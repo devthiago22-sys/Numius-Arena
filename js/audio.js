@@ -1,0 +1,17 @@
+/* Música e efeitos sonoros, ponte do Centro de Cura e volume */
+const MUS={on:true,ac:null,id:null,mg:null,vol:(()=>{try{const v=localStorage.getItem('mon-vol');return v===null?.7:+v}catch(e){return .7}})()};
+const MELO=[[659,784,659,523],[587,494,587,784],[523,659,880,659],[440,523,698,523]],BASS=[131,98,110,87];
+function tone(f,t,d,v,ty){const a=MUS.ac,o=a.createOscillator(),g=a.createGain();o.type=ty||'triangle';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.04);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(MUS.mg);o.start(t);o.stop(t+d+.05)}
+function ctxA(){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;if(!MUS.ac){MUS.ac=new C();MUS.mg=MUS.ac.createGain();MUS.mg.gain.value=MUS.vol;MUS.mg.connect(MUS.ac.destination)}MUS.ac.resume();return MUS.ac}
+function musicOn(){if(!MUS.on||MUS.id)return;try{if(!ctxA())return;const s=.75,loop=()=>{const t0=MUS.ac.currentTime+.1;MELO.forEach((b,i)=>{b.forEach((f,k)=>tone(f,t0+(i*4+k)*s,s*.9,.07));tone(BASS[i],t0+i*4*s,s*1.9,.09,'sine');tone(BASS[i],t0+(i*4+2)*s,s*1.9,.07,'sine')});MUS.id=setTimeout(loop,16*s*1000-120)};loop()}catch(e){}}
+function musicOff(){clearTimeout(MUS.id);MUS.id=null;try{MUS.ac&&MUS.ac.close()}catch(e){}MUS.ac=null;MUS.mg=null}
+function jingle(){if(!MUS.on)return;try{if(!ctxA())return;const t=MUS.ac.currentTime+.02;[523,659,784,1047].forEach((f,i)=>tone(f,t+i*.12,.4,.12,'sine'))}catch(e){}}
+function hcImg(i){const e=document.createElement('i');e.className='f'+S[i].fam;e.style.cssText='position:absolute;width:1px;height:1px;opacity:0';document.body.appendChild(e);const v=getComputedStyle(e).backgroundImage;e.remove();const m=/url\(["']?(.*?)["']?\)$/.exec(v);return m?m[1]+'#nx':''}
+function hcData(){return{team:G.team.slice(0,6).map((m,i)=>({id:'m'+i,name:S[m.i].n,level:m.l,hp:m.hp,maxHp:m.max,img:hcImg(m.i),type:S[m.i].t.toUpperCase()})),music:!!MUS.on}}
+function hcMount(){const f=document.createElement('iframe');f.id='hcf';f.className='lgf';f.title='Centro de cura';f.style.zIndex=50;document.body.appendChild(f);HC.ready=false;f.srcdoc=dec(HC).replace('<head>','<head><script>window.NXT='+JSON.stringify(hcData()).replace(/</g,'\\u003c')+'<\/script>');clearTimeout(HC.t);HC.t=setTimeout(()=>{if(!HC.ready&&G.screen==='heal'){G.hcfb=1;const x=document.getElementById('hcf');if(x)x.remove();R()}},9000)}
+function hcToggle(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('hcf');if(G.screen==='heal'&&!G.hcfb){if(!f)hcMount()}else if(f){clearTimeout(HC.t);f.remove()}}
+if(typeof addEventListener==='function')addEventListener('message',e=>{const f=typeof document.getElementById==='function'&&document.getElementById('hcf');if(!f||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;if(d.k==='ready')HC.ready=true;else if(d.k==='healed'){G.team.forEach(m=>{m.hp=m.max;restPP(m)});jingle();save()}else if(d.k==='back')leaveHeal();else if(d.k==='music')toggleMus()});
+function goHeal(){G.screen='heal';musicOn();R()}
+function leaveHeal(){musicOff();G.screen='map';R()}
+function toggleMus(){MUS.on=!MUS.on;if(MUS.on){if(G.screen==='heal'||G.prev==='heal')musicOn()}else musicOff();R()}
+function setVol(v){MUS.vol=v/100;if(MUS.mg)MUS.mg.gain.value=MUS.vol;try{localStorage.setItem('mon-vol',MUS.vol)}catch(e){}const e=$('#vv');if(e)e.textContent=v+'%'}

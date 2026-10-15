@@ -1,0 +1,7 @@
+/* Sprites dos númios (gerado a partir de assets/sprites). f = frente, b = costas. */
+.f0{background-image:url(../assets/sprites/f0.webp)}
+.b0{background-image:url(../assets/sprites/b0.webp)}
+.f1{background-image:url(../assets/sprites/f1.webp)}
+.b1{background-image:url(../assets/sprites/b1.webp)}
+.f2{background-image:url(../assets/sprites/f2.webp)}
+.b2{background-image:url(../assets/sprites/b2.webp)}
