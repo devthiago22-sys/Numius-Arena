@@ -1,0 +1,15 @@
+{
+  "name": "numius-arena",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Numius Arena: jogo de monstrinhos (númios) para navegador, em HTML/CSS/JS puro.",
+  "scripts": {
+    "start": "node tools/serve.js 8000",
+    "test": "node tests/smoke.js",
+    "build:single": "python3 tools/build_single_file.py",
+    "test:single": "python3 tools/build_single_file.py && node tests/smoke.js --single dist/numius-arena-single.html"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0"
+  }
+}
