@@ -26,10 +26,15 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
 
   console.log('Telas');
   const visible = () => page.evaluate(() => [...document.querySelectorAll('iframe')].filter(f => f.style.display !== 'none' && f.style.visibility !== 'hidden').map(f => f.id).join(','));
-  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf']]) {
+  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf'], ['boss', 'bsf']]) {
     await page.evaluate(s => { G.screen = s; R(); }, screen); await page.waitForTimeout(1500);
     ok((await visible()) === frame, 'tela "' + screen + '" mostra o iframe ' + frame);
   }
+
+  console.log('Boss semanal');
+  ok(await page.evaluate(() => BSS.ready), 'tela do boss carregou');
+  ok(await page.evaluate(() => { G.team = [mk(2, 46), mk(5, 45), mk(8, 44)]; const Z = bsNew(0, 0); let g = 0; while (!Z.over && g++ < 60) bsTurn(Z, bsPick(Z, Z.me)); return !!Z.over && Z.n > 3; }), 'simulação do raid termina');
+  ok(await page.evaluate(() => { G.eggs = 1; G.team = [mk(0, 5)]; const r = bsHatch(); return r.i != null && G.team.length === 2 && G.eggs === 0; }), 'ovo choca e entra na equipe');
 
   console.log('Centro de cura');
   await page.evaluate(() => { G.team[1].hp = 3; goHeal(); }); await page.waitForTimeout(2500);

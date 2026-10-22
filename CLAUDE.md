@@ -25,8 +25,9 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
 10. `pixel-scene.js`: cenário pixel art do menu antigo (reserva).
 11. `screens-bridge.js`: pontes com as telas em iframe (login, menu, equipe, ginásios, mostruário, PvP,
     táticas, **arena de batalha** `btMount/btData/btSend`) e `authCore`.
-12. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
-13. `main.js`: `boot()`.
+12. `boss.js`: **Boss semanal** (raid): chefes `BOSSES`, simulação `bsNew/bsTurn`, recompensas, ovos, ponte `bsMount/bsData/bsSend`.
+13. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
+14. `main.js`: `boot()`.
 
 Regras:
 - **Nunca reordene** os scripts nem chame, no nível superior de um arquivo, funções definidas em arquivos
@@ -36,7 +37,7 @@ Regras:
 - Todo estado vive em `G`. Mudou algo visível? Chame `R()`.
 
 ## Telas em iframe (`screens/*.html`)
-Login, hero, starter, menu, tactical, heal, team, gyms, dex, pvp e battle são páginas React já compiladas (minificadas),
+Login, hero, starter, menu, tactical, heal, team, gyms, dex, pvp, battle e boss são páginas React já compiladas (minificadas),
 abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com objetos `{numius:1, k:'...'}`:
 
 | Iframe | O jogo escuta (k) | O jogo envia (k) |
@@ -51,6 +52,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `gyf` ginásios | `ready`, `gym`, `nav` | `gyms` |
 | `dxf` mostruário | `ready`, `nav` | `dex` |
 | `btf` arena de batalha | `ready`, `bact` (`move`,`swap`,`swapTo`,`cap`,`flee`,`leave`,`end`) | `bimgs`, `bstate` (`seq`,`st`,`evs`) |
+| `bsf` boss semanal | `ready`, `nav`, `start` (`pick`), `turn` (`a`: `{k:'mv',i}` ou `{k:'def'}`), `hatch` | `bsdata`, `bsstart`, `bsturn`, `bshatch` |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -97,3 +99,17 @@ Se a arena não responder `ready` em 12 s, `G.btfb` ativa a batalha antiga em HT
 ## Fluxo de trabalho
 Edite os arquivos em `js/`, `css/`, `screens/`, rode o teste, gere o arquivo único e publique-o no claude.ai.
 Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
+
+## Boss semanal (`js/boss.js` + `screens/boss.html`)
+- A semana e o dragão da vez saem da mesma conta do menu: `bsWeek()`; ordem AURELION, NYXAR, CHRONOS. Mudou a conta no
+  menu (`bossInfo` em `screens/menu.html`)? Mude em `bsNow()` também.
+- Raid de 5 treinadores: o jogador + 4 aliados controlados por IA (`bsPick`). Co-op com humanos e ranking mundial
+  **precisam de servidor**: `BSRANK` (hoje só local) e a simulação determinística (`bsRng` com semente) já estão
+  prontos para isso; as jogadas de cada humano entrariam no lugar de `bsPick`.
+- Combate (`bsTurn`) devolve eventos (`atk`, `sync`, `def`, `tele`, `bs`, `baoe`, `phase`, `st`, `faint`, `end`...) que a
+  tela anima. Mecânicas: Sincronia (3+ atacantes), Proteger (intercepta golpe focado), Barreira Conjunta (2 protetores
+  na ultimate), fases em 66% e 33% (escudo de cristal / vazio / congelamento).
+- Equilíbrio em `BSX` (nível do chefe, HP, ataque, defesa), `BSR` (recompensa), `BSTOP` (top 3), `EGG` (raridades).
+  Hoje o chefe é fixo no nível 50: a vitória exige equipe ~Nv 45+.
+- Salvo em `save()`: `bs` (semana, melhor dano, recebeu?), `fr` (fragmentos por dragão), `eg` (ovos). Sem mudar `v`.
+- Para usar os fragmentos (ex.: liberar o lendário) falta definir a regra: hoje só são acumulados e exibidos.
