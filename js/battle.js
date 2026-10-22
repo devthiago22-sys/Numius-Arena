@@ -17,6 +17,7 @@ function hit(a,d,k){
   if(pa.k==='brasa'&&mv.t==='Fogo')dmg=Math.floor(dmg*(1+.5*(1-a.hp/a.max)));
   if(pa.k==='rei')dmg=Math.floor(dmg*1.1);
   if(pd.k==='millennium'&&M>1)dmg=Math.max(1,Math.floor(dmg*.5));
+  if(lgEcl(B,a)){dmg=Math.max(1,Math.floor(dmg*.75));ex+=' · Eclipse −25%'}
  }
  if(B)(B.fa=B.fa||[]).includes(a)||B.fa.push(a);
  (G.fxq=G.fxq||[]).push({a:B&&B.foe===a?'e':'p',d,dmg,M,t:mv.t,pre:d.hp/d.max});d.hp=Math.max(0,d.hp-dmg);
@@ -36,7 +37,7 @@ const AB=m=>{const B=G.battle;if(!B)return{};const mp=B.abm||(B.abm=new Map());l
 const evp=(o,li)=>{const B=G.battle;if(B)(B.ev=B.ev||[]).push({...o,li:li!=null?li:B.log.length})};
 const sideOf=m=>G.battle&&G.battle.foe===m?'e':'p';
 const btBu=m=>{const o=AB(m);return{df:o.df||0,b:Math.round((o.b||0)*100),kb:Math.round((o.kb||0)*100)}};
-const btSnap=m=>{const s=S[m.i];return{i:m.i,n:s.n,l:m.l,hp:m.hp,max:m.max,ty:[s.t,s.t2].filter(Boolean),bn:!!AB(m).burn,bu:btBu(m)}};
+const btSnap=m=>{const s=S[m.i];return{i:m.i,n:s.n,l:m.l,hp:m.hp,max:m.max,ty:tyOf(m).slice(),bn:!!AB(m).burn,bu:btBu(m)}};
 const STN={h:'PS',a:'Ataque',sa:'Atq. Mágico',d:'Defesa',sd:'Def. Mágica',sp:'Velocidade'};
 function sx(m,k){const o=AB(m),p=PA(m).k;let mul=1+(o.b||0)+(o.kb||0);if(k==='sp'&&p==='rei')mul*=1.1;if(k==='a'&&o.burn)mul*=.75;let v=(m[k]||1)*mul;if(k==='d'||k==='sd')v+=(o.df||0);return Math.max(1,v)}
 function applyStatus(t,s,src){const B=G.battle,o=AB(t);if(o[s])return false;const nt=S[t.i].n,ns=S[src.i].n,lbl=s==='burn'?'queimadura':'status negativo';
@@ -58,6 +59,7 @@ function turnFx(B){
 function regen(B){[act(),B.foe].forEach(m=>{if(!m||m.hp<=0)return;const p=PA(m);if(p.k==='regen'&&m.hp<m.max){const h=Math.min(m.max-m.hp,Math.max(1,Math.floor(m.max*.06*p.s)));m.hp+=h;B.log.push(`${S[m.i].n} recuperou ${h} PS (${p.n}).`)}})}
 function eTurn(){
  const B=G.battle,p=act(),e=B.foe;
+ if(lgFrz(B,'e')){B.log.push(`⏳ ${S[e.i].n} está paralisado no tempo e não pode agir!`);return}
  let k=moves(e).map((mv,i)=>e.pp&&e.pp[i]<=0?-1:mv.p*effv(mv.t,p)).reduce((b,v,i,a)=>v>a[b]?i:b,0);
  if((B.tt||B.vt)&&B.tier<1)k=rnd(moves(e).length);
  if((B.tt||B.vt)&&B.tier>=3&&B.pot>0&&e.hp<e.max*.3){B.pot--;e.hp=Math.min(e.max,e.hp+Math.floor(e.max*.4));B.log.push(`Treinador usou uma poção! ${S[e.i].n} recuperou PS.`);return}
@@ -96,7 +98,7 @@ function turn(k){
  if(foeFirst){eTurn();if(B.over||pl.hp<=0){save();R();return}}
  if(B.tt)B.used.push(S[act().i].t);B.log.push(hit(act(),B.foe,k));
  if(B.foe.hp<=0)foeDown();else{if(!foeFirst)eTurn();if(!B.over)regen(B)}
- save();R();
+ lgEnd(B);save();R();
 }
 function swap(){
  const B=G.battle;
@@ -108,14 +110,14 @@ function swapTo(i){
  if(!m||m.hp<=0||m===act())return;
  if(B.pvp){B.pick=false;pvpAct({t:'s',i});return}
  B.pick=false;G.team.unshift(G.team.splice(i,1)[0]);
- B.log=[`Vai, ${S[m.i].n}!`];evp({t:'send',s:'p',mon:btSnap(m)});eTurn();save();R();
+ B.log=[`Vai, ${S[m.i].n}!`];evp({t:'send',s:'p',mon:btSnap(m)});eTurn();lgEnd(B);save();R();
 }
 function leave(){if(G.battle.pvp){pvpAct({t:'f'});return}const B=G.battle;B.over='quit';G.note='🏳️ Você desistiu da batalha. A desistência foi registrada.';end()}
 function cap(){
  const B=G.battle,e=B.foe;
  if(G.team.length>=6){B.log=['Sua equipe já tem 6 monstrinhos!'];return R()}
  if(Math.random()<.2+.6*(1-e.hp/e.max)){G.team.push(e);reg(e.i);B.log=[`🎯 Você capturou ${S[e.i].n}!`];B.over='caught';evp({t:'cap',ok:true})}
- else{B.log=['A bola falhou!'];evp({t:'cap',ok:false});eTurn()}
+ else{B.log=['A bola falhou!'];evp({t:'cap',ok:false});eTurn();lgEnd(B)}
  save();R();
 }
 function flee(){G.battle.log=['Você fugiu!'];G.battle.over='fled';R()}

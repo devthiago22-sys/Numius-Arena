@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mochila</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ac:#eab308;--ink:#f5f3ff;--mut:#9ca3af;--panel:rgba(18,15,30,.86);--line:rgba(255,255,255,.12);--px:'Press Start 2P',monospace;--mono:'JetBrains Mono',ui-monospace,monospace}
+html,body{width:100%;height:100%;overflow:hidden;color:var(--ink);font-family:var(--mono);background:#0a0812}
+body{background:radial-gradient(ellipse at 20% 0%,#3b2a0a 0,transparent 55%),radial-gradient(ellipse at 90% 100%,#1e1b4b 0,transparent 55%),#0a0812}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{cursor:default;opacity:.45}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.px{font-family:var(--px)}
+#app{height:100dvh;display:flex;flex-direction:column;padding:clamp(8px,1.6vh,18px) clamp(10px,2.4vw,32px);gap:clamp(8px,1.4vh,14px)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.top .l{display:flex;align-items:center;gap:12px}
+.ttl{font-family:var(--px);font-size:clamp(12px,2.4vh,20px);color:var(--ac);text-shadow:0 2px 0 #000,0 0 18px var(--ac)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:clamp(10px,1.5vh,13px);font-weight:700;white-space:nowrap}
+.btn{padding:clamp(8px,1.4vh,12px) clamp(12px,2vw,20px);border-radius:12px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:800;font-size:clamp(11px,1.6vh,13px);letter-spacing:.04em;transition:transform .12s,background .2s}
+.btn:hover:not(:disabled){transform:translateY(-1px);background:rgba(255,255,255,.14)}
+.btn.go{background:linear-gradient(180deg,#fff3b0,var(--c,var(--ac)));color:#1a1206;border-color:#fff8;box-shadow:0 0 18px color-mix(in srgb,var(--c,var(--ac)) 55%,transparent),0 4px 0 rgba(0,0,0,.45)}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:clamp(10px,2vw,22px)}
+.tabs{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;align-self:start}
+.tab{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-weight:800;font-size:clamp(10px,1.5vh,12px);letter-spacing:.06em;text-align:left;border:1px solid transparent}
+.tab .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.07);font-size:15px}
+.tab .n{margin-left:auto;font-size:10px;color:var(--mut);background:rgba(0,0,0,.35);padding:2px 7px;border-radius:99px}
+.tab.on{background:linear-gradient(90deg,color-mix(in srgb,var(--ac) 26%,transparent),transparent);border-color:color-mix(in srgb,var(--ac) 60%,transparent);color:#fff}
+.pan{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,2vh,18px);overflow:auto;min-height:0}
+.sec{font-size:10px;letter-spacing:.18em;color:var(--mut);font-weight:800;margin:4px 0 10px;display:flex;align-items:center;gap:8px}
+.sec:after{content:'';flex:1;height:1px;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.04);font-size:clamp(10px,1.5vh,12px);line-height:1.5}
+.leg{border-color:color-mix(in srgb,var(--c) 55%,transparent);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 14%,transparent),rgba(255,255,255,.02));display:flex;flex-direction:column;gap:8px}
+.leg .im{height:clamp(90px,17vh,150px);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 0 14px var(--c))}
+.leg.lk .im{filter:grayscale(1) brightness(.35) drop-shadow(0 0 6px #000)}
+.leg h3{font-family:var(--px);font-size:clamp(10px,1.8vh,14px);color:var(--c)}
+.leg .ab{font-weight:800;color:#fff}
+.bar{height:10px;border-radius:99px;background:#0006;border:1px solid #000;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--c),#fff)}
+.ok{color:#4ade80;font-weight:800}
+.it{display:flex;align-items:center;gap:12px}
+.it .big{font-size:30px;width:52px;height:52px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.06)}
+.it b{font-size:clamp(12px,1.9vh,15px)}
+.frag{display:inline-block;width:14px;height:18px;clip-path:polygon(50% 0,100% 40%,50% 100%,0 40%);background:linear-gradient(135deg,#fff,var(--c));filter:drop-shadow(0 0 4px var(--c))}
+.egg{width:46px;height:58px;border-radius:50% 50% 46% 46%/60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff,#ddd6fe 40%,#a78bfa)}
+.empty{color:var(--mut);padding:20px;text-align:center}
+.bd{opacity:.35;filter:grayscale(1)}.bd.got{opacity:1;filter:none}
+#ov{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:10}
+#ov.on{display:flex}
+#ov .box{background:#140f24;border:2px solid var(--c,#a78bfa);border-radius:18px;padding:22px;max-width:min(92vw,420px);text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+#ov img{height:clamp(110px,26vh,200px);image-rendering:pixelated;filter:drop-shadow(0 0 18px var(--c))}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes wob{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+.wob{animation:wob .3s ease-in-out infinite}
+@media(max-width:640px){.main{grid-template-columns:1fr;grid-template-rows:auto 1fr}.tabs{flex-direction:row;overflow-x:auto}.tab{flex:none}.tab .n{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div class="top"><div class="l"><button class="btn" id="back" aria-label="Voltar ao mapa">← VOLTAR</button><span class="ttl">🎒 MOCHILA</span></div><div id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>
+ <div class="main"><nav class="tabs" id="tabs" aria-label="Divisórias da mochila"></nav><section class="pan" id="pan" aria-live="polite"></section></div>
+</div>
+<div id="ov" role="dialog" aria-modal="true"></div>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s),post=o=>{try{parent.postMessage(Object.assign({numius:1},o),'*')}catch(e){}};
+const LIMG={aurelion:'assets/screens/leg-aurelion.webp',nyxar:'assets/screens/leg-nyxar.webp',chronos:'assets/screens/leg-chronos.webp'};
+const TE={Fogo:'🔥',Água:'💧',Planta:'🍃',Elétrico:'⚡',Pedra:'🪨',Gelo:'❄️',Psíquico:'🔮',Voador:'🪶',Dragão:'🐉',Luz:'✨',Trevas:'🌑',Cósmico:'🌌'};
+let D=null,IM={},tab='leg';
+const TABS=[['leg','🐉','LENDÁRIOS',d=>d.legs.filter(x=>x.has).length+'/3'],['frag','💎','FRAGMENTOS',d=>d.legs.reduce((a,x)=>a+x.fr,0)],['egg','🥚','OVOS',d=>d.eggs],['coin','🪙','MOEDAS',d=>d.coins],['bdg','🏅','INSÍGNIAS',d=>d.badges.filter(b=>b.got).length+'/'+d.badges.length]];
+function render(){
+ if(!D)return;
+ $('#chips').innerHTML=`<span class="chip">🪙 ${D.coins}</span><span class="chip">🥚 ${D.eggs}</span>`;
+ $('#tabs').innerHTML=TABS.map(([k,ic,l,n])=>`<button class="tab ${tab===k?'on':''}" data-t="${k}" aria-pressed="${tab===k}"><span class="ic">${ic}</span>${l}<span class="n">${n(D)}</span></button>`).join('');
+ document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+ let h='';
+ if(tab==='leg'){h=`<div class="sec">LENDÁRIOS · LIBERE COM ${D.cost} FRAGMENTOS</div><div class="grid">`+D.legs.map(x=>{const p=Math.min(1,x.fr/D.cost);return `<div class="card leg ${x.has?'':'lk'}" style="--c:${x.col}">
+   <div class="im" style="background-image:url(${LIMG[x.id]})" role="img" aria-label="${x.n}"></div>
+   <h3>${x.n}</h3><div>${TE[x.t]||''} ${x.t}</div>
+   <div><span class="ab">${x.ic} ${x.ab}</span><br>${x.d}</div>
+   ${x.has?'<div class="ok">✔ LIBERADO · aparece ao lado das suas partidas, 1 uso por partida</div>':`<div><div class="bar"><i style="width:${p*100}%"></i></div><small>${x.fr} / ${D.cost} fragmentos de ${x.n}</small></div>
+   <button class="btn go" data-u="${x.id}" ${x.fr>=D.cost?'':'disabled'}>${x.fr>=D.cost?'LIBERAR (−'+D.cost+' fragmentos)':'FALTAM '+(D.cost-x.fr)+' FRAGMENTOS'}</button>`}</div>`}).join('')+`</div>`}
+ else if(tab==='frag'){h=`<div class="sec">FRAGMENTOS DOS DRAGÕES</div><div class="grid">`+D.legs.map(x=>`<div class="card it" style="--c:${x.col}"><span class="big"><i class="frag" style="--c:${x.col};width:22px;height:28px"></i></span><div><b>${x.fr}</b> fragmento(s) de ${x.n}<br><small style="color:var(--mut)">Ganhe 5 por vitória no Boss semanal quando ${x.n} for o dragão da semana.</small></div></div>`).join('')+`</div><div style="margin-top:12px"><button class="btn" id="toboss">⚔ IR PARA O BOSS SEMANAL</button></div>`}
+ else if(tab==='egg'){h=`<div class="sec">OVOS MISTERIOSOS</div><div class="card it"><div class="egg ${D.eggs?'':'bd'}"></div><div style="flex:1"><b>${D.eggs}</b> ovo(s)<br><small style="color:var(--mut)">Pode nascer qualquer Numiu: ${D.egg.map(e=>`<span style="color:${e.c}">${e.k} ${e.w}%</span>`).join(' · ')}</small></div>
+   <button class="btn go" id="hatch" ${D.eggs&&!D.teamFull?'':'disabled'}>CHOCAR</button></div>${D.teamFull?'<div class="card" style="margin-top:10px;border-color:#f59e0b">Sua equipe está cheia (6/6). Libere um espaço para chocar.</div>':''}`}
+ else if(tab==='coin'){h=`<div class="sec">MOEDAS</div><div class="grid"><div class="card it"><span class="big">🪙</span><div><b>${D.coins}</b> moedas<br><small style="color:var(--mut)">Ganhas em batalhas e no Boss semanal.</small></div></div><div class="card it"><span class="big">💠</span><div><b>${D.vc}</b> Moedas Virtuosas<br><small style="color:var(--mut)">Do Treino Virtuoso; usadas no Treinamento.</small></div></div></div>`}
+ else if(tab==='bdg'){h=`<div class="sec">INSÍGNIAS DOS GINÁSIOS</div><div class="grid">`+D.badges.map(b=>`<div class="card it bd ${b.got?'got':''}"><span class="big">${b.bd||'🏅'}</span><div><b>${b.n}</b><br><small style="color:var(--mut)">${b.c} · líder ${b.l} · ${TE[b.ty]||''} ${b.ty}</small>${b.got?'':'<br><small>🔒 ainda não conquistada</small>'}</div></div>`).join('')+`</div>`}
+ $('#pan').innerHTML=h;
+ document.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{b.disabled=true;post({k:'unlock',id:b.dataset.u})});
+ const hb=$('#hatch');if(hb)hb.onclick=()=>{hb.disabled=true;hatchAnim();post({k:'hatch'})};
+ const tb=$('#toboss');if(tb)tb.onclick=()=>post({k:'nav',to:'boss'});
+}
+function ov(html,c){const o=$('#ov');o.innerHTML=`<div class="box" style="--c:${c||'#a78bfa'}">${html}</div>`;o.classList.add('on');const x=o.querySelector('[data-x]');if(x){x.onclick=()=>o.classList.remove('on');x.focus()}}
+function hatchAnim(){ov(`<div class="egg wob" style="width:80px;height:100px"></div><b class="px" style="font-size:12px">Algo está se mexendo...</b>`)}
+addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
+ if(m.k==='bgdata'){if(m.imgs)Object.assign(IM,m.imgs);D=m;render()}
+ else if(m.k==='bgunlock'){if(m.ok){const x=D&&D.legs.find(l=>l.id===m.id);ov(`<div style="width:160px;height:160px;background:url(${LIMG[m.id]}) center/contain no-repeat;filter:drop-shadow(0 0 20px ${x?x.col:'#fff'})"></div><h2 class="px" style="font-size:14px;color:${x?x.col:'#fff'}">${x?x.n:''} LIBERADO!</h2><div>Ele vai aparecer ao lado das suas partidas. Toque no ícone para invocá-lo uma vez por partida.</div><button class="btn go" data-x>OK</button>`,x&&x.col)}}
+ else if(m.k==='bghatch'){if(m.imgs)Object.assign(IM,m.imgs);setTimeout(()=>{if(m.err){ov(`<b>Ops</b><div>${m.err}</div><button class="btn go" data-x>OK</button>`);return}
+  ov(`<img src="${IM['f'+m.i]||''}" alt="${m.n}"><b class="px" style="font-size:10px;color:${m.col}">${String(m.rar).toUpperCase()}</b><h2 style="color:${m.col}">${m.n}</h2><div>Nv ${m.l} · ${TE[m.t]||''} ${m.t}${m.t2?' · '+(TE[m.t2]||'')+' '+m.t2:''}</div><div>Entrou para a sua equipe!</div><button class="btn go" data-x>OK</button>`,m.col)},1400)}
+});
+$('#back').onclick=()=>post({k:'nav',to:'map'});
+post({k:'ready'});
+})();
+</script>
+</body>
+</html>

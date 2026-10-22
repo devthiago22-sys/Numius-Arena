@@ -14,7 +14,7 @@ const NV={Fogo:['Fogo','Água','Pedra','Dragão','Luz'],Água:['Água','Planta',
 /* Luz, Trevas e Cósmico: por enquanto só os dragões do Boss semanal usam. */
 const T2M={Terra:'Pedra',Metal:'Pedra',Vento:'Voador',Sombrio:'Psíquico'};
 S.forEach(x=>{x.tt=[x.t];const m=T2M[x.t2]||x.t2;if(m&&m!==x.t&&NV[m])x.tt.push(m)});
-const effv=(a,m)=>S[m.i].tt.reduce((p,t)=>p*mult(a,t),1);
+const effv=(a,m)=>(typeof tyOf==='function'?tyOf(m):S[m.i].tt).reduce((p,t)=>p*mult(a,t),1);
 const wk=m=>{const w=[],r=[],we=[];TYX.forEach(t=>{const e=effv(t,m);if(e>1){w.push(TE[t]+' '+t+(e>2?' ×4':''));we.push(TE[t]+(e>2?'²':''))}else if(e<1)r.push(TE[t]+' '+t)});return{w,r,we}};
 const wkHTML=m=>{const{w,r}=wk(m);return `<div class=wkb><b>Tipo:</b> ${S[m.i].t}${S[m.i].t2?' · '+S[m.i].t2:''}<br><b>Fraco contra:</b> ${w.join(' · ')||'—'}<br><b>Resiste a:</b> ${r.join(' · ')||'—'}<br><b>Evolução:</b> ${S[m.i].x!==undefined?'Nv '+(S[m.i].s===1?16:36)+' → '+S[S[m.i].x].n:'forma final'}<br><b>Habilidade:</b> ${PA(m).n} — ${pdesc(m)}</div>`};
 const MV={Fogo:'Chama',Água:'Jato d\'água',Planta:'Folha-lâmina',Elétrico:'Choque',Pedra:'Pedrada',Gelo:'Raio gelado',Psíquico:'Confusão',Voador:'Rajada'};

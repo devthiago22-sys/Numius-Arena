@@ -260,3 +260,43 @@ button .im{width:1.5em;height:1.5em}
 input{font:inherit;width:100%;padding:9px;border-radius:10px;border:2px solid var(--ink);background:var(--card);color:var(--ink);min-height:44px;margin-top:4px}
 label{font-weight:700;display:block;margin-bottom:8px}.bad{color:var(--bad);min-height:20px;margin:8px 0}
 select{font:inherit;padding:8px;border-radius:10px;border:2px solid var(--ink);background:var(--card);color:var(--ink);min-height:44px;flex:1 1 150px}
+/* ---------- Lendários na arena (js/legend.js) ---------- */
+.lgimg-aurelion{background-image:url(../assets/screens/leg-aurelion.webp)}
+.lgimg-nyxar{background-image:url(../assets/screens/leg-nyxar.webp)}
+.lgimg-chronos{background-image:url(../assets/screens/leg-chronos.webp)}
+#lgbar{position:fixed;left:max(10px,env(safe-area-inset-left));top:max(64px,20vh);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-start;font-family:ui-monospace,Menlo,monospace;pointer-events:none}
+#lgbar .lgh{font-size:9px;letter-spacing:.14em;font-weight:800;color:#fde68a;text-shadow:0 1px 3px #000;padding-left:2px}
+#lgbar .lgb{pointer-events:auto;position:relative;width:clamp(50px,7.4vh,64px);height:clamp(50px,7.4vh,64px);border-radius:50%;border:2px solid var(--lc);background-color:#0b0916;background-size:84%;background-repeat:no-repeat;background-position:center 40%;box-shadow:0 0 0 2px #000a,0 0 16px color-mix(in srgb,var(--lc) 70%,transparent);cursor:pointer;padding:0;min-height:0;transition:transform .15s,filter .3s,opacity .3s;animation:lgpulse 1.8s ease-in-out infinite}
+#lgbar .lgb:hover:not(:disabled){transform:scale(1.08)}
+#lgbar .lgb:focus-visible{outline:3px solid #fff;outline-offset:2px}
+#lgbar .lgb .lgt{position:absolute;right:-4px;top:-4px;font-size:13px;filter:drop-shadow(0 1px 2px #000)}
+#lgbar .lgb small{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);white-space:nowrap;font-size:8px;font-weight:800;letter-spacing:.05em;padding:1px 5px;border-radius:99px;background:#000c;color:var(--lc);border:1px solid var(--lc)}
+#lgbar .lgb.pd{transform:scale(1.1);box-shadow:0 0 0 3px #fff,0 0 26px var(--lc)}
+#lgbar .lgb.us,#lgbar .lgb.lk{filter:grayscale(1) brightness(.55);animation:none;box-shadow:0 0 0 2px #000a;border-color:#6b7280;cursor:not-allowed}
+#lgbar .lgb.us small,#lgbar .lgb.lk small{color:#d1d5db;border-color:#6b7280}
+#lgbar .lgb:disabled:not(.us):not(.lk){opacity:.6;animation:none}
+#lgbar .lgc{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+#lgbar .lgc span{font-size:9px;font-weight:700;color:#fff;background:#000b;border-left:3px solid var(--lc);padding:3px 6px;border-radius:4px;white-space:nowrap}
+@keyframes lgpulse{0%,100%{box-shadow:0 0 0 2px #000a,0 0 10px color-mix(in srgb,var(--lc) 50%,transparent)}50%{box-shadow:0 0 0 2px #000a,0 0 24px var(--lc)}}
+.lgov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:auto;animation:lgin .3s ease-out both}
+.lgov.out{animation:lgout .38s ease-in both}
+.lgov .lgbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--lc) 40%,#05030c) 0,#05030cf2 62%)}
+.lgov .lgfx{position:absolute;left:50%;top:44%;width:150vmax;height:150vmax;transform:translate(-50%,-50%);border-radius:50%;opacity:.55}
+.lgk-aurelion .lgfx{background:repeating-conic-gradient(from 0deg,#fff6 0 4deg,transparent 4deg 16deg);-webkit-mask-image:radial-gradient(circle,#000 0,transparent 55%);mask-image:radial-gradient(circle,#000 0,transparent 55%);animation:lgspin 6s linear infinite}
+.lgk-nyxar .lgfx{width:46vmin;height:46vmin;background:#000;opacity:1;box-shadow:0 0 0 6px #a855f7,0 0 60px 20px #a855f7,0 0 160px 60px #7c3aedaa;animation:lgecl 2.5s ease-out both}
+.lgk-chronos .lgfx{width:60vmin;height:60vmin;opacity:1;border:4px solid #bae6fd;box-shadow:0 0 30px #7dd3fc,inset 0 0 40px #7dd3fc88;background:conic-gradient(from 0deg,transparent 0 350deg,#fff 350deg 352deg,transparent 352deg),conic-gradient(from 0deg,transparent 0 30deg,#bae6fd55 30deg 31deg,transparent 31deg 60deg,#bae6fd55 60deg 61deg,transparent 61deg 90deg,#bae6fd55 90deg 91deg,transparent 91deg);animation:lgclk 2.5s cubic-bezier(.5,0,.2,1) both}
+.lgov .lgmon{position:relative;width:min(52vmin,440px);height:min(52vmin,440px);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 0 30px var(--lc));animation:lgmon 2.5s cubic-bezier(.2,.9,.3,1) both}
+.lgov .lgtx{position:absolute;left:50%;bottom:9vh;transform:translateX(-50%);text-align:center;font-family:ui-monospace,Menlo,monospace;color:#fff;text-shadow:0 2px 0 #000,0 0 20px var(--lc);animation:lgtx 2.5s ease-out both;width:92vw}
+.lgov .lgtx b{display:block;font-size:clamp(26px,6vh,52px);letter-spacing:.14em;color:var(--lc)}
+.lgov .lgtx span{display:block;font-size:clamp(14px,2.8vh,24px);font-weight:800;margin-top:4px}
+.lgov .lgtx small{display:block;font-size:11px;opacity:.75;margin-top:6px;letter-spacing:.1em;text-transform:uppercase}
+.lgov .lgfl{position:absolute;inset:0;background:#fff;animation:lgfl 2.5s ease-out both;pointer-events:none}
+@keyframes lgin{from{opacity:0}to{opacity:1}}
+@keyframes lgout{to{opacity:0}}
+@keyframes lgspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes lgmon{0%{transform:scale(.15) translateY(30%);opacity:0;filter:brightness(4) drop-shadow(0 0 30px var(--lc))}22%{transform:scale(1.12);opacity:1;filter:brightness(2.2) drop-shadow(0 0 50px var(--lc))}35%{transform:scale(1);filter:brightness(1) drop-shadow(0 0 30px var(--lc))}70%{transform:scale(1.04) translateY(-2%)}100%{transform:scale(1.02) translateY(-1%)}}
+@keyframes lgtx{0%,25%{opacity:0;transform:translateX(-50%) translateY(20px)}40%,100%{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes lgfl{0%{opacity:0}16%{opacity:.95}34%{opacity:0}100%{opacity:0}}
+@keyframes lgecl{0%{transform:translate(-120%,-50%) scale(.6);opacity:0}45%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(1.08)}}
+@keyframes lgclk{0%{transform:translate(-50%,-50%) rotate(0) scale(.4);opacity:0}30%{opacity:1;transform:translate(-50%,-50%) rotate(360deg) scale(1)}100%{transform:translate(-50%,-50%) rotate(1440deg) scale(1.1)}}
+@media(prefers-reduced-motion:reduce){#lgbar .lgb{animation:none}.lgov,.lgov *{animation-duration:.01s!important;animation-iteration-count:1!important}.lgov .lgfl{display:none}}

@@ -38,8 +38,8 @@ function pvpStart(bid,p,role){
  G.battle.olp=p.presence.lp|0;PV.search=false;
  G.screen='battle';R();
 }
-function pvpAct(a){const B=G.battle;if(!B||!B.pvp||B.over||B.wait)return;B.wait=true;B.pick=false;B.hist['t'+B.turn]=a;const ks=Object.keys(B.hist);if(ks.length>6)delete B.hist[ks[0]];pvpPres({hist:B.hist});R();pvpTick()}
-const pvpSane=(a,n)=>a&&((a.t==='a'&&Number.isInteger(a.k)&&a.k>=-1&&a.k<4)||(a.t==='s'&&Number.isInteger(a.i)&&a.i>=0&&a.i<n)||a.t==='f')?a:{t:'a',k:0};
+function pvpAct(a){const B=G.battle;if(!B||!B.pvp||B.over||B.wait)return;B.wait=true;B.pick=false;if(B.lgP&&LEG[B.lgP]&&lgHas(B.lgP)){a=Object.assign({},a,{lg:B.lgP})}B.lgP=null;B.hist['t'+B.turn]=a;const ks=Object.keys(B.hist);if(ks.length>6)delete B.hist[ks[0]];pvpPres({hist:B.hist});R();pvpTick()}
+const pvpSane=(a,n)=>{const r=a&&((a.t==='a'&&Number.isInteger(a.k)&&a.k>=-1&&a.k<4)||(a.t==='s'&&Number.isInteger(a.i)&&a.i>=0&&a.i<n)||a.t==='f')?{t:a.t,k:a.k,i:a.i}:{t:'a',k:0};if(a&&typeof a.lg==='string'&&LEG[a.lg])r.lg=a.lg;return r};
 function pvpTick(){
  const B=G.battle;if(!B||!B.pvp||B.over)return;
  const op=peerOf(B.opp);
@@ -56,12 +56,15 @@ function pvpResolve(B,actA,actB){
  RR=rngS(hstr(B.bid+':'+B.turn));B.log=[];
  const acts={a:actA,b:actB},oth=r=>r==='a'?'b':'a',T=r=>r===B.role?G.team:B.oq,ac=r=>T(r).find(m=>m.hp>0),nm=r=>r===B.role?'Você':B.oname;
  for(const r of ['a','b'])if(acts[r].t==='f'){B.over=r===B.role?'lose':'win';B.log.push(nm(r)+' desistiu do duelo.');B.foe=B.oq.find(m=>m.hp>0)||B.oq[0];RR=Math.random;return}
+ {const L=lgS(B);B.foe=ac(oth(B.role))||B.foe;for(const r of ['a','b']){const id=acts[r].lg,sd=r===B.role?'p':'e';if(id&&!L.u[sd][id])lgCast(sd,id,B)}}
+ const fz=r=>lgFrz(B,r===B.role?'p':'e');
+ for(const r of ['a','b'])if(fz(r)&&acts[r].t!=='f'){B.log.push(`⏳ ${nm(r)} está paralisado no tempo e não pode agir.`);acts[r]={t:'x'}}
  for(const r of ['a','b'])if(acts[r].t==='s'){const t=T(r),m=t[acts[r].i];if(m&&m.hp>0&&m!==ac(r)){t.unshift(t.splice(acts[r].i,1)[0]);B.log.push(`${nm(r)} trocou para ${S[m.i].n}!`)}}
  const A0={a:ac('a'),b:ac('b')};
  const order=['a','b'].filter(r=>acts[r].t==='a'&&A0[r]).sort((x,y)=>sx(A0[y],'sp')-sx(A0[x],'sp')||(x==='a'?-1:1));
  for(const r of order){const at=A0[r];if(at.hp<=0)continue;const df=ac(oth(r));if(!df)continue;B.foe=ac(oth(B.role));{let kk=acts[r].k;if(kk>=0&&(!at.mv[kk]||at.pp[kk]<=0))kk=-1;B.log.push(hit(at,df,kk))};if(df.hp<=0)B.log.push(`${S[df.i].n} de ${nm(oth(r))} desmaiou!`)}
  B.foe=ac(oth(B.role))||B.oq[0];
- if(G.team.some(m=>m.hp>0)&&B.oq.some(m=>m.hp>0)){turnFx(B);regen(B)}
+ if(G.team.some(m=>m.hp>0)&&B.oq.some(m=>m.hp>0)){turnFx(B);regen(B);B.foe=ac(oth(B.role))||B.foe;lgEnd(B)}
  if(!G.team.some(m=>m.hp>0))B.over='lose';else if(!B.oq.some(m=>m.hp>0))B.over='win';
  B.foe=B.oq.find(m=>m.hp>0)||B.oq[0];
  RR=Math.random;
