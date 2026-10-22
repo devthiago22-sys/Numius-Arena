@@ -181,7 +181,7 @@ function bsData(){
   bosses:BOSSES.map(x=>({id:x.id,n:x.n,tt:x.tt,t:x.t,t2:x.t2,col:x.col,col2:x.col2,mv:x.mv,fxd:x.fxd,ph:x.ph})),
   frag:G.frag,eggs:G.eggs||0,coins:G.coins||0,claimed:b.claimed,best:b.best,bt:b.bt,win:b.win,tries:b.tries,
   rew:BSR,top:BSTOP,egg:Object.values(EGG).map(e=>({k:e.k,w:e.w,c:e.c})),
-  team:G.team.map((m,k)=>({k,i:m.i,n:S[m.i].n,l:m.l,t:S[m.i].t,t2:S[m.i].t2||null,mv:moves(m).slice(0,4).map(x=>x.n)})),
+  team:G.team.map((m,k)=>({k,i:m.i,fam:S[m.i].fam,n:S[m.i].n,l:m.l,t:S[m.i].t,t2:S[m.i].t2||null,mv:moves(m).slice(0,4).map(x=>x.n)})),
   hero:(G.hero&&G.hero.name)||ME||'Você',rank:{world:BSRANK.world,list:BSRANK.top()},
   imgs:BSS.sent?null:(BSS.sent=1,btImgs()),teamFull:G.team.length>=6}
 }
@@ -190,7 +190,7 @@ function bsToggle(){if(typeof document.getElementById!=='function')return;const 
 function bsStartMsg(Z){
  const bd=BOSSES[Z.bi];
  return{numius:1,k:'bsstart',boss:{...Z.b,id:bd.id},
-  party:Z.p.map(m=>({id:m.id,tr:m.tr,e:m.e,me:m.me,ai:m.ai,i:m.i,l:m.l,n:m.n,hp:m.hp,max:m.max,t:m.t,t2:m.t2,
+  party:Z.p.map(m=>({id:m.id,tr:m.tr,e:m.e,me:m.me,ai:m.ai,i:m.i,fam:S[m.i].fam,l:m.l,n:m.n,hp:m.hp,max:m.max,t:m.t,t2:m.t2,
    mv:m.mv.map(x=>({n:x.n,t:x.t,p:x.p,c:x.c,M:bsEffB(x.t,Z.b)}))})),warn:bsWarn(Z)}
 }
 if(typeof addEventListener==='function')addEventListener('message',e=>{const f=document.getElementById('bsf');if(!f||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;
