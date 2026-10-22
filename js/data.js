@@ -3,7 +3,7 @@ const FAM=[
 ["Blazleo","Fogo","Pedra",["Blazleo","Cindaleo","Obsidileo"],[32,56,30,40,32,42],0,[["Garra de Brasa", "Fogo", 65], ["Cristal Cortante", "Pedra", 60], ["Juba Flamejante", "Fogo", 80], ["Inferno de Obsidiana", "Fogo", 100, "cr"]],[["Brasa Forte","brasa"],["Vontade do Fogo","vontade"],["Rei Obsidiana","rei"]]],
 ["Byron","Pedra","Planta",["Byron","Byrocks","Imperyron"],[48,42,24,62,44,18],0,[["Pedrada Musgosa", "Pedra", 65], ["Folha Cortante", "Planta", 60], ["Casco Esmeralda", "Pedra", 80], ["Terremoto Verdejante", "Planta", 100, "dr"]],[["Néctar Ancestral","nectar"],["Carapaça Refletiva","reflect"],["Endurecer do Milênio","millennium"]]]];
 const S=[];
-FAM.forEach(([n,t,t2,ns,B6,_z,_m,abs],f)=>ns.forEach((nm,k)=>{const i=S.length,u=[0,10,22][k];S.push({n:nm,e:`<i class="im f${i}" style="--k:${[.82,.92,1][k]}"></i>`,t,t2,h:B6[0]+[0,20,42][k],a:B6[1]+[0,14,30][k],sa:B6[2]+u,d:B6[3]+u,sd:B6[4]+u,sp:B6[5]+u,fam:f,s:k+1,ab:abs[k],...(k<2?{x:i+1}:{}),...(k===0?{b:`<i class="im b${i}" style="--k:.82"></i>`}:{})})}));
+FAM.forEach(([n,t,t2,ns,B6,_z,_m,abs],f)=>ns.forEach((nm,k)=>{const i=S.length,u=[0,10,22][k];S.push({n:nm,e:`<i class="im f${i}" style="--k:${[.82,.92,1][k]}"></i>`,t,t2,h:B6[0]+[0,20,42][k],a:B6[1]+[0,14,30][k],sa:B6[2]+u,d:B6[3]+u,sd:B6[4]+u,sp:B6[5]+u,fam:f,s:k+1,ab:abs[k],...(k<2?{x:i+1}:{}),b:`<i class="im b${i}" style="--k:${[.82,.92,1][k]}"></i>`})}));
 const BASE=[...S.keys()].filter(i=>S[i].s===1);
 const DEX=[];BASE.forEach(b=>{let i=b;DEX.push(i);while(S[i].x!==undefined){i=S[i].x;DEX.push(i)}});
 const PREV={};S.forEach((x,i)=>{if(x.x!==undefined)PREV[x.x]=i});
