@@ -198,6 +198,7 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  if(d.k==='ready'){BSS.ready=true;bsSend()}
  else if(G.screen!=='boss')return;
  else if(d.k==='nav'&&d.to==='map'){BSS.Z=null;G.screen='map';R()}
+ else if(d.k==='leave'){const Z=BSS.Z;if(Z&&!Z.over){Z.over='left';bsFinish(Z,false)}BSS.Z=null;setTimeout(bsSend,50)}
  else if(d.k==='start'){const nw=bsNow();BSS.Z=bsNew(nw.i,d.pick|0);post(bsStartMsg(BSS.Z))}
  else if(d.k==='turn'){const Z=BSS.Z;if(!Z)return;const r=bsTurn(Z,d.a);let rw=null;if(r.over)rw=bsFinish(Z,r.over==='win');
   post({k:'bsturn',evs:r.evs,snap:r.snap,over:r.over,warn:r.warn,turn:r.turn,reward:rw,score:Z.me.dm,best:bsd().best,coins:G.coins||0,frag:G.frag,eggs:G.eggs||0});if(r.over)setTimeout(bsSend,50)}

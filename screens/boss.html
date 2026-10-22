@@ -186,7 +186,7 @@ button:disabled{cursor:default;opacity:.45}
  <canvas id="bg"></canvas>
  <div id="lobby" class="scr"></div>
  <div id="battle" class="scr hidden">
-  <div id="hud"><span class="nm" id="hn"></span><div id="bhp"><div class="ghost"></div><div class="fill"></div><div class="sh"></div><div class="nt" style="left:66%"></div><div class="nt" style="left:33%"></div><div class="tx"></div></div><span id="turn"></span></div>
+  <div id="hud"><span class="nm" id="hn"></span><div id="bhp"><div class="ghost"></div><div class="fill"></div><div class="sh"></div><div class="nt" style="left:66%"></div><div class="nt" style="left:33%"></div><div class="tx"></div></div><span id="turn"></span><button class="btn" id="leave" style="padding:4px 10px;font-size:clamp(9px,1.4vh,12px)">🏳 SAIR</button></div>
   <div id="stage">
    <div id="floor"></div>
    <div id="boss"><div class="wrap"><div class="aura"></div><div class="ring"></div><img id="bimg" alt="" draggable="false"><div class="shield" id="shd"></div></div></div>
@@ -328,10 +328,10 @@ function startBattle(m){
  $('#mems').innerHTML=B.party.map(p=>{const pos=P5[p.id];const src=img('b'+p.i)||img('f'+p.i);return `<div class="mem ${p.me?'me':''}" id="m_${p.id}" style="left:${pos[0]}%;top:${pos[1]}%"><div class="vdx"></div><div class="guard"></div><div class="frz">⏳</div><div class="sp"><div class="sh2"></div><img src="${src}" alt="${p.n}" style="animation-delay:${(Math.random()*-2).toFixed(2)}s"></div><div class="tg">${p.e} ${p.tr} <em>${p.me?'':'IA'}</em></div><div class="tg" style="font-weight:600;opacity:.85">${p.n} Nv${p.l}</div><div class="hb"><i></i></div></div>`}).join('');
  B.party.forEach(hpBar);bossBar();ST.b.ph=1;
  $('#boss').className='';$('#vig').classList.remove('on');$('#dim').style.opacity=0;
- setTimeout(()=>{links(false)},60);
+ setTimeout(()=>{if(B)links(false)},60);
  busy=true;setMsg(bb.n+' surge diante do grupo!');
  banner(bb.n,bb.col,Math.min(42,innerWidth/14),2200);snd('roar');shake($('#stage'),10,700);
- setTimeout(()=>{busy=false;renderCtl(B.warn)},2300);
+ setTimeout(()=>{if(!B)return;busy=false;renderCtl(B.warn)},2300);
 }
 function renderCtl(warn){
  const me=B.party.find(p=>p.me),dead=!me.alive||me.hp<=0,fz=me.fz>0;
@@ -349,7 +349,7 @@ function act(a){if(busy||B.over)return;busy=true;document.querySelectorAll('.mv,
 
 /* ---------- batalha: reprodução dos eventos ---------- */
 async function playAtk(e,delay){
- await sleep(delay||0);const p=mem(e.who),el=memEl(e.who),sp=el.querySelector('.sp'),A=ctr(sp),T=bossC(),col=TC[e.mv.t]||'#fff',phys=e.mv.c!=='e';
+ await sleep(delay||0);if(!B)return;const p=mem(e.who),el=memEl(e.who),sp=el.querySelector('.sp'),A=ctr(sp),T=bossC(),col=TC[e.mv.t]||'#fff',phys=e.mv.c!=='e';
  const dx=(T.x-A.x)*(phys?.62:.18),dy=(T.y-A.y)*(phys?.62:.18);
  if(!RM)el.animate([{transform:'translate(-50%,-50%)'},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${phys?1.18:1.1})`,offset:.4},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(${phys?1.18:1.1})`,offset:.58},{transform:'translate(-50%,-50%)'}],{duration:780,easing:'ease-in-out'});
  let hitAt=330;
@@ -363,6 +363,7 @@ async function playAtk(e,delay){
  ST.b.hp=e.hp;ST.b.sh=e.sh;bossBar();
 }
 async function ev(e,evs){
+ if(!B)return 0;
  switch(e.t){
   case 'turn':$('#turn').textContent='TURNO '+e.n;links(false);return 200;
   case 'fz':{const el=memEl(e.who);pop('⏳ CONGELADO',ctr(el.querySelector('.sp')),'#7dd3fc',40);setMsg(mem(e.who).tr+' está congelado no tempo.');return 650}
@@ -413,23 +414,25 @@ async function ev(e,evs){
   default:return 100}
 }
 async function playTurn(evs){
+ const cur=B;
  for(let i=0;i<evs.length;i++){
+  if(B!==cur)return;
   const e=evs[i];
   if(e.t==='atk'){ // ataques juntos, escalonados
    const g=[];while(i<evs.length&&evs[i].t==='atk'){g.push(evs[i]);i++}i--;
    setMsg(g.length>1?'O grupo ataca em conjunto!':mem(g[0].who).tr+' ataca!');
-   await Promise.all(g.map((x,k)=>playAtk(x,k*170)));await sleep(250);continue}
-  const d=await ev(e,evs);if(d)await sleep(d)
+   await Promise.all(g.map((x,k)=>playAtk(x,k*170).catch(()=>{})));await sleep(250);continue}
+  let d=0;try{d=await ev(e,evs)}catch(err){if(B===cur)throw err;return}if(d)await sleep(d)
  }
  document.querySelectorAll('.mem.def').forEach(e=>e.classList.remove('def'));
 }
 async function onTurn(m){
- await playTurn(m.evs);applySnap(m.snap);B.warn=m.warn||B.warn;
+ const cur=B;await playTurn(m.evs);if(B!==cur||!B)return;applySnap(m.snap);B.warn=m.warn||B.warn;
  if(m.over){B.over=m.over;await finish(m)}
  else{busy=false;renderCtl(m.warn)}
 }
 async function finish(m){
- const win=m.over==='win',bb=bd(),T=bossC();$('#boss').classList.remove('charging');$('#vig').classList.remove('on');
+ const cur0=B;if(!B)return;const win=m.over==='win',bb=bd(),T=bossC();$('#boss').classList.remove('charging');$('#vig').classList.remove('on');
  if(win){snd('win');setMsg(bb.n+' foi derrotado!');
   for(let i=0;i<4;i++){flash(.6,300);burst(T,bb.col,20,170,'✨');await sleep(260)}
   const bi=$('#boss img');if(!RM)bi.animate([{transform:'scale(1)',opacity:1,filter:'brightness(1)'},{transform:'scale(1.06)',opacity:1,filter:'brightness(3)',offset:.5},{transform:'scale(.7) translateY(-8%)',opacity:0,filter:'brightness(6)'}],{duration:1500,fill:'forwards',easing:'ease-in'});
@@ -452,6 +455,13 @@ function showResult(m,win){
   $('#hb').onclick=()=>{$('#ov').classList.remove('on');toLobby();post({k:'hatch'});hatchStart()}}
  $('#again').onclick=()=>{$('#ov').classList.remove('on');post({k:'start',pick})};
  $('#out').onclick=()=>{$('#ov').classList.remove('on');toLobby()};
+}
+function askLeave(){
+ if(!B||B.over)return;
+ $('#ov').innerHTML=`<div class="box"><h2 class="l">SAIR DO RAID?</h2><div class="card">Você abandona a luta contra ${bd().n}. O dano causado até agora conta para o ranking, mas não há recompensa.</div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn go" id="stay">CONTINUAR LUTANDO</button><button class="btn" id="quit">SAIR</button></div></div>`;
+ $('#ov').classList.add('on');
+ $('#stay').onclick=()=>$('#ov').classList.remove('on');
+ $('#quit').onclick=()=>{post({k:'leave'});$('#ov').classList.remove('on');busy=false;toLobby()};
 }
 function toLobby(){mode='lobby';B=null;$('#battle').classList.add('hidden');$('#lobby').classList.remove('hidden');renderLobby()}
 
@@ -482,6 +492,7 @@ addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
  else if(m.k==='bsturn'){onTurn(m)}
  else if(m.k==='bshatch'){onHatch(m)}
 });
+$('#leave').onclick=askLeave;
 post({k:'ready'});
 })();
 </script>
