@@ -70,6 +70,8 @@ function R(){
  }
  else if(G.screen==='boss'&&!G.bsfb){h=`<div id=bsph></div>`}
  else if(G.screen==='bag'&&!G.bgfb){h=`<div id=bgph></div>`}
+ else if(G.screen==='safari'&&!G.sffb){h=`<div id=sfph></div>`}
+ else if(G.screen==='safari'){h=`<h1>Zona Safari</h1><p>A tela da Safari não carregou.</p><p><button onclick="G.sffb=0;G.screen='map';R()">Voltar ao mapa</button></p>`}
  else if(G.screen==='bag'){h=`<h1>Mochila</h1><p>A tela da Mochila não carregou.</p><p><button onclick="G.bgfb=0;G.screen='map';R()">Voltar ao mapa</button></p>`}
  else if(G.screen==='boss'){h=`<h1>Boss semanal</h1><p>A tela do Boss não carregou.</p><p><button onclick="G.bsfb=0;G.screen='map';R()">Voltar ao mapa</button></p>`}
  else if(G.screen==='dex'&&!G.xfb){h=`<div id=dxph></div>`}
@@ -144,6 +146,6 @@ function R(){
  }
  if(G.note&&G.screen!=='battle'){h=`<p class=win role=status>${G.note}</p>`+h;G.note=''}
  if(G.screen!=='map')G.cf=0;
- if(!['auth','battle','bye','cfg','hero','tac'].includes(G.screen)||(G.screen==='team'&&!G.efb)||(G.screen==='gyms'&&!G.gfb)||(G.screen==='dex'&&!G.xfb)||(G.screen==='boss'&&!G.bsfb)||(G.screen==='bag'&&!G.bgfb)||(G.screen==='pvp'&&!G.pfb)||(G.screen==='start'&&!G.sfb))h+=`<button class=gear onclick="openCfg()" aria-label="Configurações">⚙️</button>`;
- A.innerHTML=h;if(G.screen==='map')pxDraw();if(G.screen==='auth'&&!G.fb)lgMount();if(G.screen==='hero'&&!G.hfb)hMount();if(G.screen==='start'&&!G.sfb)sMount();else sVis();mnToggle();if(G.screen==='tac'){tbMount();tbSend()}else tbToggle();if(G.screen==='team'&&!G.efb){eqMount();eqSend()}else eqToggle();if(G.screen==='gyms'&&!G.gfb){gyMount();gySend()}else gyToggle();if(G.screen==='dex'&&!G.xfb){dxMount();dxSend()}else dxToggle();if(G.screen==='pvp'&&!G.pfb){pvMount();pvSend()}else pvToggle();if(G.screen==='boss'&&!G.bsfb){bsMount();bsSend()}else bsToggle();if(G.screen==='bag'&&!G.bgfb){bgMount();bgSend()}else bgToggle();lgBarSync();if(G.screen==='battle'&&!G.btfb&&G.battle){btMount();btSend()}else btToggle();if(G.screen==='map'&&!G.mfb)mnMount();hcToggle();
+ if(!['auth','battle','bye','cfg','hero','tac'].includes(G.screen)||(G.screen==='team'&&!G.efb)||(G.screen==='gyms'&&!G.gfb)||(G.screen==='dex'&&!G.xfb)||(G.screen==='boss'&&!G.bsfb)||(G.screen==='bag'&&!G.bgfb)||(G.screen==='safari'&&!G.sffb)||(G.screen==='pvp'&&!G.pfb)||(G.screen==='start'&&!G.sfb))h+=`<button class=gear onclick="openCfg()" aria-label="Configurações">⚙️</button>`;
+ A.innerHTML=h;if(G.screen==='map')pxDraw();if(G.screen==='auth'&&!G.fb)lgMount();if(G.screen==='hero'&&!G.hfb)hMount();if(G.screen==='start'&&!G.sfb)sMount();else sVis();mnToggle();if(G.screen==='tac'){tbMount();tbSend()}else tbToggle();if(G.screen==='team'&&!G.efb){eqMount();eqSend()}else eqToggle();if(G.screen==='gyms'&&!G.gfb){gyMount();gySend()}else gyToggle();if(G.screen==='dex'&&!G.xfb){dxMount();dxSend()}else dxToggle();if(G.screen==='pvp'&&!G.pfb){pvMount();pvSend()}else pvToggle();if(G.screen==='boss'&&!G.bsfb){bsMount();bsSend()}else bsToggle();if(G.screen==='bag'&&!G.bgfb){bgMount();bgSend()}else bgToggle();if(G.screen==='safari'&&!G.sffb){sfMount();sfSend()}else sfToggle();lgBarSync();if(G.screen==='battle'&&!G.btfb&&G.battle){btMount();btSend()}else btToggle();if(G.screen==='map'&&!G.mfb)mnMount();hcToggle();
 }

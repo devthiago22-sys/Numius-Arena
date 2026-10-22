@@ -27,8 +27,9 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
     táticas, **arena de batalha** `btMount/btData/btSend`) e `authCore`.
 12. `boss.js`: **Boss semanal** (raid): chefes `BOSSES`, simulação `bsNew/bsTurn`, recompensas, ovos, ponte `bsMount/bsData/bsSend`.
 13. `legend.js`: **lendários invocáveis** (`LEG`, `lgCast`, `lgEnd`, `tyOf`, barra `lgBarSync`, animação `lgFx`) e ponte da **Mochila** (`bgMount/bgData/bgSend`).
-14. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
-15. `main.js`: `boot()`.
+14. `safari.js`: ponte da **Zona Safari** (`sfMount/sfData/sfSend`, `sfCatch` grava o Numiu do vínculo).
+15. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
+16. `main.js`: `boot()`.
 
 Regras:
 - **Nunca reordene** os scripts nem chame, no nível superior de um arquivo, funções definidas em arquivos
@@ -55,6 +56,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `btf` arena de batalha | `ready`, `bact` (`move`,`swap`,`swapTo`,`cap`,`flee`,`leave`,`end`) | `bimgs`, `bstate` (`seq`,`st`,`evs`) |
 | `bsf` boss semanal | `ready`, `nav`, `start` (`pick`), `turn` (`a`: `{k:'mv',i}` ou `{k:'def'}`), `hatch` | `bsdata`, `bsstart`, `bsturn`, `bshatch` |
 | `bgf` mochila | `ready`, `nav` (map, boss), `unlock` (`id`), `hatch` | `bgdata`, `bgunlock`, `bghatch` |
+| `sff` zona safari | `ready`, `nav`, `catch` (`i`, `l`) | `sfdata`, `sfcaught` |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -133,3 +135,12 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 - Eclipse das Trevas: golpes do lado afetado com −25% por 2 turnos (`hit`). Paradoxo Temporal: o lado afetado não age por
   3 turnos (`eTurn` e `pvpResolve`).
 - Imagens dos lendários fora dos iframes: classes `.lgimg-*` em `style.css` (o build embute `url(../assets/...)` do CSS).
+
+## Zona Safari (`js/safari.js` + `screens/safari.html`)
+- Mapa explorável 64×48 (pixel art desenhada por código, semente fixa) com 4 regiões: Lago Espelhado (linha Hydrake),
+  Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central (qualquer). Encontros no capim alto (13% por passo).
+- O personagem anda com setas/WASD ou o direcional na tela; o sprite do mapa é gerado com as cores do herói (`G.hero`:
+  `g`, `skin`, `hair`); o retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
+- Captura sem bola, o **Laço de Sintonia**: VÍNCULO (0-100) e AGITAÇÃO. Ações: Sintonizar (4 batidas no ritmo da aura:
+  Perfeito/Bom/Fora), Fruta calmante (10 por visita), Observar (revela o temperamento) e Sair. Agitação alta = chance de fuga.
+  Vínculo 100 -> `catch` -> `sfCatch` (equipe máx. 6). Visita: 500 passos. Raridade: estágio 1/2/3 = 72/23/5%.
