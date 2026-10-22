@@ -120,7 +120,8 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 
 ## Lendários invocáveis e Mochila (`js/legend.js` + `screens/bag.html`)
 - Liberados na Mochila gastando `LGC` (60) fragmentos do dragão (`G.frag`) -> `G.leg[id]=1` (salvo como `lg`).
-- Na aba Equipe (`screens/team.html`, painel `#lgw` acrescentado fora do React) o jogador escolhe qual lendário levar:
+- Na aba Equipe (`screens/team.html`, componente `LegSup` = seção "SUPORTE DE PARTIDA", abaixo de EQUIPE ATUAL) o jogador
+  toca num lendário liberado e em "ADICIONAR À EQUIPE":
   `G.legSel` (salvo como `ls`, mensagem `leg` da tela, dados em `eqData().legs`). Só o escolhido (`lgSel()`) aparece na arena.
 - Na arena aparece uma coluna `#lgbar` (DOM do jogo, por cima do iframe `btf`). O jogador invoca **um único lendário por
   partida** (escolhe entre os liberados; os outros ficam bloqueados), como ação livre (não gasta o turno). Partida comum: `lgUse` -> `lgCast` na hora. PvP: a invocação
