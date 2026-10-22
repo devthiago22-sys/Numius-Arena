@@ -137,10 +137,13 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 - Imagens dos lendários fora dos iframes: classes `.lgimg-*` em `style.css` (o build embute `url(../assets/...)` do CSS).
 
 ## Zona Safari (`js/safari.js` + `screens/safari.html`)
-- Mapa explorável 64×48 (pixel art desenhada por código, semente fixa) com 4 regiões: Lago Espelhado (linha Hydrake),
+- Mapa explorável 64×48 (semente fixa). Terreno orgânico pré-desenhado (`buildTerrain`: máscaras borradas por camada,
+  bordas arredondadas) + detalhes desenhados a cada quadro (árvores, capim que balança, flores, partículas por região) com 4 regiões: Lago Espelhado (linha Hydrake),
   Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central (qualquer). Encontros no capim alto (13% por passo).
-- O personagem anda com setas/WASD ou o direcional na tela; o sprite do mapa é gerado com as cores do herói (`G.hero`:
-  `g`, `skin`, `hair`); o retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
+- Encontro: cenário pintado por região (`drawScene`), Numiu animado pelo mesmo motor de sprites vivos do Boss (`Live`),
+  entrada pulando do capim e reações a cada ação. O direcional só aparece em telas de toque.
+- O personagem anda com setas/WASD ou o direcional na tela; o sprite do mapa é a própria arte do herói
+  (`G.hero`: `g`, `skin`, `hair`; costas = cabelo pintado sobre o rosto). O retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
 - Captura sem bola, o **Laço de Sintonia**: VÍNCULO (0-100) e AGITAÇÃO. Ações: Sintonizar (4 batidas no ritmo da aura:
   Perfeito/Bom/Fora), Fruta calmante (10 por visita), Observar (revela o temperamento) e Sair. Agitação alta = chance de fuga.
   Vínculo 100 -> `catch` -> `sfCatch` (equipe máx. 6). Visita: 500 passos. Raridade: estágio 1/2/3 = 72/23/5%.
