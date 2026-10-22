@@ -38,6 +38,10 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   ok(await page.evaluate(() => G.team.every(m => m.hp === m.max)), 'curar equipe restaura a vida');
 
   console.log('Batalha');
+  await page.evaluate(() => { G.screen = 'map'; R(); wild(); }); await page.waitForTimeout(3500);
+  ok(await page.evaluate(() => G.screen === 'battle' && !G.btfb && BT.ready), 'arena de batalha carregou');
+  await page.evaluate(() => turn(0)); await page.waitForTimeout(2200);
+  ok(await page.evaluate(() => G.battle.log.length > 1), 'golpe usado na arena nova');
   await page.evaluate(() => { G.screen = 'map'; R(); tac('Fogo'); }); await page.waitForTimeout(1500);
   await page.evaluate(() => turn(0)); await page.waitForTimeout(2200);
   ok(await page.evaluate(() => G.screen === 'battle' && G.battle.log.length > 0), 'um golpe foi usado na batalha');

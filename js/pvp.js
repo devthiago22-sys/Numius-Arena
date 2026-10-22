@@ -1,12 +1,11 @@
-/* PvP em tempo real: sala, desafios, resolução determinística dos turnos */
 const PV={ok:null,room:null,peers:[],out:null,seen:{},init:0};
 function rngS(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 function hstr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 const myPeer=()=>{const p=PV.peers.find(p=>p.sameTab);return p&&p.peer};
 const peerOf=id=>PV.peers.find(p=>p.peer===id&&!p.sameTab);
 function pvpPres(patch){if(PV.room)PV.room.presence(patch).catch(()=>{})}
-const pvpCompact=()=>G.team.slice(0,6).map(m=>({i:m.i,l:m.l,v:[m.iv.h,m.iv.a],e:[m.ev.h,m.ev.a],mv:m.mv||0}));
-function pvpBuild(c){const m={i:c.i|0,l:Math.max(1,Math.min(100,c.l|0)),xp:0,iv:{h:c.v[0]|0,a:c.v[1]|0},ev:{h:c.e[0]|0,a:c.e[1]|0}};m.mv=(Array.isArray(c.mv)&&c.mv.length>=1&&c.mv.length<=4&&c.mv.every(x=>Number.isInteger(x)&&x>=0&&x<MOVES.length))?c.mv.slice():initMoves(m.i,m.l);m.pp=m.mv.map(k=>MOVES[k].pp);calc(m);m.hp=m.max;return m}
+const pvpCompact=()=>G.team.slice(0,6).map(m=>({i:m.i,l:m.l,v:STK.map(k=>m.iv[k]==null?15:m.iv[k]),e:STK.map(k=>m.ev[k]||0),mv:m.mv||0}));
+function pvpBuild(c){const m={i:c.i|0,l:Math.max(1,Math.min(100,c.l|0)),xp:0,iv:Object.fromEntries(STK.map((k,j)=>[k,Math.max(0,Math.min(31,c.v[j]==null?15:c.v[j]|0))])),ev:Object.fromEntries(STK.map((k,j)=>[k,Math.max(0,Math.min(252,(c.e&&c.e[j])|0))]))};m.mv=(Array.isArray(c.mv)&&c.mv.length>=1&&c.mv.length<=4&&c.mv.every(x=>Number.isInteger(x)&&x>=0&&x<MOVES.length))?c.mv.slice():initMoves(m.i,m.l);m.pp=m.mv.map(k=>MOVES[k].pp);calc(m);m.hp=m.max;return m}
 async function pvpOpen(){
  G.screen='pvp';R();
  if(!PV.init){PV.init=1;
@@ -59,10 +58,10 @@ function pvpResolve(B,actA,actB){
  for(const r of ['a','b'])if(acts[r].t==='f'){B.over=r===B.role?'lose':'win';B.log.push(nm(r)+' desistiu do duelo.');B.foe=B.oq.find(m=>m.hp>0)||B.oq[0];RR=Math.random;return}
  for(const r of ['a','b'])if(acts[r].t==='s'){const t=T(r),m=t[acts[r].i];if(m&&m.hp>0&&m!==ac(r)){t.unshift(t.splice(acts[r].i,1)[0]);B.log.push(`${nm(r)} trocou para ${S[m.i].n}!`)}}
  const A0={a:ac('a'),b:ac('b')};
- const order=['a','b'].filter(r=>acts[r].t==='a'&&A0[r]).sort((x,y)=>(A0[y].a+A0[y].l)-(A0[x].a+A0[x].l)||(x==='a'?-1:1));
+ const order=['a','b'].filter(r=>acts[r].t==='a'&&A0[r]).sort((x,y)=>sx(A0[y],'sp')-sx(A0[x],'sp')||(x==='a'?-1:1));
  for(const r of order){const at=A0[r];if(at.hp<=0)continue;const df=ac(oth(r));if(!df)continue;B.foe=ac(oth(B.role));{let kk=acts[r].k;if(kk>=0&&(!at.mv[kk]||at.pp[kk]<=0))kk=-1;B.log.push(hit(at,df,kk))};if(df.hp<=0)B.log.push(`${S[df.i].n} de ${nm(oth(r))} desmaiou!`)}
  B.foe=ac(oth(B.role))||B.oq[0];
- if(G.team.some(m=>m.hp>0)&&B.oq.some(m=>m.hp>0))regen(B);
+ if(G.team.some(m=>m.hp>0)&&B.oq.some(m=>m.hp>0)){turnFx(B);regen(B)}
  if(!G.team.some(m=>m.hp>0))B.over='lose';else if(!B.oq.some(m=>m.hp>0))B.over='win';
  B.foe=B.oq.find(m=>m.hp>0)||B.oq[0];
  RR=Math.random;

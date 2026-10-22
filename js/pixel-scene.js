@@ -1,4 +1,6 @@
-/* Cenário e treinador em pixel art do menu antigo (reserva) */
+const PX={t:0};
+function pmSel(i){G.sel=i;document.querySelectorAll('.pm').forEach((b,j)=>b.classList.toggle('sel',j===i))}
+if(typeof addEventListener==='function')addEventListener('keydown',e=>{if(G.screen!=='map')return;const L=document.querySelectorAll('.pm');if(!L.length)return;if(e.key==='ArrowDown'){e.preventDefault();pmSel(((G.sel||0)+1)%L.length)}else if(e.key==='ArrowUp'){e.preventDefault();pmSel(((G.sel||0)+L.length-1)%L.length)}else if(e.key==='Enter'){L[G.sel||0].click()}});
 if(typeof addEventListener==='function')addEventListener('resize',()=>{if(G.screen==='map')pxDraw()});
 let PXO=null;
 function shd(h,k){const v=[1,3,5].map(i=>parseInt(h.substr(i,2),16));return'rgb('+v.map(x=>Math.max(0,Math.min(255,Math.round(x*k)))).join(',')+')'}

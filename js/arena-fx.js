@@ -1,26 +1,3 @@
-/* Arena de batalha: cenários, animações de ataque e sons de vitória/derrota */
-async function submitAuth(){
- const id=$('#fid').value.trim().toLowerCase(),pw=$('#fpw').value,em=$('#fem')?$('#fem').value.trim():'',p2=$('#fp2')?$('#fp2').value:'';
- G.f={id,em};const up=G.mode==='up',u=U();
- if(!/^[a-z0-9_]{3,20}$/.test(id))G.err='O ID deve ter de 3 a 20 letras minúsculas, números ou _.';
- else if(up&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em))G.err='Digite um e-mail válido.';
- else if(up&&pw.length<6)G.err='A senha precisa ter pelo menos 6 caracteres.';
- else if(up&&pw!==p2)G.err='As senhas não coincidem.';
- else if(up&&u[id])G.err='Esse ID já está em uso.';
- else if(up&&Object.values(u).some(x=>x.email===em.toLowerCase()))G.err='Esse e-mail já está cadastrado.';
- else if(!up&&!u[id])G.err='ID não encontrado.';
- else{
-  try{
-   if(up){const s=rb();let old=null;try{old=JSON.parse(localStorage.getItem('mon-save'));localStorage.removeItem('mon-save')}catch(e){}u[id]={email:em.toLowerCase(),salt:s,hash:await H(pw,s),data:old};setU(u)}
-   else if(await H(pw,u[id].salt)!==u[id].hash){G.err='Senha incorreta.';return R()}
-   G.err='';G.f=null;ME=id;try{localStorage.setItem('mon-session',id)}catch(e){}enter();return;
-  }catch(e){G.err='Não foi possível concluir. Tente novamente.'}
- }
- R();
-}
-function enter(){const d=U()[ME]&&U()[ME].data;if(d&&d.team&&d.team.length)load();else{G={team:[],badges:[],coins:0,screen:d&&d.hero?'start':'hero',battle:null,hero:d&&d.hero||null};R()}}
-function guest(){ME=null;G={team:[],badges:[],coins:0,screen:'hero',battle:null};R()}
-function logout(){musicOff();ME=null;try{localStorage.removeItem('mon-session')}catch(e){}G={team:[],badges:[],coins:0,screen:'auth',mode:'in',battle:null};R()}
 const TNPC={Fogo:{e:'🧑‍🍳',n:'Treinador Brasa'},Água:{e:'🏄',n:'Treinador Marés'},Planta:{e:'🧑‍🌾',n:'Treinadora Folhas'},Elétrico:{e:'🧑‍🔧',n:'Treinador Faísca'},Pedra:{e:'🧗',n:'Treinador Seixo'},Gelo:{e:'⛷️',n:'Treinadora Flocos'},Psíquico:{e:'🕵️',n:'Treinador Mente'},Voador:{e:'🧑‍✈️',n:'Treinador Brisa'}};
 const GYX=[{e:'👷',bio:'Caverna rochosa'},{e:'🧜‍♀️',bio:'Costa marítima'},{e:'👨‍🎤',bio:'Planície de tempestade'},{e:'🧝‍♀️',bio:'Floresta encantada'},{e:'👸',bio:'Geleira'},{e:'🦸',bio:'Picos nas nuvens'},{e:'🧙‍♀️',bio:'Vale místico'},{e:'🧑‍🚒',bio:'Vulcão'}];
 const ARENA={Fogo:['#3a1209','#c2462b','#6b2a17','🌋','🔥'],Água:['#7cc4ee','#2c78b8','#3b6f8f','🌊','🐚'],Planta:['#bfe6a0','#5aa84a','#3e7a34','🌳','🌸'],Elétrico:['#2b2a45','#e0b92b','#6d6a2e','⛈️','⚡'],Pedra:['#b9a58c','#7b6a55','#5a4c3c','⛰️','🪨'],Gelo:['#d6f1ff','#8fd0f0','#5c9fc2','🧊','❄️'],Psíquico:['#3a1d5c','#8d4fc4','#59318a','🔮','✨'],Voador:['#8fd0ff','#e8f6ff','#9bbcd8','☁️','🌤️']};
@@ -56,7 +33,7 @@ function arena(B,p){
   if(m.hp<=0)an.push(`faintA .7s ${last}s forwards`);
   else an.push(`bob 2.2s ${last+(mine&&evo?1:0)+(mine&&B.over==='win'?2:0)}s ease-in-out infinite`);
   const hv=hh>=0?ev[hh]:null,r=m.hp/m.max,pre=hv?hv.pre:r,bd=hv?T(hh)+.4:0,col=r>.5?'var(--acc)':r>.2?'var(--warn)':'var(--bad)';
-  return `<div class="pl ${mine?'pmy':'pf'} ${mine&&lv?'lvup':''}"><b>${S[m.i].n}</b> <small>Nv ${m.l}</small><div class=bar><i style="width:${100*r}%;background:${col};--from:${100*pre}%;animation:barin .6s ${bd}s both"></i></div><small>${m.hp}/${m.max} PS</small>${mine?'':`<br><small>Fraco: ${wk(m).we.join('')||'—'}</small>`}</div><i class="plat ${mine?'pmy':'pf'}"></i><span class="spr ${mine?'me':'fo'}" style="animation:${an.join(',')}">${mine&&S[m.i].b?S[m.i].b:S[m.i].e}${hv?`<em class="dn ${hv.M>1?'se':hv.M<1?'nv':''}" style="animation-delay:${bd}s">−${hv.dmg}</em>`:''}</span>`;
+  return `<div class="pl ${mine?'pmy':'pf'} ${mine&&lv?'lvup':''}"><b>${S[m.i].n}</b>${AB(m).burn?' <span title="Queimado">🔥</span>':''} <small>Nv ${m.l}</small><div class=bar><i style="width:${100*r}%;background:${col};--from:${100*pre}%;animation:barin .6s ${bd}s both"></i></div><small>${m.hp}/${m.max} PS</small>${mine?'':`<br><small>Fraco: ${wk(m).we.join('')||'—'}</small>`}</div><i class="plat ${mine?'pmy':'pf'}"></i><span class="spr ${mine?'me':'fo'}" style="animation:${an.join(',')}">${mine&&S[m.i].b?S[m.i].b:S[m.i].e}${hv?`<em class="dn ${hv.M>1?'se':hv.M<1?'nv':''}" style="animation-delay:${bd}s">−${hv.dmg}</em>`:''}</span>`;
  };
  let endHTML='';
  if(B.over==='win'||B.over==='lose'){

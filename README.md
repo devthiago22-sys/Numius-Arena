@@ -23,7 +23,7 @@ python3 -m http.server 8000
 
 Os mapas, imagens dos númios e telas são arquivos normais da pasta, sem o limite de 16 MB do claude.ai.
 
-## Estrutura
+## Estrutura (resumo)
 
 ```
 index.html              página única; carrega css/ e js/ nesta ordem

@@ -15,16 +15,18 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
 2. `data.js`: `FAM` (famílias/espécies), `S` (espécies), tipos e tabela de eficácia, `MOVES`, aprendizado
    por nível (`LS`, `initMoves`), `GY` (ginásios).
 3. `state.js`: `G` (estado), `save/load` (conta em `localStorage`), `calc`, `form`, `evo`, `mk`, `moves`.
-4. `battle.js`: `hit` (dano), habilidades passivas, IA (`eTurn`), `turn`, XP, aprendizado, `tac`, `vstart`.
-5. `arena-fx.js`: campo de batalha, animações de golpes e sons de fim de batalha.
-6. `audio.js`: música (WebAudio), ponte do Centro de Cura, volume.
-7. `pvp.js`: PvP em tempo real.
-8. `screens-core.js`: `dec`, `iw` (iframe pré-carregado), telas Starter e Hero.
-9. `pixel-scene.js`: cenário pixel art do menu antigo (reserva).
-10. `screens-bridge.js`: pontes com as telas em iframe (login, menu, equipe, ginásios, mostruário, PvP,
-    táticas) e `authCore`.
-11. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
-12. `main.js`: `boot()`.
+4. `battle.js`: `hit` (dano, emite eventos de animação com `evp`), habilidades passivas, IA (`eTurn`), `turn`, XP,
+   aprendizado, `tac`, `vstart`, atributos (`calc`, `sx`).
+5. `auth.js`: `submitAuth`, `enter`, `guest`, `logout`.
+6. `arena-fx.js`: arena antiga em HTML (reserva), `sfx`.
+7. `audio.js`: música (WebAudio), ponte do Centro de Cura, volume.
+8. `pvp.js`: PvP em tempo real.
+9. `screens-core.js`: `dec`, `iw` (iframe pré-carregado), telas Starter e Hero.
+10. `pixel-scene.js`: cenário pixel art do menu antigo (reserva).
+11. `screens-bridge.js`: pontes com as telas em iframe (login, menu, equipe, ginásios, mostruário, PvP,
+    táticas, **arena de batalha** `btMount/btData/btSend`) e `authCore`.
+12. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
+13. `main.js`: `boot()`.
 
 Regras:
 - **Nunca reordene** os scripts nem chame, no nível superior de um arquivo, funções definidas em arquivos
@@ -34,7 +36,7 @@ Regras:
 - Todo estado vive em `G`. Mudou algo visível? Chame `R()`.
 
 ## Telas em iframe (`screens/*.html`)
-Login, hero, starter, menu, tactical, heal, team, gyms, dex e pvp são páginas React já compiladas (minificadas),
+Login, hero, starter, menu, tactical, heal, team, gyms, dex, pvp e battle são páginas React já compiladas (minificadas),
 abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com objetos `{numius:1, k:'...'}`:
 
 | Iframe | O jogo escuta (k) | O jogo envia (k) |
@@ -48,6 +50,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `eqf` equipe | `ready`, `mv`, `nav`, `cfg` | `team` |
 | `gyf` ginásios | `ready`, `gym`, `nav` | `gyms` |
 | `dxf` mostruário | `ready`, `nav` | `dex` |
+| `btf` arena de batalha | `ready`, `bact` (`move`,`swap`,`swapTo`,`cap`,`flee`,`leave`,`end`) | `bimgs`, `bstate` (`seq`,`st`,`evs`) |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -62,7 +65,7 @@ Pontos importantes:
   para mudanças grandes de layout, peça a tela nova pronta e substitua o arquivo.
 
 ## Dados e salvamento
-- Espécies: `S[i]` (índice = posição). Famílias em `FAM`; hoje existem só os 3 iniciais.
+- Espécies: `S[i]` (índice = posição). Famílias em `FAM`: 3 linhas evolutivas (Hydrake, Blazleo, Byron), 9 formas. Atributos reais com IV/EV em `calc`.
 - Conta e progresso: `localStorage` (`mon-users`, `mon-session`), senha com PBKDF2. Formato salvo em
   `save()` (campo `v`). Ao mudar o formato, aumente `v` e trate a migração em `load()` (hoje, versão
   diferente zera o progresso e mostra um aviso).
@@ -84,3 +87,13 @@ Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 
 - Respeitar `prefers-reduced-motion` em animações novas.
 - Ao criar uma tela nova: adicione o HTML em `screens/`, o nome em `SCREEN_NAMES` (`loader.js`), a ponte
   em `screens-bridge.js`, e uma verificação em `tests/smoke.js`.
+
+## Arena de batalha (`screens/battle.html`)
+O jogo não desenha a batalha: `hit()`, `applyStatus`, `turnFx` etc. empilham eventos (`evp`: `move`, `buff`, `status`,
+`dot`, `tsunami`, `recoil`, `shield`, `faint`, `send`, `evolve`, `lvup`, `cap`) em `B.ev`; `btSend()` envia o estado
+com esses eventos e a arena toca as animações (uma por golpe, aura para buffs, fogo/tom laranja para queimadura).
+Se a arena não responder `ready` em 12 s, `G.btfb` ativa a batalha antiga em HTML.
+
+## Fluxo de trabalho
+Edite os arquivos em `js/`, `css/`, `screens/`, rode o teste, gere o arquivo único e publique-o no claude.ai.
+Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.

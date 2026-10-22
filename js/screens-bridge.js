@@ -1,4 +1,3 @@
-/* Pontes com as telas em iframe: login, menu, equipe, ginásios, mostruário, PvP, táticas e conta */
 function lgMount(){const f=$('#lgf');if(!f||!f.dataset||f.dataset.m)return;f.dataset.m=1;LG.ready=false;f.srcdoc=dec(LG);clearTimeout(LG.t);LG.t=setTimeout(()=>{if(!LG.ready&&G.screen==='auth'){G.fb=1;G.tp=2;G.mode='in';R()}},6000)}
 function lgErr(m){const f=$('#lgf');if(f&&f.contentWindow)f.contentWindow.postMessage({numius:1,k:'err',msg:m},'*')}
 if(typeof addEventListener==='function')addEventListener('message',e=>{const f=$('#lgf');if(!f||!f.contentWindow||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;if(d.k==='ready')LG.ready=true;else if(d.k==='login')authCore(false,d.id,d.pw);else if(d.k==='signup')authCore(true,d.id,d.pw,d.em,d.p2);else if(d.k==='guest')guest()});
@@ -24,14 +23,14 @@ function eqData(){
  const team=G.team.map((m,i)=>{
   m.uid=m.uid||Math.random().toString(36).slice(2,9);
   const s=S[m.i],fr=[],rs=[];
-  TY.forEach(t=>{const e=effv(t,m);if(e>1)fr.push({icon:TE[t],label:t+(e>2?' ×4':'')});else if(e<1)rs.push({icon:TE[t],label:t})});
-  if(!EQ.sent[s.fam]){const u=spUrl(s.fam);if(u){imgs[s.fam]=u;EQ.sent[s.fam]=1}}
+  TYX.forEach(t=>{const e=effv(t,m);if(e>1)fr.push({icon:TE[t],label:t+(e>2?' ×4':'')});else if(e<1)rs.push({icon:TE[t],label:t})});
+  if(!EQ.sent[m.i]){const u=spUrl(m.i);if(u){imgs[m.i]=u;EQ.sent[m.i]=1}}
   const nx=LS(s.fam).find(a=>a[0]>m.l);
-  return{id:m.uid,fam:s.fam,px:0,nome:s.n,nivel:m.l,tipos:[s.t,s.t2].filter(Boolean),tipoIcons:[s.t,s.t2].filter(Boolean).map(ic),tipoColor:TCOL[s.t]||'#2a9d5a',
+  return{id:m.uid,fam:m.i,px:0,nome:s.n,nivel:m.l,tipos:[s.t,s.t2].filter(Boolean),tipoIcons:[s.t,s.t2].filter(Boolean).map(ic),tipoColor:TCOL[s.t]||'#2a9d5a',
    hp:m.hp,hpMax:m.max,fraco:fr,resiste:rs,habilidade:PA(m).n,habilidadeDesc:pdesc(m),
-   evolucao:s.x!==undefined?'Nv '+(s.s===1?16:36)+' → '+S[s.x].n:'forma final',first:i===act,
-   moves:moves(m).map((x,j)=>({id:'k'+j+'_'+x.n,nome:x.n,tipo:x.t,icon:ic(x.t),poder:x.p,cc:m.pp?m.pp[j]:x.pp,ccMax:x.pp,stab:x.t===s.t,
-    desc:x.x==='dr'?'Drena PS: recupera 40% do dano causado.':x.x==='cr'?'Sempre causa dano crítico (+50%).':'Golpe do tipo '+x.t+(x.t===s.t?' — recebe bônus de tipo (STAB).':'.')})),
+   evolucao:s.x!==undefined?'Nv '+(s.s===1?16:36)+' → '+S[s.x].n:'forma final',attrs:[['PS',m.max],['ATQ',m.a],['ATQ.M',m.sa],['DEF',m.d],['DEF.M',m.sd],['VEL',m.sp]],first:i===act,
+   moves:moves(m).map((x,j)=>({id:'k'+j+'_'+x.n,nome:x.n,tipo:x.t,icon:ic(x.t),poder:x.p,cc:m.pp?m.pp[j]:x.pp,ccMax:x.pp,stab:x.t===s.t||x.t===s.t2,
+    desc:x.x==='def'?'O dano é calculado com a Defesa de quem usa, em vez do Ataque.':x.x==='dr'?'Drena PS: recupera 40% do dano causado.':x.x==='cr'?'Sempre causa dano crítico (+50%).':'Golpe do tipo '+x.t+(x.t===s.t?' — recebe bônus de tipo (STAB).':'.')})),
    proximoGolpe:nx?{nome:MOVES[nx[1]].n,nivel:nx[0]}:{nome:'',nivel:m.l,fim:1}}});
  return{numius:1,k:'team',team,imgs}
 }
@@ -70,14 +69,14 @@ function dxMount(){
 function dxData(){
  const d=G.dex||[],imgs={};
  const list=DEX.map((i,k)=>{
-  const s=S[i],o=d.includes(i),f=s.fam;
+  const s=S[i],o=d.includes(i),f=i;
   if(!DXS.sent[f]){const u=spUrl(f);if(u){imgs[f]=u;DXS.sent[f]=1}}
   const e={id:k+1,fam:f,px:0,family:s.ps?'Única':'F'+s.s,discovered:o,name:o?s.n:'???',realName:o?s.n:'???',types:[],cells:[],desc:''};
   if(o){
-   const {w,r}=wk({i}),evo=s.x!==undefined?'Nv '+(s.s===1?16:36)+' → '+S[s.x].n:'Forma final',pd=pdesc({i}),ab=FAM[f][7][0];
+   const {w,r}=wk({i}),evo=s.x!==undefined?'Nv '+(s.s===1?16:36)+' → '+S[s.x].n:'Forma final',pd=pdesc({i}),ab=S[i].ab[0];
    e.types=[s.t,s.t2].filter(Boolean);
    e.desc='Habilidade '+ab+': '+pd+'.';
-   e.cells=[['Tipo',e.types.join(' · ')],['Forma',s.ps?'Única':'Forma '+s.s],['Evolução',evo],['Habilidade',ab],['PS base',String(s.h)],['Ataque base',String(s.a)],['Fraco contra',w.join(' · ')||'—',1],['Resiste a',r.join(' · ')||'—',1],['Golpes',LS(f).map(([lv,m])=>(lv===1?'Inicial':'Nv '+lv)+' '+MOVES[m].n).join(' · '),1]];
+   e.cells=[['Tipo',e.types.join(' · ')],['Forma',s.ps?'Única':'Forma '+s.s],['Evolução',evo],['Habilidade',ab],['PS base',String(s.h)],['Ataque',String(s.a)],['Atq. Mágico',String(s.sa)],['Defesa',String(s.d)],['Def. Mágica',String(s.sd)],['Velocidade',String(s.sp)],['Fraco contra',w.join(' · ')||'—',1],['Resiste a',r.join(' · ')||'—',1],['Golpes',LS(s.fam).map(([lv,m])=>(lv===1?'Inicial':'Nv '+lv)+' '+MOVES[m].n).join(' · '),1]];
   }
   return e});
  return{numius:1,k:'dex',list,imgs}
@@ -120,6 +119,47 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  else if(d.k==='cancel')pvpCancel()
  else if(d.k==='search')pvpSearch(!!d.on)
  else if(d.k==='room')pvpRoom(d.op,d.code)});
+const BT={n:'battle',ready:false,seq:0,sent:false};
+function btMount(){
+ if(typeof document.createElement!=='function')return;
+ let f=document.getElementById('btf');
+ if(!f){f=document.createElement('iframe');f.id='btf';f.className='lgf';f.title='Batalha';f.style.zIndex=50;document.body.appendChild(f);f.srcdoc=dec(BT)}
+ if(!BT.ready&&!BT.tt){BT.tt=1;BT.t=setTimeout(()=>{if(!BT.ready&&G.screen==='battle'){G.btfb=1;R()}},12000)}
+ btToggle();
+}
+function btToggle(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('btf');if(f)f.style.display=(G.screen==='battle'&&!G.btfb)?'block':'none'}
+function btCu(c){BT.c=BT.c||{};if(BT.c[c]!==undefined)return BT.c[c];const e=document.createElement('i');e.className=c;e.style.cssText='position:absolute;width:1px;height:1px;opacity:0';document.body.appendChild(e);const v=getComputedStyle(e).backgroundImage;e.remove();const m=/url\(["']?(.*?)["']?\)$/.exec(v);return BT.c[c]=m?m[1]:''}
+function btImgs(){const o={};S.forEach((s,i)=>{o['f'+i]=btCu('f'+i);if(s.b)o['b'+i]=btCu('b'+i)});return o}
+function btData(){
+ const B=G.battle,p=act()||G.team[0],mv=moves(p);
+ const title=B.vt?'Batalha Virtuosa — Fase '+B.vt:B.pvp?'PvP: '+B.oname:B.tt?'Batalha tática: '+B.tt:B.wild?'Batalha selvagem':GY[B.gym].c;
+ let overText='';
+ if(B.over)overText=B.pvp?(B.over==='win'?'Você venceu o duelo!':'Você perdeu o duelo.'):({win:'Você venceu a batalha!',lose:'Você perdeu… voltando ao Centro de cura.',fled:'Você escapou com segurança.',caught:'Um novo monstrinho entrou na sua equipe!',quit:'A desistência foi registrada.'})[B.over]||'';
+ return{title,wild:!!B.wild,over:B.over||null,overText,
+  moves:mv.map((m,k)=>({n:m.n,t:m.t,c:m.c||'f',p:m.p,pp:p.pp?p.pp[k]:m.pp,max:m.pp,M:effv(m.t,B.foe)})),
+  struggle:!!(p.pp&&mv.every((m,k)=>p.pp[k]<=0)),pick:!!B.pick,wait:!!B.wait,
+  team:G.team.map((m,i)=>({i,n:S[m.i].n,l:m.l,hp:m.hp,max:m.max,fa:m.hp<=0,act:m===p})),
+  log:B.log.slice(),p:btSnap(p),e:btSnap(B.foe)}
+}
+function btSend(){
+ if(typeof document.getElementById!=='function')return;const f=document.getElementById('btf'),B=G.battle;
+ if(!BT.ready||!f||!f.contentWindow||!B)return;
+ const evs=(B.ev||[]).splice(0);
+ f.contentWindow.postMessage({numius:1,k:'bstate',seq:++BT.seq,st:btData(),evs},'*');
+ if((B.over==='win'||B.over==='lose')&&!B.sfx){B.sfx=1;try{sfx(B.over==='win',Math.min(5,evs.length*.9+.4))}catch(e){}}
+}
+if(typeof addEventListener==='function')addEventListener('message',e=>{const f=document.getElementById('btf');if(!f||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;
+ if(d.k==='ready'){BT.ready=true;f.contentWindow.postMessage({numius:1,k:'bimgs',imgs:btImgs()},'*');btSend()}
+ else if(d.k==='bact'&&G.screen==='battle'&&G.battle){const B=G.battle;
+  if(d.a==='end'){if(B.over)end()}
+  else if(B.over)return;
+  else if(d.a==='move'){if(!B.wait&&!B.pick)turn(d.i|0)}
+  else if(d.a==='swap')swap()
+  else if(d.a==='swapTo')swapTo(d.i|0)
+  else if(d.a==='cancelPick'){B.pick=false;R()}
+  else if(d.a==='cap'&&B.wild)cap()
+  else if(d.a==='flee'&&B.wild)flee()
+  else if(d.a==='leave')leave()}});
 const TB={n:'tactical'};
 function tbMount(){
  if(typeof document.createElement!=='function')return;
@@ -138,8 +178,8 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  else if(d.k==='tac'&&G.screen==='tac'){const ty=TBMAP[d.tipo];if(!ty||!G.team.length)return;if(!G.team.some(m=>m.hp>0)){goHeal();return}tac(ty)}});
 function tbToggle(){if(typeof document.getElementById!=='function')return;const on=G.screen==='tac',f=document.getElementById('tbf'),x=document.getElementById('tbx');if(f)f.style.display=on?'block':'none';if(x)x.style.display=on?'block':'none'}
 function mnToggle(){if(typeof document.getElementById!=='function')return;ifv(document.getElementById('mnf'),G.screen==='map'&&!G.mfb,MN)}
-function mnData(){const nb=G.badges.length,dx=(G.dex||[]).length;return{name:G.hero?String(G.hero.name):(ME||'Convidado'),coins:G.coins||0,guest:!ME,sub:ME?'conectado':'sem salvar',bl:['Pd','Ag','El','Pl','Ge','Vo','Ps','Fo'],bc:GY.map(g=>ARENA[g.ty][1]),be:GY.map((g,i)=>G.badges.includes(i)),bn:GY.map(g=>g.n),cnt:{gyms:nb+'/8',tac:'8',team:G.team.length+'/6',numios:''+dx,dex:dx+'/'+DEX.length,train:''+(G.vc||0)}}}
-const NAV={gyms:()=>{G.screen='gyms';R()},tac:()=>{G.screen='tac';R()},team:()=>{G.screen='team';R()},numios:()=>{G.screen='numios';R()},dex:()=>{G.screen='dex';R()},pvp:()=>pvpOpen(),train:()=>{G.screen='train';R()},heal:()=>goHeal(),cfg:()=>openCfg(),exit:()=>quitGame()};
+function mnData(){const nb=G.badges.length,dx=(G.dex||[]).length,tw=Object.values(G.tac||{}).reduce((a,t)=>a+Math.min(3,(t&&t.w)|0),0);return{lv:Math.max(1,...G.team.map(m=>m.l)),isl:{vale:Math.min(100,(G.vbest||0)*10),cristal:Math.round(nb/8*100),canion:Math.round(tw/24*100),porto:Math.min(100,Math.round((pv0().lp|0)/30))},name:G.hero?String(G.hero.name):(ME||'Convidado'),coins:G.coins||0,guest:!ME,sub:ME?'conectado':'sem salvar',bl:['Pd','Ag','El','Pl','Ge','Vo','Ps','Fo'],bc:GY.map(g=>ARENA[g.ty][1]),be:GY.map((g,i)=>G.badges.includes(i)),bn:GY.map(g=>g.n),cnt:{gyms:nb+'/8',tac:'8',team:G.team.length+'/6',numios:''+dx,dex:dx+'/'+DEX.length,train:''+(G.vc||0)}}}
+const NAV={vir:()=>{G.screen='vir';R()},gyms:()=>{G.screen='gyms';R()},tac:()=>{G.screen='tac';R()},team:()=>{G.screen='team';R()},numios:()=>{G.screen='numios';R()},dex:()=>{G.screen='dex';R()},pvp:()=>pvpOpen(),train:()=>{G.screen='train';R()},heal:()=>goHeal(),cfg:()=>openCfg(),exit:()=>quitGame()};
 if(typeof addEventListener==='function')addEventListener('message',e=>{const f=$('#mnf');if(!f||!f.contentWindow||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;if(d.k==='ready'){MN.ready=true;f.contentWindow.postMessage({numius:1,k:'data',d:mnData()},'*');mnToggle()}else if(d.k==='nav'&&NAV[d.to])NAV[d.to]()});
 async function authCore(up,id,pw,em,p2){
  id=String(id||'').trim().toLowerCase();em=String(em||'').trim();pw=String(pw||'');p2=String(p2||'');const u=U();let err='';

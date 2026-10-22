@@ -28,7 +28,7 @@ head = index[:index.index('<link rel="stylesheet"')]
 head = head.replace('<head>', '<head>', 1)
 
 # CSS: junta e troca os caminhos dos sprites por data URIs
-css = read('css', 'style.css') + '\n' + read('css', 'sprites.css')
+css = read('css', 'sprites.css') + '\n' + read('css', 'style.css')
 css = re.sub(r'url\(\.\./(assets/[^)]+)\)', lambda m: 'url(%s)' % data_uri(os.path.join(ROOT, m.group(1))), css)
 
 # Telas: troca assets/screens/... por data URIs
