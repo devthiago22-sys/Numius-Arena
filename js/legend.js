@@ -1,6 +1,6 @@
 /* Lendários invocáveis + Mochila.
    - Liberados com LGC fragmentos do Boss semanal (G.frag) -> G.leg[id]=1.
-   - Em qualquer partida (inclusive PvP) cada lendário liberado pode ser invocado UMA vez: ação livre (não gasta o turno).
+   - Em qualquer partida (inclusive PvP) o jogador invoca UM único lendário (escolhe entre os liberados): ação livre.
    - Estado da partida em G.battle.lg: u (usados por lado), lux (campo de Luz), ecl (Eclipse), frz (Paradoxo).
      Lados: 'p' = sua equipe (G.team), 'e' = oponente. Tudo determinístico (o PvP calcula nos dois aparelhos). */
 const LGC=60;
@@ -20,6 +20,7 @@ const lgS=B=>B.lg||(B.lg={u:{p:{},e:{}},lux:{},luxSeen:{},ecl:{},frz:{}});
 /* tipos considerando o campo de Luz (usado por effv) */
 function tyOf(m){const B=typeof G!=='undefined'&&G&&G.battle;return B&&B.lg&&B.lg.lux[teamSide(m)]?['Luz']:S[m.i].tt}
 const lgAct=(B,s)=>s==='p'?act():B.pvp?B.oq.find(m=>m.hp>0):B.foe;
+const lgDone=(B,s)=>!!(B&&B.lg&&Object.keys(B.lg.u[s]).length);
 const lgFrz=(B,s)=>!!(B&&B.lg&&B.lg.frz[s]>0);
 const lgEcl=(B,m)=>!!(B&&B.lg&&B.lg.ecl[teamSide(m)]>0);
 const lgWho=(B,s)=>s==='p'?'Você':B.pvp?B.oname:'O oponente';
@@ -47,7 +48,7 @@ function lgEnd(B){
 }
 /* clique no botão: na partida comum invoca na hora; no PvP marca para o turno (vai junto com a jogada) */
 function lgUse(id){
- const B=G.battle;if(!B||B.over||!lgHas(id)||B.pick||B.wait||lgOv.on)return;const L=lgS(B);if(L.u.p[id])return;
+ const B=G.battle;if(!B||B.over||!lgHas(id)||B.pick||B.wait||lgOv.on)return;const L=lgS(B);if(lgDone(B,'p'))return;
  if(B.pvp){B.lgP=B.lgP===id?null:id;B.log=[B.lgP?`${LEG[id].ic} ${LEG[id].n} será invocado junto com a sua próxima jogada.`:'Invocação cancelada.'];R();return}
  B.log=[];lgCast('p',id,B);save();lgBarSync();
  const RMx=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;setTimeout(()=>{if(G.battle===B)R()},RMx?1400:2700);
@@ -58,12 +59,13 @@ function lgBarSync(){
  if(!show){if(el)el.style.display='none';return}
  if(!el){el=document.createElement('div');el.id='lgbar';el.setAttribute('role','toolbar');el.setAttribute('aria-label','Lendários');document.body.appendChild(el)}
  el.style.display='flex';const L=lgS(B),f=G.frag||{};
- const btn=Object.keys(LEG).map(id=>{const X=LEG[id],has=lgHas(id),used=!!L.u.p[id],pend=B.lgP===id,dis=!has||used||B.pick||B.wait;
-  const st=!has?`🔒 ${Math.min(f[id]|0,LGC)}/${LGC}`:used?'USADO':pend?'NESTE TURNO':'PRONTO';
-  return `<button class="lgb lgimg-${id} ${has?'':'lk'} ${used?'us':''} ${pend?'pd':''}" style="--lc:${X.col}" ${dis?'disabled':''} onclick="lgUse('${id}')" aria-label="${has?(used?X.n+' já foi usado nesta partida':'Invocar '+X.n+': '+X.ab):X.n+' bloqueado: '+Math.min(f[id]|0,LGC)+' de '+LGC+' fragmentos'}" title="${X.n} · ${X.ab}\n${X.d}"><span class=lgt>${X.ic}</span><small>${st}</small></button>`}).join('');
+ const done=lgDone(B,'p');
+ const btn=Object.keys(LEG).map(id=>{const X=LEG[id],has=lgHas(id),me=!!L.u.p[id],used=done,pend=B.lgP===id,dis=!has||used||B.pick||B.wait;
+  const st=!has?`🔒 ${Math.min(f[id]|0,LGC)}/${LGC}`:me?'USADO':used?'BLOQUEADO':pend?'NESTE TURNO':'PRONTO';
+  return `<button class="lgb lgimg-${id} ${has?'':'lk'} ${used?'us':''} ${pend?'pd':''}" style="--lc:${X.col}" ${dis?'disabled':''} onclick="lgUse('${id}')" aria-label="${has?(used?(me?X.n+' já foi usado nesta partida':'Você já invocou um lendário nesta partida'):'Invocar '+X.n+': '+X.ab):X.n+' bloqueado: '+Math.min(f[id]|0,LGC)+' de '+LGC+' fragmentos'}" title="${X.n} · ${X.ab}\n${X.d}"><span class=lgt>${X.ic}</span><small>${st}</small></button>`}).join('');
  const ch=[];const nm=s=>s==='p'?'Você':'Oponente';
  for(const s of ['p','e']){if(L.lux[s])ch.push(`<span style="--lc:#fde68a">✨ ${nm(s)}: campo de Luz</span>`);if(L.ecl[s]>0)ch.push(`<span style="--lc:#a855f7">🌑 ${nm(s)}: eclipse ${L.ecl[s]}t</span>`);if(L.frz[s]>0)ch.push(`<span style="--lc:#7dd3fc">⏳ ${nm(s)}: paralisado ${L.frz[s]}t</span>`)}
- el.innerHTML=`<div class=lgh>LENDÁRIOS</div>${btn}${ch.length?`<div class=lgc>${ch.join('')}</div>`:''}`;
+ el.innerHTML=`<div class=lgh>LENDÁRIOS</div>${btn}${done?'<div class=lgc><span style="--lc:#9ca3af">1 lendário por partida</span></div>':''}${ch.length?`<div class=lgc>${ch.join('')}</div>`:''}`;
 }
 /* ---------- animação de invocação (sobre a arena) ---------- */
 const lgOv={on:0,q:[]};

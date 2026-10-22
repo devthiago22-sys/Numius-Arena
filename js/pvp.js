@@ -56,7 +56,7 @@ function pvpResolve(B,actA,actB){
  RR=rngS(hstr(B.bid+':'+B.turn));B.log=[];
  const acts={a:actA,b:actB},oth=r=>r==='a'?'b':'a',T=r=>r===B.role?G.team:B.oq,ac=r=>T(r).find(m=>m.hp>0),nm=r=>r===B.role?'Você':B.oname;
  for(const r of ['a','b'])if(acts[r].t==='f'){B.over=r===B.role?'lose':'win';B.log.push(nm(r)+' desistiu do duelo.');B.foe=B.oq.find(m=>m.hp>0)||B.oq[0];RR=Math.random;return}
- {const L=lgS(B);B.foe=ac(oth(B.role))||B.foe;for(const r of ['a','b']){const id=acts[r].lg,sd=r===B.role?'p':'e';if(id&&!L.u[sd][id])lgCast(sd,id,B)}}
+ {const L=lgS(B);B.foe=ac(oth(B.role))||B.foe;for(const r of ['a','b']){const id=acts[r].lg,sd=r===B.role?'p':'e';if(id&&!lgDone(B,sd))lgCast(sd,id,B)}}
  const fz=r=>lgFrz(B,r===B.role?'p':'e');
  for(const r of ['a','b'])if(fz(r)&&acts[r].t!=='f'){B.log.push(`⏳ ${nm(r)} está paralisado no tempo e não pode agir.`);acts[r]={t:'x'}}
  for(const r of ['a','b'])if(acts[r].t==='s'){const t=T(r),m=t[acts[r].i];if(m&&m.hp>0&&m!==ac(r)){t.unshift(t.splice(acts[r].i,1)[0]);B.log.push(`${nm(r)} trocou para ${S[m.i].n}!`)}}
