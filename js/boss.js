@@ -4,13 +4,13 @@
    Equilíbrio: ajuste as constantes BSX, BSR e EGG. */
 
 const BOSSES=[
- {id:'aurelion',n:'AURELION',tt:'Dragão Cristal do Alvorecer',t:'Dragão',t2:'Pedra',col:'#ffd54a',col2:'#fff3b0',img:'assets/screens/boss-aurelion.webp',
+ {id:'aurelion',n:'AURELION',tt:'Dragão Cristal do Alvorecer',t:'Dragão',t2:'Pedra',col:'#ffd54a',col2:'#fff3b0',
   mv:{s:{n:'Lança de Cristal',t:'Pedra',p:95,c:'f'},a:{n:'Chuva de Estilhaços',t:'Dragão',p:65,c:'e'},u:{n:'Eclipse Dourado',t:'Dragão',p:140,c:'e'}},
   ph:['Casca de Cristal','Coroa Solar'],fx:'shield',fxd:'Cria um escudo de cristal que absorve dano'},
- {id:'nyxar',n:'NYXAR',tt:'Dragão do Vazio Estelar',t:'Dragão',t2:'Psíquico',col:'#a855f7',col2:'#e9d5ff',img:'assets/screens/boss-nyxar.webp',
+ {id:'nyxar',n:'NYXAR',tt:'Dragão do Vazio Estelar',t:'Dragão',t2:'Psíquico',col:'#a855f7',col2:'#e9d5ff',
   mv:{s:{n:'Garra do Vazio',t:'Psíquico',p:95,c:'f'},a:{n:'Maré Galáctica',t:'Psíquico',p:65,c:'e'},u:{n:'Singularidade',t:'Dragão',p:140,c:'e'}},
   ph:['Fome do Abismo','Horizonte de Eventos'],fx:'void',fxd:'Marca dois treinadores: perdem vida por turno e curam o dragão'},
- {id:'chronos',n:'CHRONOS',tt:'Dragão Guardião do Tempo',t:'Psíquico',t2:'Elétrico',col:'#7dd3fc',col2:'#e0f2fe',img:'assets/screens/boss-chronos.webp',
+ {id:'chronos',n:'CHRONOS',tt:'Dragão Guardião do Tempo',t:'Psíquico',t2:'Elétrico',col:'#7dd3fc',col2:'#e0f2fe',
   mv:{s:{n:'Ampulheta Quebrada',t:'Elétrico',p:95,c:'f'},a:{n:'Pêndulo Eterno',t:'Psíquico',p:65,c:'e'},u:{n:'Colapso Temporal',t:'Psíquico',p:140,c:'e'}},
   ph:['Tempo Acelerado','Fim dos Ponteiros'],fx:'freeze',fxd:'Congela dois treinadores no tempo: perdem o turno'}
 ];
@@ -178,7 +178,7 @@ function bsData(){
  const b=bsd(),nw=bsNow(),d=Math.floor(nw.left/864e5),h=Math.floor(nw.left%864e5/36e5),mn=Math.floor(nw.left%36e5/6e4);
  const bd=BOSSES[nw.i];
  return{numius:1,k:'bsdata',w:nw.w,bi:nw.i,left:d+'d '+h+'h '+mn+'min',
-  bosses:BOSSES.map(x=>({id:x.id,n:x.n,tt:x.tt,t:x.t,t2:x.t2,col:x.col,col2:x.col2,img:x.img,mv:x.mv,fxd:x.fxd,ph:x.ph})),
+  bosses:BOSSES.map(x=>({id:x.id,n:x.n,tt:x.tt,t:x.t,t2:x.t2,col:x.col,col2:x.col2,mv:x.mv,fxd:x.fxd,ph:x.ph})),
   frag:G.frag,eggs:G.eggs||0,coins:G.coins||0,claimed:b.claimed,best:b.best,bt:b.bt,win:b.win,tries:b.tries,
   rew:BSR,top:BSTOP,egg:Object.values(EGG).map(e=>({k:e.k,w:e.w,c:e.c})),
   team:G.team.map((m,k)=>({k,i:m.i,n:S[m.i].n,l:m.l,t:S[m.i].t,t2:S[m.i].t2||null,mv:moves(m).slice(0,4).map(x=>x.n)})),

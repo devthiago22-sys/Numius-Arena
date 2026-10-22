@@ -205,6 +205,7 @@ const $=s=>document.querySelector(s),post=o=>{try{parent.postMessage(Object.assi
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const TC={Fogo:'#ff7a3d',Água:'#38bdf8',Planta:'#4ade80',Elétrico:'#facc15',Pedra:'#c9a66b',Gelo:'#7dd3fc',Psíquico:'#e879f9',Voador:'#93c5fd',Dragão:'#818cf8',Normal:'#d1d5db'};
 const TE={Fogo:'🔥',Água:'💧',Planta:'🍃',Elétrico:'⚡',Pedra:'🪨',Gelo:'❄️',Psíquico:'🔮',Voador:'🪶',Dragão:'🐉',Normal:'◎'};
+const BIMG={aurelion:'assets/screens/boss-aurelion.webp',nyxar:'assets/screens/boss-nyxar.webp',chronos:'assets/screens/boss-chronos.webp'};
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let D=null,IM={},tab='raid',pick=0,B=null,ST=null,busy=false,mode='lobby',finalRes=null;
 const img=k=>IM[k]||'';
@@ -267,7 +268,7 @@ function renderLobby(){
   <div class="sec">TOP 3 DO RANKING MUNDIAL</div>
   <div class="rw"><div class="rwi"><i class="frag" style="--fc:${b.col}"></i> ${D.top.frag} fragmentos</div><div class="rwi">🪙 ${D.top.coins} moedas</div><div class="rwi">🥚 ${D.top.egg} ovos</div></div>
   <div class="sec">SEUS FRAGMENTOS</div>
-  <div class="fgrid">${D.bosses.map(x=>`<div class="fc ${x.id===b.id?'cur':''}" style="--fc:${x.col}"><img src="${x.img}" alt=""><b>${x.n}</b>${D.frag[x.id]||0}</div>`).join('')}</div>
+  <div class="fgrid">${D.bosses.map(x=>`<div class="fc ${x.id===b.id?'cur':''}" style="--fc:${x.col}"><img src="${BIMG[x.id]}" alt=""><b>${x.n}</b>${D.frag[x.id]||0}</div>`).join('')}</div>
   <div class="sec">OVOS MISTERIOSOS</div>
   <div class="card" style="display:flex;gap:12px;align-items:center"><div class="eggbig"></div><div style="flex:1">Você tem <b>${D.eggs}</b> ovo(s).<br>${D.egg.map(e=>`<span style="color:${e.c}">${e.k} ${e.w}%</span>`).join(' · ')}<br><small style="color:var(--mut)">Quanto mais raro, menor a chance.</small></div><button class="btn go" id="hatchb" ${D.eggs<1||D.teamFull?'disabled':''}>CHOCAR</button></div>
   ${D.teamFull?'<div class="card" style="border-color:#f59e0b">Sua equipe está cheia (6/6). Libere um espaço para chocar.</div>':''}`;
@@ -280,7 +281,7 @@ function renderLobby(){
  $('#lobby').innerHTML=`
   <div class="top"><div class="l"><button class="btn" id="back">← VOLTAR</button><span class="ttl">BOSS SEMANAL</span></div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip">⏳ renova em ${D.left}</span>${chips()}</div></div>
   <div class="lob">
-   <div class="show"><div class="hero"><div class="rays"></div><div class="halo"></div><img class="dr" src="${b.img}" alt="${b.n}"></div>
+   <div class="show"><div class="hero"><div class="rays"></div><div class="halo"></div><img class="dr" src="${BIMG[b.id]}" alt="${b.n}"></div>
     <div class="bname"><h1>${b.n}</h1><p>${b.tt}</p><div style="margin-top:6px;display:flex;gap:6px;justify-content:center"><span class="chip" style="color:${TC[b.t]}">${TE[b.t]} ${b.t}</span>${b.t2?`<span class="chip" style="color:${TC[b.t2]}">${TE[b.t2]} ${b.t2}</span>`:''}</div></div></div>
    <div class="pan"><div class="tabs"><button class="tab ${tab==='raid'?'on':''}" data-t="raid">⚔ RAID</button><button class="tab ${tab==='rew'?'on':''}" data-t="rew">🎁 RECOMPENSAS</button><button class="tab ${tab==='rank'?'on':''}" data-t="rank">🏆 RANKING</button></div>
     <div class="tb">${body}</div>
@@ -323,7 +324,7 @@ function startBattle(m){
  B=m;mode='battle';ST={b:{...m.boss}};B.party.forEach(p=>{p.alive=true;p.fz=0;p.vd=0});
  const bb=D.bosses[D.bi];theme(bb);setBg(bb.id);
  $('#lobby').classList.add('hidden');$('#battle').classList.remove('hidden');$('#ov').classList.remove('on');
- $('#hn').textContent=bb.n;$('#bimg').src=bb.img;$('#turn').textContent='TURNO 1';
+ $('#hn').textContent=bb.n;$('#bimg').src=BIMG[bb.id];$('#turn').textContent='TURNO 1';
  $('#mems').innerHTML=B.party.map(p=>{const pos=P5[p.id];const src=img('b'+p.i)||img('f'+p.i);return `<div class="mem ${p.me?'me':''}" id="m_${p.id}" style="left:${pos[0]}%;top:${pos[1]}%"><div class="vdx"></div><div class="guard"></div><div class="frz">⏳</div><div class="sp"><div class="sh2"></div><img src="${src}" alt="${p.n}" style="animation-delay:${(Math.random()*-2).toFixed(2)}s"></div><div class="tg">${p.e} ${p.tr} <em>${p.me?'':'IA'}</em></div><div class="tg" style="font-weight:600;opacity:.85">${p.n} Nv${p.l}</div><div class="hb"><i></i></div></div>`}).join('');
  B.party.forEach(hpBar);bossBar();ST.b.ph=1;
  $('#boss').className='';$('#vig').classList.remove('on');$('#dim').style.opacity=0;
