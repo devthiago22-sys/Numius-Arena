@@ -38,7 +38,7 @@ function pvpStart(bid,p,role){
  G.battle.olp=p.presence.lp|0;PV.search=false;
  G.screen='battle';R();
 }
-function pvpAct(a){const B=G.battle;if(!B||!B.pvp||B.over||B.wait)return;B.wait=true;B.pick=false;if(B.lgP&&LEG[B.lgP]&&lgHas(B.lgP)){a=Object.assign({},a,{lg:B.lgP})}B.lgP=null;B.hist['t'+B.turn]=a;const ks=Object.keys(B.hist);if(ks.length>6)delete B.hist[ks[0]];pvpPres({hist:B.hist});R();pvpTick()}
+function pvpAct(a){const B=G.battle;if(!B||!B.pvp||B.over||B.wait)return;B.wait=true;B.pick=false;if(B.lgP&&LEG[B.lgP]&&B.lgP===lgSel()){a=Object.assign({},a,{lg:B.lgP})}B.lgP=null;B.hist['t'+B.turn]=a;const ks=Object.keys(B.hist);if(ks.length>6)delete B.hist[ks[0]];pvpPres({hist:B.hist});R();pvpTick()}
 const pvpSane=(a,n)=>{const r=a&&((a.t==='a'&&Number.isInteger(a.k)&&a.k>=-1&&a.k<4)||(a.t==='s'&&Number.isInteger(a.i)&&a.i>=0&&a.i<n)||a.t==='f')?{t:a.t,k:a.k,i:a.i}:{t:'a',k:0};if(a&&typeof a.lg==='string'&&LEG[a.lg])r.lg=a.lg;return r};
 function pvpTick(){
  const B=G.battle;if(!B||!B.pvp||B.over)return;

@@ -32,7 +32,7 @@ function eqData(){
    moves:moves(m).map((x,j)=>({id:'k'+j+'_'+x.n,nome:x.n,tipo:x.t,icon:ic(x.t),poder:x.p,cc:m.pp?m.pp[j]:x.pp,ccMax:x.pp,stab:x.t===s.t||x.t===s.t2,
     desc:x.x==='def'?'O dano é calculado com a Defesa de quem usa, em vez do Ataque.':x.x==='dr'?'Drena PS: recupera 40% do dano causado.':x.x==='cr'?'Sempre causa dano crítico (+50%).':'Golpe do tipo '+x.t+(x.t===s.t?' — recebe bônus de tipo (STAB).':'.')})),
    proximoGolpe:nx?{nome:MOVES[nx[1]].n,nivel:nx[0]}:{nome:'',nivel:m.l,fim:1}}});
- return{numius:1,k:'team',team,imgs}
+ return{numius:1,k:'team',team,imgs,legs:{sel:lgSel(),cost:LGC,list:Object.keys(LEG).map(id=>({id,n:LEG[id].n,ab:LEG[id].ab,ic:LEG[id].ic,col:LEG[id].col,t:LEG[id].t,d:LEG[id].d,has:lgHas(id),fr:(G.frag||{})[id]|0}))}}
 }
 function eqSend(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('eqf');if(EQ.ready&&f&&f.contentWindow&&G.team.length)f.contentWindow.postMessage(eqData(),'*')}
 function eqToggle(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('eqf');if(f)f.style.display=(G.screen==='team'&&!G.efb)?'block':'none'}
@@ -41,7 +41,8 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  else if(G.screen!=='team')return;
  else if(d.k==='nav'&&d.to==='map'){G.screen='map';R()}
  else if(d.k==='cfg')openCfg()
- else if(d.k==='mv'){const i=G.team.findIndex(m=>m.uid===d.id);if(i>=0&&(d.d===1||d.d===-1))mvUp(i,d.d)}});
+ else if(d.k==='mv'){const i=G.team.findIndex(m=>m.uid===d.id);if(i>=0&&(d.d===1||d.d===-1))mvUp(i,d.d)}
+ else if(d.k==='leg'){if(d.id===null||lgHas(d.id)){G.legSel=d.id||null;save()}eqSend()}});
 const GM={n:'gyms',ready:false};
 function gyMount(){
  if(typeof document.createElement!=='function')return;

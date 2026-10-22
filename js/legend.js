@@ -14,7 +14,9 @@ const LEG={
 };
 const LGF=['rei','tsunami']; // habilidades de campo que desfazem a Luz quando entram em campo
 const lgHas=id=>!!(G.leg&&G.leg[id]);
-function lgUnlock(id){const f=G.frag||(G.frag={});if(!LEG[id]||lgHas(id)||(f[id]|0)<LGC)return false;f[id]-=LGC;(G.leg=G.leg||{})[id]=1;save();return true}
+/* lendário escolhido na aba Equipe: é o único que aparece nas partidas */
+const lgSel=()=>G.legSel&&lgHas(G.legSel)?G.legSel:null;
+function lgUnlock(id){const f=G.frag||(G.frag={});if(!LEG[id]||lgHas(id)||(f[id]|0)<LGC)return false;f[id]-=LGC;(G.leg=G.leg||{})[id]=1;if(!lgSel())G.legSel=id;save();return true}
 const teamSide=m=>G.team.includes(m)?'p':'e';
 const lgS=B=>B.lg||(B.lg={u:{p:{},e:{}},lux:{},luxSeen:{},ecl:{},frz:{}});
 /* tipos considerando o campo de Luz (usado por effv) */
@@ -48,24 +50,24 @@ function lgEnd(B){
 }
 /* clique no botão: na partida comum invoca na hora; no PvP marca para o turno (vai junto com a jogada) */
 function lgUse(id){
- const B=G.battle;if(!B||B.over||!lgHas(id)||B.pick||B.wait||lgOv.on)return;const L=lgS(B);if(lgDone(B,'p'))return;
+ const B=G.battle;if(!B||B.over||!lgHas(id)||id!==lgSel()||B.pick||B.wait||lgOv.on)return;const L=lgS(B);if(lgDone(B,'p'))return;
  if(B.pvp){B.lgP=B.lgP===id?null:id;B.log=[B.lgP?`${LEG[id].ic} ${LEG[id].n} será invocado junto com a sua próxima jogada.`:'Invocação cancelada.'];R();return}
  B.log=[];lgCast('p',id,B);save();lgBarSync();
  const RMx=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;setTimeout(()=>{if(G.battle===B)R()},RMx?1400:2700);
 }
 /* ---------- interface: coluna de botões na arena ---------- */
 function lgBarSync(){
- if(typeof document.getElementById!=='function')return;let el=document.getElementById('lgbar');const B=G.battle,show=G.screen==='battle'&&B&&(!B.over);
+ if(typeof document.getElementById!=='function')return;let el=document.getElementById('lgbar');const B=G.battle,show=G.screen==='battle'&&B&&(!B.over)&&Object.keys(G.leg||{}).length>0;
  if(!show){if(el)el.style.display='none';return}
  if(!el){el=document.createElement('div');el.id='lgbar';el.setAttribute('role','toolbar');el.setAttribute('aria-label','Lendários');document.body.appendChild(el)}
  el.style.display='flex';const L=lgS(B),f=G.frag||{};
  const done=lgDone(B,'p');
- const btn=Object.keys(LEG).map(id=>{const X=LEG[id],has=lgHas(id),me=!!L.u.p[id],used=done,pend=B.lgP===id,dis=!has||used||B.pick||B.wait;
+ const sel=lgSel(),btn=(sel?[sel]:[]).map(id=>{const X=LEG[id],has=lgHas(id),me=!!L.u.p[id],used=done,pend=B.lgP===id,dis=!has||used||B.pick||B.wait;
   const st=!has?`🔒 ${Math.min(f[id]|0,LGC)}/${LGC}`:me?'USADO':used?'BLOQUEADO':pend?'NESTE TURNO':'PRONTO';
   return `<button class="lgb lgimg-${id} ${has?'':'lk'} ${used?'us':''} ${pend?'pd':''}" style="--lc:${X.col}" ${dis?'disabled':''} onclick="lgUse('${id}')" aria-label="${has?(used?(me?X.n+' já foi usado nesta partida':'Você já invocou um lendário nesta partida'):'Invocar '+X.n+': '+X.ab):X.n+' bloqueado: '+Math.min(f[id]|0,LGC)+' de '+LGC+' fragmentos'}" title="${X.n} · ${X.ab}\n${X.d}"><span class=lgt>${X.ic}</span><small>${st}</small></button>`}).join('');
  const ch=[];const nm=s=>s==='p'?'Você':'Oponente';
  for(const s of ['p','e']){if(L.lux[s])ch.push(`<span style="--lc:#fde68a">✨ ${nm(s)}: campo de Luz</span>`);if(L.ecl[s]>0)ch.push(`<span style="--lc:#a855f7">🌑 ${nm(s)}: eclipse ${L.ecl[s]}t</span>`);if(L.frz[s]>0)ch.push(`<span style="--lc:#7dd3fc">⏳ ${nm(s)}: paralisado ${L.frz[s]}t</span>`)}
- el.innerHTML=`<div class=lgh>LENDÁRIOS</div>${btn}${done?'<div class=lgc><span style="--lc:#9ca3af">1 lendário por partida</span></div>':''}${ch.length?`<div class=lgc>${ch.join('')}</div>`:''}`;
+ el.innerHTML=`<div class=lgh>LENDÁRIO</div>${sel?'':'<div class=lgc><span style="--lc:#fde68a">Escolha seu lendário na aba Equipe</span></div>'}${btn}${done?'<div class=lgc><span style="--lc:#9ca3af">já usado nesta partida</span></div>':''}${ch.length?`<div class=lgc>${ch.join('')}</div>`:''}`;
 }
 /* ---------- animação de invocação (sobre a arena) ---------- */
 const lgOv={on:0,q:[]};
