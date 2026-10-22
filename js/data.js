@@ -7,15 +7,18 @@ FAM.forEach(([n,t,t2,ns,B6,_z,_m,abs],f)=>ns.forEach((nm,k)=>{const i=S.length,u
 const BASE=[...S.keys()].filter(i=>S[i].s===1);
 const DEX=[];BASE.forEach(b=>{let i=b;DEX.push(i);while(S[i].x!==undefined){i=S[i].x;DEX.push(i)}});
 const PREV={};S.forEach((x,i)=>{if(x.x!==undefined)PREV[x.x]=i});
-const SE={Fogo:['Planta','Gelo'],Água:['Fogo','Pedra'],Planta:['Água','Pedra'],Elétrico:['Água','Voador'],Pedra:['Fogo','Gelo','Voador'],Gelo:['Planta','Voador','Dragão'],Psíquico:[],Voador:['Planta'],Dragão:['Dragão']};
-const NV={Fogo:['Fogo','Água','Pedra','Dragão'],Água:['Água','Planta','Dragão'],Planta:['Fogo','Planta','Voador','Dragão'],Elétrico:['Elétrico','Planta','Pedra','Dragão'],Pedra:['Pedra'],Gelo:['Fogo','Água','Gelo'],Psíquico:['Psíquico'],Voador:['Elétrico','Pedra'],Dragão:['Pedra']};
+const SE={Fogo:['Planta','Gelo','Trevas'],Água:['Fogo','Pedra'],Planta:['Água','Pedra'],Elétrico:['Água','Voador'],Pedra:['Fogo','Gelo','Voador','Cósmico'],Gelo:['Planta','Voador','Dragão'],Psíquico:[],Voador:['Planta'],Dragão:['Dragão','Luz'],
+ Luz:['Trevas','Dragão'],Trevas:['Luz','Psíquico','Cósmico'],Cósmico:['Dragão','Voador']};
+const NV={Fogo:['Fogo','Água','Pedra','Dragão','Luz'],Água:['Água','Planta','Dragão'],Planta:['Fogo','Planta','Voador','Dragão','Luz'],Elétrico:['Elétrico','Planta','Pedra','Dragão','Cósmico'],Pedra:['Pedra'],Gelo:['Fogo','Água','Gelo'],Psíquico:['Psíquico','Trevas','Cósmico'],Voador:['Elétrico','Pedra'],Dragão:['Pedra'],
+ Luz:['Luz','Fogo','Pedra'],Trevas:['Trevas','Fogo'],Cósmico:['Cósmico','Pedra']};
+/* Luz, Trevas e Cósmico: por enquanto só os dragões do Boss semanal usam. */
 const T2M={Terra:'Pedra',Metal:'Pedra',Vento:'Voador',Sombrio:'Psíquico'};
 S.forEach(x=>{x.tt=[x.t];const m=T2M[x.t2]||x.t2;if(m&&m!==x.t&&NV[m])x.tt.push(m)});
 const effv=(a,m)=>S[m.i].tt.reduce((p,t)=>p*mult(a,t),1);
 const wk=m=>{const w=[],r=[],we=[];TYX.forEach(t=>{const e=effv(t,m);if(e>1){w.push(TE[t]+' '+t+(e>2?' ×4':''));we.push(TE[t]+(e>2?'²':''))}else if(e<1)r.push(TE[t]+' '+t)});return{w,r,we}};
 const wkHTML=m=>{const{w,r}=wk(m);return `<div class=wkb><b>Tipo:</b> ${S[m.i].t}${S[m.i].t2?' · '+S[m.i].t2:''}<br><b>Fraco contra:</b> ${w.join(' · ')||'—'}<br><b>Resiste a:</b> ${r.join(' · ')||'—'}<br><b>Evolução:</b> ${S[m.i].x!==undefined?'Nv '+(S[m.i].s===1?16:36)+' → '+S[S[m.i].x].n:'forma final'}<br><b>Habilidade:</b> ${PA(m).n} — ${pdesc(m)}</div>`};
 const MV={Fogo:'Chama',Água:'Jato d\'água',Planta:'Folha-lâmina',Elétrico:'Choque',Pedra:'Pedrada',Gelo:'Raio gelado',Psíquico:'Confusão',Voador:'Rajada'};
-const TY=['Fogo','Água','Planta','Elétrico','Pedra','Gelo','Psíquico','Voador'],TN=['Iniciante','Esperto','Estrategista','Mestre'],TE={Fogo:'🔥',Água:'💧',Planta:'🍃',Elétrico:'⚡',Pedra:'🪨',Gelo:'❄️',Psíquico:'🔮',Voador:'🪶',Dragão:'🐉'};
+const TY=['Fogo','Água','Planta','Elétrico','Pedra','Gelo','Psíquico','Voador'],TN=['Iniciante','Esperto','Estrategista','Mestre'],TE={Fogo:'🔥',Água:'💧',Planta:'🍃',Elétrico:'⚡',Pedra:'🪨',Gelo:'❄️',Psíquico:'🔮',Voador:'🪶',Dragão:'🐉',Luz:'✨',Trevas:'🌑',Cósmico:'🌌'};
 const TYX=[...TY,'Dragão'];
 const MOVES=[{n:'Investida',t:'Normal',p:45},{n:'Pancada',t:'Normal',p:60},...TY.map(t=>({n:MV[t],t,p:60})),...FAM.slice(0,20).flatMap((g,f)=>g[6].map(([n,t,p,x],j)=>({n,t,p,x,f,j})))];
 MOVES.push({n:'Golpe Pesado',t:'Normal',p:75});

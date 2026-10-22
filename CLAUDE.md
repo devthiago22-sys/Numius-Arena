@@ -112,4 +112,6 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 - Equilíbrio em `BSX` (nível do chefe, HP, ataque, defesa), `BSR` (recompensa), `BSTOP` (top 3), `EGG` (raridades).
   Hoje o chefe é fixo no nível 50: a vitória exige equipe ~Nv 45+.
 - Salvo em `save()`: `bs` (semana, melhor dano, recebeu?), `fr` (fragmentos por dragão), `eg` (ovos). Sem mudar `v`.
+- Tipos dos dragões: AURELION = Luz, NYXAR = Trevas, CHRONOS = Cósmico (tipos novos em `SE`/`NV` de `data.js`, usados só
+  pelo Boss por enquanto). Luz é fraco a Trevas e Dragão; Trevas a Luz e Fogo; Cósmico a Trevas e Pedra.
 - Para usar os fragmentos (ex.: liberar o lendário) falta definir a regra: hoje só são acumulados e exibidos.

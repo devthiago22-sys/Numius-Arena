@@ -4,14 +4,14 @@
    Equilíbrio: ajuste as constantes BSX, BSR e EGG. */
 
 const BOSSES=[
- {id:'aurelion',n:'AURELION',tt:'Dragão Cristal do Alvorecer',t:'Dragão',t2:'Pedra',col:'#ffd54a',col2:'#fff3b0',
-  mv:{s:{n:'Lança de Cristal',t:'Pedra',p:95,c:'f'},a:{n:'Chuva de Estilhaços',t:'Dragão',p:65,c:'e'},u:{n:'Eclipse Dourado',t:'Dragão',p:140,c:'e'}},
+ {id:'aurelion',n:'AURELION',tt:'Dragão Cristal do Alvorecer',t:'Luz',t2:null,col:'#ffd54a',col2:'#fff3b0',
+  mv:{s:{n:'Lança de Cristal',t:'Pedra',p:95,c:'f'},a:{n:'Chuva de Estilhaços',t:'Luz',p:65,c:'e'},u:{n:'Eclipse Dourado',t:'Luz',p:140,c:'e'}},
   ph:['Casca de Cristal','Coroa Solar'],fx:'shield',fxd:'Cria um escudo de cristal que absorve dano'},
- {id:'nyxar',n:'NYXAR',tt:'Dragão do Vazio Estelar',t:'Dragão',t2:'Psíquico',col:'#a855f7',col2:'#e9d5ff',
-  mv:{s:{n:'Garra do Vazio',t:'Psíquico',p:95,c:'f'},a:{n:'Maré Galáctica',t:'Psíquico',p:65,c:'e'},u:{n:'Singularidade',t:'Dragão',p:140,c:'e'}},
+ {id:'nyxar',n:'NYXAR',tt:'Dragão do Vazio Estelar',t:'Trevas',t2:null,col:'#a855f7',col2:'#e9d5ff',
+  mv:{s:{n:'Garra do Vazio',t:'Trevas',p:95,c:'f'},a:{n:'Maré Galáctica',t:'Trevas',p:65,c:'e'},u:{n:'Singularidade',t:'Trevas',p:140,c:'e'}},
   ph:['Fome do Abismo','Horizonte de Eventos'],fx:'void',fxd:'Marca dois treinadores: perdem vida por turno e curam o dragão'},
- {id:'chronos',n:'CHRONOS',tt:'Dragão Guardião do Tempo',t:'Psíquico',t2:'Elétrico',col:'#7dd3fc',col2:'#e0f2fe',
-  mv:{s:{n:'Ampulheta Quebrada',t:'Elétrico',p:95,c:'f'},a:{n:'Pêndulo Eterno',t:'Psíquico',p:65,c:'e'},u:{n:'Colapso Temporal',t:'Psíquico',p:140,c:'e'}},
+ {id:'chronos',n:'CHRONOS',tt:'Dragão Guardião do Tempo',t:'Cósmico',t2:null,col:'#7dd3fc',col2:'#e0f2fe',
+  mv:{s:{n:'Ampulheta Quebrada',t:'Elétrico',p:95,c:'f'},a:{n:'Pêndulo Eterno',t:'Cósmico',p:65,c:'e'},u:{n:'Colapso Temporal',t:'Cósmico',p:140,c:'e'}},
   ph:['Tempo Acelerado','Fim dos Ponteiros'],fx:'freeze',fxd:'Congela dois treinadores no tempo: perdem o turno'}
 ];
 /* Ordem e semana iguais às do menu (a ilha do boss usa a mesma conta). */
