@@ -142,8 +142,8 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central (qualquer). Encontros no capim alto (13% por passo).
 - Encontro: cenário pintado por região (`drawScene`), Numiu animado pelo mesmo motor de sprites vivos do Boss (`Live`),
   entrada pulando do capim e reações a cada ação. O direcional só aparece em telas de toque.
-- O personagem anda com setas/WASD ou o direcional na tela; o sprite do mapa é a própria arte do herói
-  (`G.hero`: `g`, `skin`, `hair`; costas = cabelo pintado sobre o rosto). O retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
+- O personagem anda com setas/WASD ou o direcional na tela; o sprite do mapa é pixel art 16×21 estilo GBA
+  (`HSP` + `heroPix`: 4 direções × parado/passo 1/passo 2, cores e cabelo de `G.hero`: `g`, `skin`, `hair`). O retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
 - Captura sem bola, o **Laço de Sintonia**: VÍNCULO (0-100) e AGITAÇÃO. Ações: Sintonizar (4 batidas no ritmo da aura:
   Perfeito/Bom/Fora), Fruta calmante (10 por visita), Observar (revela o temperamento) e Sair. Agitação alta = chance de fuga.
   Vínculo 100 -> `catch` -> `sfCatch` (equipe máx. 6). Visita: 500 passos. Raridade: estágio 1/2/3 = 72/23/5%.
