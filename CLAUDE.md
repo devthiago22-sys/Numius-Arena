@@ -142,9 +142,11 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central (qualquer). Encontros no capim alto (13% por passo).
 - Encontro: cenário pintado por região (`drawScene`), Numiu animado pelo mesmo motor de sprites vivos do Boss (`Live`),
   entrada pulando do capim e reações a cada ação. O direcional só aparece em telas de toque.
-- O personagem anda com setas/WASD ou o direcional na tela; o sprite do mapa é pixel art gerada da arte do
-  criador de personagem por `tools/make_overworld.py` (`assets/screens/ow-m|f.webp`: 4 cabelos × 4 direções × parado/passo 1/
-  passo 2; o tom de pele vem do mesmo filtro do criador). Mudou a arte do criador? Rode o script de novo. O retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
+- O personagem anda com setas/WASD ou o direcional na tela; no mapa o boneco é a própria arte do criador de
+  personagem, recortada em tempo real (`buildRig`) em cabeça / tronco / perna esquerda / perna direita, com pivôs no pescoço
+  e no quadril; `drawHero` anima o ciclo de caminhada (pernas girando com profundidade, corpo subindo, giro no eixo Y ao
+  mudar de direção). De costas, a área do rosto é repintada com fios de cabelo. Pernas desenhadas atrás do tronco e
+  recortadas na linha do quadril: sem isso elas aparecem por cima da jaqueta. O retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
 - Captura sem bola, o **Laço de Sintonia**: VÍNCULO (0-100) e AGITAÇÃO. Ações: Sintonizar (4 batidas no ritmo da aura:
   Perfeito/Bom/Fora), Fruta calmante (10 por visita), Observar (revela o temperamento) e Sair. Agitação alta = chance de fuga.
   Vínculo 100 -> `catch` -> `sfCatch` (equipe máx. 6). Visita: 500 passos. Raridade: estágio 1/2/3 = 72/23/5%.

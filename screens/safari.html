@@ -301,19 +301,98 @@ function rockSpr(kind,ts){const key='rock'+kind+'_'+ts;if(CACHE[key])return CACH
  else{x.fillStyle='#6fbf4a';x.beginPath();x.ellipse(cxm-ts*.12,by-ts*.47,ts*.14,ts*.06,-.3,0,6.29);x.fill()}
  return CACHE[key]=c}
 function glowSpr(col,ts){const key='g'+col+ts;if(CACHE[key])return CACHE[key];const c=cvs(ts,ts),x=c.getContext('2d'),g=x.createRadialGradient(ts/2,ts/2,0,ts/2,ts/2,ts/2);g.addColorStop(0,col);g.addColorStop(1,col.slice(0,7)+'00');x.fillStyle=g;x.fillRect(0,0,ts,ts);return CACHE[key]=c}
-/* ---------- personagem: arte do jogo (retrato) com animação ---------- */
+/* ---------- personagem: esqueleto 3D montado a partir da arte do criador ---------- */
 const HAIR={m:['#1c1c22','#7a4a22','#3b6fd1','#e5e7eb'],f:['#e8c84a','#1c1c22','#8b5a2b','#4a8acc']};
-let HSPR=null,HIMG=null,HKEY='';
-function heroImg(){if(HIMG&&HIMG._g===hero.g)return HIMG;HIMG=new Image();HIMG._g=hero.g;HIMG.src=TR[hero.g==='m'?'m':'f'];return HIMG}
-/* sprite do mapa: pixel art gerada da arte do criador de personagem (tools/make_overworld.py).
-   Folha ow-m/ow-f: linha = cabelo (0-3); colunas = baixo(3) cima(3) esquerda(3) direita(3); quadros 34x48. */
-const OW={m:'assets/screens/ow-m.webp',f:'assets/screens/ow-f.webp'},OWI={};
-function owImg(g){if(!OWI[g]){const im=new Image();im.src=OW[g];im.onload=()=>{HKEY=''};OWI[g]=im}return OWI[g]}
-function heroPix(){const g=hero.g==='m'?'m':'f',hi=Math.max(0,Math.min(3,hero.hair|0)),sk=Math.max(0,Math.min(3,hero.skin|0)),key=g+hi+sk;if(HSPR&&HKEY===key)return HSPR;
- const im=owImg(g);if(!im.complete||!im.naturalWidth)return null;HSPR={};
- ['down','up','left','right'].forEach((d,di)=>['st','w1','w2'].forEach((f,fi)=>{const c=cvs(34,48),x=c.getContext('2d');x.imageSmoothingEnabled=false;try{x.filter=SKF[sk]}catch(e){}x.drawImage(im,(di*3+fi)*34,hi*48,34,48,0,0,34,48);HSPR[d+'_'+f]=c}));
- HKEY=key;return HSPR}
-const SKIN4=['#f5d0a0','#e8b888','#c6865a','#8d5a3a'];
+let HIMG=null,HRG=null,RKEY='';
+function heroImg(){if(HIMG&&HIMG._g===hero.g)return HIMG;HIMG=new Image();HIMG._g=hero.g;HIMG.src=TR[hero.g==='m'?'m':'f'];HIMG.onload=()=>{RKEY=''};return HIMG}
+/* Corta a arte em cabeça / tronco / perna esquerda / perna direita, com pivôs (pescoço e quadril).
+   Cada parte guarda dx,dy (canto superior esquerdo) e pvx,pvy (pivô), em pixels da arte, com a origem
+   no centro dos pés. Assim o desenho continua o mesmo e a animação roda sobre essas peças. */
+function buildRig(){
+ const g=hero.g==='m'?'m':'f',hi=Math.max(0,Math.min(3,hero.hair|0)),sk=Math.max(0,Math.min(3,hero.skin|0)),key=g+hi+sk;
+ if(HRG&&RKEY===key)return HRG;
+ const im=heroImg();if(!im.complete||!im.naturalWidth)return null;
+ const fw=im.naturalWidth/4,fh=im.naturalHeight,H=150,W=Math.max(8,Math.round(fw*H/fh));
+ const wk=cvs(W,H),x=wk.getContext('2d');x.imageSmoothingQuality='high';
+ try{x.filter=SKF[sk]}catch(e){}
+ x.drawImage(im,hi*fw,0,fw,fh,0,0,W,H);x.filter='none';
+ let dat;try{dat=x.getImageData(0,0,W,H)}catch(e){return null}
+ const d=dat.data,AL=(a,b)=>a>=0&&b>=0&&a<W&&b<H&&d[(b*W+a)*4+3]>60;
+ let x0=W,x1=0,y0=H,y1=0;const rl=new Int16Array(H),rr=new Int16Array(H);
+ for(let y=0;y<H;y++){let a=-1,b=-1;for(let p=0;p<W;p++)if(AL(p,y)){if(a<0)a=p;b=p}rl[y]=a;rr[y]=b;if(a>=0){if(a<x0)x0=a;if(b>x1)x1=b;if(y<y0)y0=y;if(y>y1)y1=y}}
+ if(y1-y0<20)return null;
+ const hh=y1-y0+1,mid=Math.round((x0+x1)/2);
+ /* pescoço: linha mais estreita no alto do corpo */
+ let neck=Math.round(y0+hh*.34),bw=1e9;
+ for(let y=Math.round(y0+hh*.22);y<Math.round(y0+hh*.47);y++){const w=rl[y]<0?1e9:rr[y]-rl[y];if(w<=bw){bw=w;neck=y}}
+ /* quadril: linha mais alta (subindo) em que as pernas ainda aparecem separadas */
+ let hip=0;const gw=Math.max(1,Math.round(hh*.04));
+ for(let y=y1-2;y>y0+hh*.52;y--){let gap=0;for(let p=mid-gw;p<=mid+gw;p++)if(!AL(p,y))gap++;if(gap>=2)hip=y;else if(hip)break}
+ if(!hip||hip>y0+hh*.86)hip=Math.round(y0+hh*.74);
+ const ov=Math.max(2,Math.round(hh*.025));
+ const sub=(rx,ry,rw,rh)=>{rw=Math.max(1,rw);rh=Math.max(1,rh);const c=cvs(rw,rh);c.getContext('2d').drawImage(wk,rx,ry,rw,rh,0,0,rw,rh);
+  return{cv:c,dx:rx-mid,dy:ry-y1,pvx:0,pvy:0}};
+ const dark=(p,a)=>{const c=cvs(p.cv.width,p.cv.height),q=c.getContext('2d');q.drawImage(p.cv,0,0);q.globalCompositeOperation='source-atop';q.fillStyle='rgba(16,24,40,'+a+')';q.fillRect(0,0,c.width,c.height);return{cv:c,dx:p.dx,dy:p.dy,pvx:p.pvx,pvy:p.pvy}};
+ const bw2=x1-x0+1;
+ const head=sub(x0,y0,bw2,neck-y0+ov);head.pvx=mid-x0;head.pvy=neck-y0;
+ const torso=sub(x0,neck-ov,bw2,hip-neck+ov*2);torso.pvx=mid-x0;torso.pvy=hip-(neck-ov);
+ const lov=Math.max(1,Math.round(hh*.012));
+ const lw=mid-x0+2,legL=sub(x0,hip-lov,lw,y1-hip+lov+2);legL.pvx=Math.round(lw*.56);legL.pvy=lov;
+ const rw2=x1-mid+2,legR=sub(mid-1,hip-lov,rw2,y1-hip+lov+2);legR.pvx=Math.round(rw2*.44);legR.pvy=lov;
+ /* cabeça de costas: a área do rosto é repintada com fios de cabelo (tons tirados do alto da cabeça) */
+ const hb=(()=>{const c=cvs(head.cv.width,head.cv.height),q=c.getContext('2d');q.drawImage(head.cv,0,0);
+  const w=c.width,h=c.height;let id;try{id=q.getImageData(0,0,w,h)}catch(e){return head}
+  const p=id.data,L=i=>.3*p[i]+.59*p[i+1]+.11*p[i+2];
+  const skin=i=>p[i+3]>60&&p[i]>150&&p[i]-p[i+1]>12&&p[i+1]-p[i+2]>8&&p[i]-p[i+2]>40&&p[i+2]>80;
+  /* tons do cabelo: pixels mais comuns no quinto superior, sem pele nem contorno */
+  const cnt={};for(let y=Math.round(h*.04);y<h*.3;y++)for(let xx=0;xx<w;xx++){const i=(y*w+xx)*4;if(p[i+3]<200||skin(i)||L(i)<26)continue;const k=(p[i]>>3)+','+(p[i+1]>>3)+','+(p[i+2]>>3);(cnt[k]=cnt[k]||{n:0,r:0,g:0,b:0}).n++;cnt[k].r+=p[i];cnt[k].g+=p[i+1];cnt[k].b+=p[i+2]}
+  const top=Object.values(cnt).sort((a,b)=>b.n-a.n).slice(0,3).map(o=>[o.r/o.n,o.g/o.n,o.b/o.n]);
+  if(!top.length)return head;
+  top.sort((a,b)=>(.3*a[0]+.59*a[1]+.11*a[2])-(.3*b[0]+.59*b[1]+.11*b[2]));
+  const mid=top[Math.min(1,top.length-1)],dk=top[0].map(v=>v*.72),lt=(top[2]||mid).map(v=>Math.min(255,v*1.1+8));
+  /* área do rosto: caixa dos pixels de pele, com folga */
+  let fx0=w,fx1=-1,fy0=h,fy1=-1;
+  for(let y=0;y<h;y++)for(let xx=0;xx<w;xx++){const i=(y*w+xx)*4;if(skin(i)){if(xx<fx0)fx0=xx;if(xx>fx1)fx1=xx;if(y<fy0)fy0=y;if(y>fy1)fy1=y}}
+  if(fx1<0)return head;
+  const pad=Math.max(1,Math.round(h*.03));fx0=Math.max(0,fx0-pad);fx1=Math.min(w-1,fx1+pad);fy0=Math.max(0,fy0-pad);fy1=Math.min(h-1,fy1+pad);
+  for(let y=fy0;y<=fy1;y++)for(let xx=fx0;xx<=fx1;xx++){const i=(y*w+xx)*4;if(p[i+3]<40)continue;
+   const n=Math.sin(xx*1.7)*.5+Math.sin(xx*.61+1.3)*.5,ty=(y-fy0)/Math.max(1,fy1-fy0);
+   let col=n>.45?lt:n<-.35?dk:mid;const sh=.98-.3*ty-.12*Math.abs((xx-(fx0+fx1)/2)/Math.max(1,(fx1-fx0)/2));
+   p[i]=col[0]*sh;p[i+1]=col[1]*sh;p[i+2]=col[2]*sh;p[i+3]=255}
+  q.putImageData(id,0,0);return{cv:c,dx:head.dx,dy:head.dy,pvx:head.pvx,pvy:head.pvy}})();
+ HRG={hh,hipY:y1-hip,head,headBack:hb,torso,legL,legR,legLd:dark(legL,.17),legRd:dark(legR,.17),torsoD:dark(torso,.14)};
+ RKEY=key;return HRG;
+}
+/* ---------- desenho: ciclo de caminhada com profundidade ---------- */
+function drawHero(ppx,ppy,camx,camy,ts,t,dt){
+ const R=buildRig(),c=cx;
+ const PX=(ppx+.5)*ts-camx,PY=(ppy+1)*ts-camy-ts*.05;
+ const tg=pl.dir==='left'?-1:pl.dir==='right'?1:0;
+ pl.yaw+=(tg-pl.yaw)*Math.min(1,dt*13);
+ const yw=pl.yaw,side=Math.abs(yw),back=pl.dir==='up';
+ if(!R){c.fillStyle='rgba(0,0,0,.25)';c.beginPath();c.ellipse(PX,PY,ts*.22,ts*.07,0,0,6.29);c.fill();return}
+ const S=ts*1.34/R.hh,sxs=1-.42*side;
+ const walking=!!pl.mv,ph=(pl.par?0:Math.PI)+(pl.mv?pl.mv.t:0)*Math.PI;
+ const sw=walking?Math.sin(ph):0,spread=Math.abs(sw);
+ const A=walking?(.32+.14*side):0;
+ const bob=walking?spread*R.hh*.055:0,br=walking?0:Math.sin(t*2.3)*.006;
+ /* sombra acompanha o corpo */
+ c.fillStyle='rgba(0,0,0,'+(.3-.06*spread)+')';c.beginPath();c.ellipse(PX,PY-S*2,ts*.25*(1-.08*spread),ts*.075,0,0,6.29);c.fill();
+ c.save();c.translate(PX,PY);c.scale(sxs*S,S*(1+br));
+ const put=(p,rot,ox,oy,sc)=>{if(!p)return;c.save();c.translate(p.pvx+p.dx+(ox||0),p.pvy+p.dy+(oy||0));if(rot)c.rotate(rot);if(sc&&sc!==1)c.scale(sc,sc);c.drawImage(p.cv,-p.pvx,-p.pvy);c.restore()};
+ const aL=sw*A,aR=-sw*A,nearPos=!back;
+ const Lnear=nearPos?aL>0:aL<0;
+ const leg=(p,pd,a,near)=>{c.save();c.beginPath();c.rect(-R.hh,-R.hipY+bob,R.hh*2,R.hh);c.clip();put(near?p:pd,a,0,bob-(a>0?spread*R.hh*.012:0),near?1.025:.965);c.restore()};
+ const roll=sw*.03*(back?-1:1),lean=yw*.06;
+ if(Lnear){leg(R.legR,R.legRd,aR,false);leg(R.legL,R.legLd,aL,true)}
+ else{leg(R.legL,R.legLd,aL,false);leg(R.legR,R.legRd,aR,true)}
+ /* as duas pernas ficam atrás do tronco: o quadril nunca aparece cortado */
+ /* o tronco é desenhado depois da perna de trás e antes da da frente, com leve balanço */
+ c.save();c.translate(R.torso.pvx+R.torso.dx,R.torso.pvy+R.torso.dy+bob);c.rotate(roll+lean*.5);c.drawImage(back?R.torsoD.cv:R.torso.cv,-R.torso.pvx,-R.torso.pvy);c.restore();
+ put(back?R.headBack:R.head,-roll*.6+lean,yw*R.hh*.035,bob*.55+(walking?-spread*R.hh*.008:0));
+ c.restore();
+ if(pl.alert&&performance.now()-pl.alert<900){const kk=Math.min(1,(performance.now()-pl.alert)/180),s=kk<1?kk*1.25:1,X=PX,Y=PY-R.hh*S-ts*.16;c.save();c.translate(X,Y);c.scale(s,s);c.fillStyle='#fff';c.strokeStyle='#1c1c22';c.lineWidth=Math.max(2,ts*.04);c.beginPath();c.roundRect(-ts*.18,-ts*.38,ts*.36,ts*.4,ts*.1);c.fill();c.stroke();c.beginPath();c.moveTo(-ts*.06,0);c.lineTo(0,ts*.1);c.lineTo(ts*.06,0);c.fill();c.fillStyle='#ef4444';c.font=`bold ${Math.round(ts*.3)}px "Press Start 2P",monospace`;c.textAlign='center';c.textBaseline='middle';c.fillText('!',0,-ts*.17);c.restore()}}
+
 /* ---------- partículas do mapa ---------- */
 let PT=[],AMB=[];
 function ambient(reg,camx,camy,W,H,ts,dt){const want=RM?0:reg==='vulcao'?26:reg==='floresta'?22:reg==='lago'?16:14;
@@ -340,9 +419,9 @@ function drawAmb(camx,camy,ts,t){const c=cx;for(const p of AMB){const X=p.x*ts-c
 if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h){this.rect(x,y,w,h)};
 function shade(h,a){const n=parseInt(h.slice(1,7),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.max(0,Math.min(255,Math.round(a<0?v*(1+a):v+(255-v)*a)));return'#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}
 /* ---------- estado do jogador e laço ---------- */
-const pl={par:false,x:32,y:44,dir:'up',mv:null,anim:0,reg:'campo',grace:4,fs:1,face:1,alert:0,step:0};
+const pl={par:false,yaw:0,x:32,y:44,dir:'up',mv:null,anim:0,reg:'campo',grace:4,fs:1,face:1,alert:0,step:0};
 const keys={};let held=null,cv=$('#world'),cx=cv.getContext('2d'),TSZ=64,DPR=1,raf=0,last=0,mode='load',clouds=[];
-function resize(){DPR=Math.min(2,devicePixelRatio||1);cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);TSZ=Math.round(Math.max(40,Math.min(76,Math.min(innerWidth/16,innerHeight/9.5)))*DPR);CACHE={};HKEY=''}
+function resize(){DPR=Math.min(2,devicePixelRatio||1);cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);TSZ=Math.round(Math.max(40,Math.min(76,Math.min(innerWidth/16,innerHeight/9.5)))*DPR);CACHE={};RKEY=''}
 addEventListener('resize',resize);
 const DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
 function want(){if(held)return held;for(const k of ['up','down','left','right'])if(keys[k])return k;return null}
@@ -400,7 +479,7 @@ function draw(t,dt){const W=cv.width,H=cv.height,ts=TSZ;if(CTS!==ts){CACHE={};CT
    const g=c.createLinearGradient(0,Y,0,Y+ts*.7);g.addColorStop(0,'#d9a25f');g.addColorStop(1,'#9a6a35');c.fillStyle=g;c.beginPath();c.roundRect(X-ts*.25,Y,ts*2.3,ts*.62,ts*.16);c.fill();c.strokeStyle='#6b4220';c.lineWidth=Math.max(1,ts*.04);c.stroke();
    c.fillStyle='#fff7e0';c.font=`bold ${Math.round(ts*.24)}px "Press Start 2P",monospace`;c.textAlign='center';c.textBaseline='middle';c.fillText('SAFARI',X+ts*.9,Y+ts*.32);c.fillStyle='#4ade80';c.beginPath();c.arc(X-ts*.08,Y+ts*.08,ts*.09,0,6.29);c.fill()}};
  for(let y=y0;y<=Math.min(y1,prow);y++)objRow(y);
- drawHero(ppx,ppy,camx,camy,ts,t);
+ drawHero(ppx,ppy,camx,camy,ts,t,dt);
  if(at(pl.x,pl.y)===T.TG||at(pl.x,pl.y)===T.AG){if(!pl.mv)tuft(pl.x,pl.y,true)}
  for(let y=prow+1;y<=y1;y++)objRow(y);
  // partículas
@@ -411,11 +490,6 @@ function draw(t,dt){const W=cv.width,H=cv.height,ts=TSZ;if(CTS!==ts){CACHE={};CT
  const tint={vulcao:'rgba(255,90,30,.10)',floresta:'rgba(10,60,30,.12)',lago:'rgba(60,140,220,.06)',campo:'rgba(255,240,200,.04)'}[pl.reg];c.fillStyle=tint;c.fillRect(0,0,W,H);
  const vg=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,10,5,.35)');c.fillStyle=vg;c.fillRect(0,0,W,H);
 }
-function drawHero(ppx,ppy,camx,camy,ts,t){const P=heroPix(),c=cx;const k=Math.max(2,Math.round(ts*1.3/48)),w=34*k,h=48*k,PX=Math.round((ppx+.5)*ts-camx),PY=Math.round((ppy+1)*ts-camy-ts*.08);
- c.fillStyle='rgba(0,0,0,.25)';c.beginPath();c.ellipse(PX,PY-k,ts*.26,k*3,0,0,6.29);c.fill();if(!P)return;
- let fr='st';if(pl.mv&&pl.mv.t<.6)fr=pl.par?'w1':'w2';
- const im=P[pl.dir+'_'+fr]||P[pl.dir+'_st'];c.imageSmoothingEnabled=false;c.drawImage(im,PX-w/2,PY-h,w,h);c.imageSmoothingEnabled=true;
- if(pl.alert&&performance.now()-pl.alert<900){const kk=Math.min(1,(performance.now()-pl.alert)/180),s=kk<1?kk*1.25:1,X=PX,Y=PY-44*k-ts*.2;c.save();c.translate(X,Y);c.scale(s,s);c.fillStyle='#fff';c.strokeStyle='#1c1c22';c.lineWidth=Math.max(2,ts*.04);c.beginPath();c.roundRect(-ts*.18,-ts*.38,ts*.36,ts*.4,ts*.1);c.fill();c.stroke();c.beginPath();c.moveTo(-ts*.06,0);c.lineTo(0,ts*.1);c.lineTo(ts*.06,0);c.fill();c.fillStyle='#ef4444';c.font=`bold ${Math.round(ts*.3)}px "Press Start 2P",monospace`;c.textAlign='center';c.textBaseline='middle';c.fillText('!',0,-ts*.17);c.restore()}}
 let tT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('on'),2200)}
 function hud(){$('#chips').innerHTML=`<span class="chip" title="Passos restantes nesta visita">👣 ${V.steps}</span><span class="chip" title="Frutas calmantes">🍓 ${V.fruits}</span><span class="chip" title="Vínculos nesta visita">💞 ${V.caught}</span><span class="chip" title="Equipe">🎒 ${D?D.team:0}/6</span>`}
 /* entrada */
@@ -566,7 +640,7 @@ function showEnd(){ov(`<h2>FIM DA VISITA</h2><div>Seus passos acabaram. Você cr
  $('#again').onclick=()=>{$('#ov').classList.remove('on');newVisit()};$('#out').onclick=()=>{$('#ov').classList.remove('on');post({k:'nav',to:'map'})}}
 function newVisit(){V={steps:VISIT.steps,fruits:VISIT.fruits,caught:0};pl.x=32;pl.y=44;pl.mv=null;pl.dir='up';pl.reg='campo';pl.grace=4;pl.alert=0;mode=TER?'map':'load';hud();toast('🌿 Bem-vindo à Zona Safari!')}
 addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
- if(m.k==='sfdata'){if(m.imgs)Object.assign(IM,m.imgs);const first=!D;D=m;if(m.hero){hero=m.hero;HKEY='';heroImg()}hud();if(first){newVisit()}}
+ if(m.k==='sfdata'){if(m.imgs)Object.assign(IM,m.imgs);const first=!D;D=m;if(m.hero){hero=m.hero;RKEY='';heroImg()}hud();if(first){newVisit()}}
  else if(m.k==='sfcaught'){if(m.ok){V.caught++;D.team=m.team;hud();ov(`<img src="${IM['f'+m.i]||''}" alt="${m.n}"><h2>VÍNCULO FORMADO!</h2><div><b>${m.n}</b> (Nv ${m.l}) agora confia em você e entrou para a sua equipe!</div><button class="btn go" id="ok">CONTINUAR EXPLORANDO</button>`,'#f9a8d4')}else ov(`<h2>Ops</h2><div>${m.err||'Não foi possível.'}</div><button class="btn go" id="ok">OK</button>`,'#fca5a5');
   $('#ok').onclick=()=>{$('#ov').classList.remove('on');closeEnc(null)}}
 });
