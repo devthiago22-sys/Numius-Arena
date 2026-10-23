@@ -142,11 +142,14 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central (qualquer). Encontros no capim alto (13% por passo).
 - Encontro: cenário pintado por região (`drawScene`), Numiu animado pelo mesmo motor de sprites vivos do Boss (`Live`),
   entrada pulando do capim e reações a cada ação. O direcional só aparece em telas de toque.
-- O personagem anda com setas/WASD ou o direcional na tela; no mapa o boneco é a própria arte do criador de
-  personagem, recortada em tempo real (`buildRig`) em cabeça / tronco / perna esquerda / perna direita, com pivôs no pescoço
-  e no quadril; `drawHero` anima o ciclo de caminhada (pernas girando com profundidade, corpo subindo, giro no eixo Y ao
-  mudar de direção). De costas, a área do rosto é repintada com fios de cabelo. Pernas desenhadas atrás do tronco e
-  recortadas na linha do quadril: sem isso elas aparecem por cima da jaqueta. O retrato do encontro usa `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
+- O personagem anda com setas/WASD ou o direcional na tela. No mapa ele é um **sprite 16x24 estilo GBA (Pokémon Emerald)**:
+  `GBA` guarda 8 variantes (2 gêneros x 4 cabelos), cada uma com 9 quadros de 384 letras (parado/passo A/passo B para baixo,
+  cima e lado; a direita é o quadro do lado espelhado). As letras são índices de cor (`O` contorno, `H/h/L` cabelo, `S/s/N`
+  pele, `E/W` olho, `J/j/A/K/k/G` roupa, `P/p` perna, `B/b` bota) e `heroSheet(S)` pinta os 9 quadros num canvas ampliado
+  (sem suavizar), trocando cabelo por `HAIR[g][hair]` e pele por `SKIN[skin]`. `drawHero` escolhe o quadro pela direção e
+  alterna o pé a cada casa (`pl.par`), com o passo na primeira metade da casa. As grades vêm de
+  `tools/gba_sprite.py` (gerador com pré-visualização). O retrato do encontro continua usando
+  `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
 - Captura sem bola, o **Laço de Sintonia**: VÍNCULO (0-100) e AGITAÇÃO. Ações: Sintonizar (4 batidas no ritmo da aura:
   Perfeito/Bom/Fora), Fruta calmante (10 por visita), Observar (revela o temperamento) e Sair. Agitação alta = chance de fuga.
   Vínculo 100 -> `catch` -> `sfCatch` (equipe máx. 6). Visita: 500 passos. Raridade: estágio 1/2/3 = 72/23/5%.
