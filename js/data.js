@@ -43,3 +43,16 @@ const GY=[
 {l:'Aero',c:'Ginásio Céu',bd:'🪶',n:'Insígnia Pena',ty:'Voador',t:[[3,28],[0,30]]},
 {l:'Mística',c:'Ginásio Aura',bd:'🔮',n:'Insígnia Mente',ty:'Psíquico',t:[[6,32],[3,34]]},
 {l:'Pyro',c:'Ginásio Vulcão',bd:'🔥',n:'Insígnia Chama',ty:'Fogo',t:[[3,36],[6,38],[3,40]]}];
+/* Fases da Batalha Virtuosa (aba Treinamento). `numios` e `r` (recompensa) valem para as fases 1-10;
+   além da 10, `vstart` cai de volta na fórmula genérica (cnt cresce a cada 2 fases, recompensa = 2+n). */
+const VPH=[
+{nome:'Início Virtuoso',numios:3,nivel:'Nv 5+',tatica:'Iniciante',r:3,rival:'Rival Virtuoso',e:'🥷',cor:['#7C3AED','#2D1B69']},
+{nome:'Trilha de Pedra',numios:3,nivel:'Nv 8+',tatica:'Defensiva',r:4,rival:'Guardião Rocha',e:'🪨',cor:['#D97706','#7C2D12']},
+{nome:'Vapor Árido',numios:3,nivel:'Nv 12+',tatica:'Ofensiva',r:5,rival:'Mestre Brasa',e:'🔥',cor:['#DC2626','#4C0519']},
+{nome:'Nevoa Profunda',numios:4,nivel:'Nv 16+',tatica:'Equilíbrio',r:6,rival:'Oráculo Água',e:'💧',cor:['#0891B2','#1E3A8A']},
+{nome:'Choque Tático',numios:4,nivel:'Nv 20+',tatica:'Veloz',r:8,rival:'Corredor Volt',e:'⚡',cor:['#EAB308','#78350F']},
+{nome:'Muralha Viva',numios:4,nivel:'Nv 25+',tatica:'Muralha',r:10,rival:'Colosso',e:'🛡️',cor:['#64748B','#18181B']},
+{nome:'Tempestade Psíquica',numios:5,nivel:'Nv 30+',tatica:'Mista',r:12,rival:'Sábio Psi',e:'🔮',cor:['#C026D3','#581C87']},
+{nome:'Arena Suprema',numios:5,nivel:'Nv 35+',tatica:'Elite',r:15,rival:'Campeão Lumen',e:'👑',cor:['#059669','#134E4A']},
+{nome:'Eclipse',numios:6,nivel:'Nv 40+',tatica:'Extrema',r:20,rival:'Sombra Eclipse',e:'🌑',cor:['#404040','#000000']},
+{nome:'Lenda Virtuosa',numios:6,nivel:'Nv 50',tatica:'Lendária',r:35,rival:'Avatar Numius',e:'🏆',cor:['#7C3AED','#2D1B69']}];

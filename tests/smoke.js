@@ -26,7 +26,7 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
 
   console.log('Telas');
   const visible = () => page.evaluate(() => [...document.querySelectorAll('iframe')].filter(f => f.style.display !== 'none' && f.style.visibility !== 'hidden').map(f => f.id).join(','));
-  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf'], ['boss', 'bsf'], ['bag', 'bgf'], ['safari', 'sff']]) {
+  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf'], ['boss', 'bsf'], ['bag', 'bgf'], ['safari', 'sff'], ['train', 'trf']]) {
     await page.evaluate(s => { G.screen = s; R(); }, screen); await page.waitForTimeout(1500);
     ok((await visible()) === frame, 'tela "' + screen + '" mostra o iframe ' + frame);
   }
@@ -73,6 +73,23 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   await ms.locator('.claim').first().click(); await page.waitForTimeout(600);
   ok(await page.evaluate(() => G.sf.mo) > moA, 'resgatar a missão paga Moedas Safari');
   ok(await page.evaluate(() => MIS.d.reduce((a, m) => a + m.r, 0)) === 20 * 5 * 4, 'as diárias juntas pagam 5 invocações em cada região');
+
+  console.log('Treinamento');
+  await page.evaluate(() => { G.vc = 50; G.vbest = 0; G.screen = 'train'; G.trfb = 0; R(); }); await page.waitForTimeout(2200);
+  const tr = page.frameLocator('#trf');
+  ok(await page.evaluate(() => TR.ready), 'tela de treinamento carregou');
+  await tr.locator('#goIv').click(); await page.waitForTimeout(400);
+  const ev0 = await page.evaluate(() => G.team[0].ev.h || 0), vc0 = await page.evaluate(() => G.vc);
+  await tr.locator('.stbtn.ev').first().click(); await page.waitForTimeout(500);
+  ok(await page.evaluate(() => G.team[0].ev.h) === ev0 + 8, 'o botão de EV soma 8 pontos no primeiro Numiu');
+  ok(await page.evaluate(() => G.vc) === vc0 - 2, 'a sessão de EV cobrou 2 Moedas Virtuosas');
+  await tr.locator('#backIv').click(); await page.waitForTimeout(300);
+  await tr.locator('#goVir').click(); await page.waitForTimeout(400);
+  ok(await tr.locator('.ph').count() === 10, 'a escada de fases mostra as 10 fases');
+  ok(await tr.locator('.ph.locked').count() === 9, 'só a fase 1 está liberada no começo');
+  await tr.locator('#fightBtn').click(); await page.waitForTimeout(2200);
+  ok(await page.evaluate(() => G.screen === 'battle' && G.battle && G.battle.vt === 1), 'lutar na fase 1 abre a arena de batalha de verdade');
+  await page.evaluate(() => { G.battle = null; G.screen = 'map'; R(); }); await page.waitForTimeout(500);
 
   console.log('Batalha');
   await page.evaluate(() => { G.screen = 'map'; R(); wild(); }); await page.waitForTimeout(3500);

@@ -24,7 +24,7 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
 9. `screens-core.js`: `dec`, `iw` (iframe pré-carregado), telas Starter e Hero.
 10. `pixel-scene.js`: cenário pixel art do menu antigo (reserva).
 11. `screens-bridge.js`: pontes com as telas em iframe (login, menu, equipe, ginásios, mostruário, PvP,
-    táticas, **arena de batalha** `btMount/btData/btSend`) e `authCore`.
+    táticas, **arena de batalha** `btMount/btData/btSend`, **treinamento** `trMount/trData/trSend`) e `authCore`.
 12. `boss.js`: **Boss semanal** (raid): chefes `BOSSES`, simulação `bsNew/bsTurn`, recompensas, ovos, ponte `bsMount/bsData/bsSend`.
 13. `legend.js`: **lendários invocáveis** (`LEG`, `lgCast`, `lgEnd`, `tyOf`, barra `lgBarSync`, animação `lgFx`) e ponte da **Mochila** (`bgMount/bgData/bgSend`).
 14. `safari.js`: **Zona Safari** (sorteio `sfSpin`, cruzamento `sfBreed`, ponte `sfMount/sfData/sfSend`).
@@ -59,6 +59,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `bgf` mochila | `ready`, `nav` (map, boss), `unlock` (`id`), `hatch` | `bgdata`, `bgunlock`, `bghatch` |
 | `sff` zona safari | `ready`, `nav`, `spin` (`z`), `breed` (`a`,`b`), `take` (`u`), `release` (`u`) | `sfdata`, `sfspin`, `sfbreed`, `sftake`, `sfrelease` |
 | `msf` missões | `ready`, `nav`, `claim` (`id`) | `msdata`, `msclaim` |
+| `trf` treinamento | `ready`, `nav`, `ev` (`i`,`s`), `iv` (`i`,`s`), `fight` (`n`) | `trdata` |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -174,3 +175,23 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   diárias para a conta continuar fechando (o teste de fumaça confere isso).
 - No menu a aba **MISSÕES** fica na lista lateral, logo abaixo de BATALHAS TÁTICAS, com a contagem de missões
   prontas para resgate (`cnt.missoes` em `mnData`, de `msCount()`).
+
+## Treinamento (`screens/train.html` + ponte em `screens-bridge.js`)
+- Tela em HTML/JS puro (não é bundle React), acessada pela ilha "VALE ANCESTRAL" e pelo item **TREINAMENTO**
+  da lista lateral do menu (`nav:"train"`), e pela tela de reserva do mapa. Substituiu as três telas antigas
+  em HTML inline (`train`, `vir`, `trainiv` em `render.js`) por um único iframe com três visões internas
+  (hub, IV/EV, Batalha Virtuosa) — o jogo só conhece `G.screen==='train'`.
+- **IV e EV**: `trEV(i,s)`/`trIV(i,s)` (em `js/battle.js`) já existiam e não mudaram — gastam `G.vc` (Moedas
+  Virtuosas) para subir EV (+8, custa 2, máx. 252) ou IV (+4, custa 6, máx. 31) de um Numiu da equipe. A tela
+  manda `{k:'ev',i,s}`/`{k:'iv',i,s}` (`i` = índice na equipe, `s` = `h`/`a`/`sa`/`d`/`sd`/`sp`); o jogo chama
+  a função, que já termina com `R()`, e isso reenvia `trdata` sozinho (mesmo padrão de `mv` na tela de equipe).
+- **Batalha Virtuosa**: a tabela **`VPH`** (`js/data.js`, logo depois de `GY`) tem as 10 fases com nome, rival,
+  emoji, tática, número de númios e recompensa em moedas. `vstart(n)` (em `battle.js`) usa `VPH[n-1]` para o
+  número de rivais e a recompensa quando `n<=10`; além da fase 10 cai de volta na fórmula genérica antiga
+  (`cnt` cresce a cada 2 fases, recompensa `2+n`). O **nível** dos rivais continua vindo da fórmula baseada no
+  nível do seu primeiro Numiu (`pl+2*(n-1)`) — os textos "Nv 5+", "Nv 8+"... da tabela são só decorativos.
+  Fases além da `G.vbest+1` aparecem bloqueadas (`locked`) e não podem ser lutadas.
+- A luta em si **não é simulada na tela**: o botão "LUTAR" manda `{k:'fight',n}` e o jogo chama `vstart(n)`,
+  que abre a arena de batalha de verdade (`G.screen='battle'`). Ao vencer, `end()` (em `battle.js`) volta para
+  `G.screen='train'` (antes voltava para a extinta tela `vir`) com `G.vc`/`G.vbest`/`G.vsel` já atualizados.
+- Estado salvo não mudou: `G.vc` (moedas), `G.vbest` (melhor fase), `G.vn`/`G.vsel` (fase atual/selecionada).

@@ -74,18 +74,8 @@ function R(){
   const d=G.dex||[];
   h=`<h1>Mostruário</h1><small>${d.length}/${DEX.length} registrados · os que você ainda não obteve aparecem como sombra</small><p><button onclick="G.screen='map';R()">Voltar ao mapa</button></p><div class=dex>`+DEX.map((i,k)=>{const s=S[i],o=d.includes(i);return `<div class="card dx ${o?'':'sh'}" ${o?`onclick="G.dd=${i};G.screen='dexd';R()" role=button tabindex=0`:''}><small>#${String(k+1).padStart(3,'0')}${s.s&&!s.ps?' · F'+s.s:''}</small><span class=sp>${s.e}</span><b>${o?s.n:'???'}</b><small>${o?s.t+(s.t2?' · '+s.t2:''):'&nbsp;'}</small></div>`}).join('')+`</div>`;
  }
- else if(G.screen==='train'){
-  h=`<h1>🏋️ Treinamento</h1><small>🪙 ${G.vc||0} Moedas Virtuosas · Melhor fase: ${G.vbest||0}</small><p><button onclick="G.screen='map';R()">Voltar ao mapa</button></p><div class=tiles><button class=tile onclick="G.screen='trainiv';R()"><span class=medal2 style="--c:#5b7bd5">🧬</span><b>IV e EV</b><small>Gaste moedas virtuosas</small></button><button class=tile onclick="G.screen='vir';R()"><span class=medal2 style="--c:#8d4fc4">🏆</span><b>Batalha Virtuosa</b><small>Fase ${G.vn||1} · ganhe moedas</small></button></div>`;
- }
- else if(G.screen==='vir'){
-  const pl=Math.max(5,(G.team[0]||{l:5}).l),best=G.vbest||0,n=Math.max(1,Math.min(G.vsel||G.vn||1,best+1)),L=pl+2*(n-1),cnt=Math.min(6,3+Math.floor((n-1)/2)),tier=Math.min(3,Math.floor((n-1)/2)),A=ARENA['Psíquico'],mon=S[form(BASE[(n*5)%BASE.length],L)];
-  h=`<h1>🏆 Batalha Virtuosa</h1><small>🪙 ${G.vc||0} Moedas Virtuosas · Melhor fase: ${best}</small><p><button onclick="G.screen='train';R()">Voltar</button></p><div class=gcard><div class=biome style="--a:${A[0]};--b:${A[1]};--g:${A[2]}"><span class="deco d1">${A[3]}</span><span class="deco d3">${A[4]}</span><div class="medal got" title="Moedas Virtuosas">🪙</div><i class="plat pl1"></i><i class="plat pl2"></i><div class=npc>🥷</div><div class=nmo>${mon.e}</div><span class=lname>Rival Virtuoso</span></div><div class=ginfo><div><b>Fase ${n}</b><br><small>${cnt} númios · Nv ${L}+ · Tática: ${TN[tier]}</small><br><small>Recompensa: 🪙 ${2+n} moedas</small></div><div class=row><button ${n>1?'':'disabled'} onclick="G.vsel=${n-1};R()" aria-label="Fase anterior">◀</button><button ${n<best+1?'':'disabled'} onclick="G.vsel=${n+1};R()" aria-label="Próxima fase">▶</button></div></div></div><p><button style="width:100%" onclick="vstart(${n})">⚔️ Lutar na Fase ${n}</button></p><small>Cada vitória sobe a fase: mais níveis, mais númios e rivais mais espertos. Derrotas não custam nada.</small>`;
- }
- else if(G.screen==='trainiv'){
-  const rate=v=>v>=31?'Perfeito':v>=26?'Ótimo':v>=16?'Bom':v>=8?'Regular':'Fraco';
-  h=`<h1>🧬 IV e EV</h1><small>🪙 ${G.vc||0} Moedas Virtuosas · EV: +8 por sessão (2 🪙, máx. 252) · IV: +4 por sessão (6 🪙, máx. 31). Ganhe moedas na Batalha Virtuosa.</small><p><button onclick="G.screen='train';R()">Voltar</button></p>`;
-  h+=G.team.map((m,i)=>{const I=k=>m.iv[k]==null?15:m.iv[k],E=k=>m.ev[k]||0,L=[['h','PS',m.max],['a','Atq',m.a],['sa','Atq.M',m.sa],['d','Def',m.d],['sd','Def.M',m.sd],['sp','Vel',m.sp]];return `<div class=card><div class=mon><span class=sp>${S[m.i].e}</span><div><b>${S[m.i].n}</b> <small>Nv ${m.l} · ${S[m.i].t}</small><br><small>${L.map(x=>x[1]+' '+x[2]).join(' · ')}</small><br><small>IV: ${L.map(x=>x[1]+' '+I(x[0])).join(' · ')}</small><br><small>EV: ${L.map(x=>x[1]+' '+E(x[0])).join(' · ')}</small></div></div><div class=row style="margin-top:8px;flex-wrap:wrap">${L.map(x=>`<button onclick="trEV(${i},'${x[0]}')">💪 EV ${x[1]}</button>`).join('')}${L.map(x=>`<button onclick="trIV(${i},'${x[0]}')">🧬 IV ${x[1]}</button>`).join('')}</div></div>`}).join('');
- }
+ else if(G.screen==='train'&&!G.trfb){h=`<div id=trph></div>`}
+ else if(G.screen==='train'){h=`<h1>🏋️ Treinamento</h1><p>A tela de Treinamento não carregou.</p><p><button onclick="G.trfb=0;G.screen='map';R()">Voltar ao mapa</button></p>`}
  else if(G.screen==='tac'){h=`<div id=tbph></div>`}
  else if(G.screen==='team'&&!G.efb){h=`<div id=eqph></div>`}
  else if(G.screen==='team'){
@@ -101,7 +91,7 @@ function R(){
    [S[(G.team[0]||{i:0}).i].e,'Equipe',G.team.length+'/6',"G.screen='team';R()"],
    ['📖','Mostruário',(G.dex||[]).length+'/'+DEX.length,"G.screen='dex';R()"],
    ['🤝','PvP online','','pvpOpen()'],
-   ['🏋️','Treinamento',(G.vc||0)+' 🪙',"G.screen='train';R()"],
+   ['🏋️','Treinamento',(G.vc||0)+' 🪙',"G.trfb=0;G.screen='train';R()"],
    ['🏥','Centro de cura',hurt?hurt+' ferido'+(hurt>1?'s':''):'',"goHeal()"]];
   const sel=G.sel||0;
   const pm=it.map(([ic,t,sub,fn],i)=>`<button class="pm ${i===sel?'sel':''}" style="--d:${i*.05}s" onclick="${fn}" onmouseenter="pmSel(${i})" onfocus="pmSel(${i})"><span class=cur>▶</span><span class=pic>${ic}</span><span class=pt>${t}</span>${sub?`<small>${sub}</small>`:''}</button>`).join('');
@@ -140,6 +130,6 @@ function R(){
  }
  if(G.note&&G.screen!=='battle'){h=`<p class=win role=status>${G.note}</p>`+h;G.note=''}
  if(G.screen!=='map')G.cf=0;
- if(!['auth','battle','bye','cfg','hero','tac'].includes(G.screen)||(G.screen==='team'&&!G.efb)||(G.screen==='gyms'&&!G.gfb)||(G.screen==='dex'&&!G.xfb)||(G.screen==='boss'&&!G.bsfb)||(G.screen==='bag'&&!G.bgfb)||(G.screen==='safari'&&!G.sffb)||(G.screen==='missions'&&!G.msfb)||(G.screen==='pvp'&&!G.pfb)||(G.screen==='start'&&!G.sfb))h+=`<button class=gear onclick="openCfg()" aria-label="Configurações">⚙️</button>`;
- A.innerHTML=h;if(G.screen==='map')pxDraw();if(G.screen==='auth'&&!G.fb)lgMount();if(G.screen==='hero'&&!G.hfb)hMount();if(G.screen==='start'&&!G.sfb)sMount();else sVis();mnToggle();if(G.screen==='tac'){tbMount();tbSend()}else tbToggle();if(G.screen==='team'&&!G.efb){eqMount();eqSend()}else eqToggle();if(G.screen==='gyms'&&!G.gfb){gyMount();gySend()}else gyToggle();if(G.screen==='dex'&&!G.xfb){dxMount();dxSend()}else dxToggle();if(G.screen==='pvp'&&!G.pfb){pvMount();pvSend()}else pvToggle();if(G.screen==='boss'&&!G.bsfb){bsMount();bsSend()}else bsToggle();if(G.screen==='bag'&&!G.bgfb){bgMount();bgSend()}else bgToggle();if(G.screen==='safari'&&!G.sffb){sfMount();sfSend()}else sfToggle();if(G.screen==='missions'&&!G.msfb){msMount();msSend()}else msToggle();lgBarSync();if(G.screen==='battle'&&!G.btfb&&G.battle){btMount();btSend()}else btToggle();if(G.screen==='map'&&!G.mfb)mnMount();hcToggle();
+ if(!['auth','battle','bye','cfg','hero','tac'].includes(G.screen)||(G.screen==='team'&&!G.efb)||(G.screen==='gyms'&&!G.gfb)||(G.screen==='dex'&&!G.xfb)||(G.screen==='boss'&&!G.bsfb)||(G.screen==='bag'&&!G.bgfb)||(G.screen==='safari'&&!G.sffb)||(G.screen==='missions'&&!G.msfb)||(G.screen==='train'&&!G.trfb)||(G.screen==='pvp'&&!G.pfb)||(G.screen==='start'&&!G.sfb))h+=`<button class=gear onclick="openCfg()" aria-label="Configurações">⚙️</button>`;
+ A.innerHTML=h;if(G.screen==='map')pxDraw();if(G.screen==='auth'&&!G.fb)lgMount();if(G.screen==='hero'&&!G.hfb)hMount();if(G.screen==='start'&&!G.sfb)sMount();else sVis();mnToggle();if(G.screen==='tac'){tbMount();tbSend()}else tbToggle();if(G.screen==='team'&&!G.efb){eqMount();eqSend()}else eqToggle();if(G.screen==='gyms'&&!G.gfb){gyMount();gySend()}else gyToggle();if(G.screen==='dex'&&!G.xfb){dxMount();dxSend()}else dxToggle();if(G.screen==='pvp'&&!G.pfb){pvMount();pvSend()}else pvToggle();if(G.screen==='boss'&&!G.bsfb){bsMount();bsSend()}else bsToggle();if(G.screen==='bag'&&!G.bgfb){bgMount();bgSend()}else bgToggle();if(G.screen==='safari'&&!G.sffb){sfMount();sfSend()}else sfToggle();if(G.screen==='missions'&&!G.msfb){msMount();msSend()}else msToggle();if(G.screen==='train'&&!G.trfb){trMount();trSend()}else trToggle();lgBarSync();if(G.screen==='battle'&&!G.btfb&&G.battle){btMount();btSend()}else btToggle();if(G.screen==='map'&&!G.mfb)mnMount();hcToggle();
 }

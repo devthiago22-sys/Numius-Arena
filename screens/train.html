@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Treinamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'JetBrains Mono',ui-monospace,monospace}
+:root{--bg:#0d0b16;--pan:#15121f;--line:rgba(255,255,255,.10);--vi:#8b5cf6;--vi2:#6d28d9;--go:#ffd700;--ok:#4ade80;--bad:#ff6b6b}
+html,body{height:100%}
+body{background:var(--bg);color:#fff;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.px{font-family:'Press Start 2P',monospace;letter-spacing:.04em}
+#app{height:100%;display:flex;flex-direction:column;gap:10px;padding:12px;padding-top:max(12px,env(safe-area-inset-top))}
+#top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:11px;color:var(--vi);text-shadow:0 0 14px rgba(139,92,246,.55);flex:1;min-width:120px}
+.btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;border-radius:10px;padding:9px 12px;font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.12)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.go{background:linear-gradient(90deg,var(--vi),var(--vi2));border-color:transparent;box-shadow:0 0 22px rgba(139,92,246,.45)}
+.btn.go:hover{filter:brightness(1.1)}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;white-space:nowrap}
+.chip b{color:var(--go)}
+#body{flex:1;min-height:0;overflow:auto;padding-right:2px}
+.view{display:none}
+.view.on{display:block}
+/* ---- hub ---- */
+.hub{display:grid;gap:12px}
+@media(min-width:620px){.hub{grid-template-columns:1fr 1fr}}
+.hcard{border:1px solid var(--line);border-radius:18px;padding:16px;cursor:pointer;text-align:left;color:#fff;background:var(--pan);position:relative;overflow:hidden;transition:.18s}
+.hcard:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.22)}
+.hcard .ic{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.08);margin-bottom:10px}
+.hcard h3{font-size:16px;margin-bottom:4px}
+.hcard p{font-size:11px;color:rgba(255,255,255,.6);line-height:1.4;margin-bottom:10px}
+.hcard .tags{display:flex;gap:6px;flex-wrap:wrap}
+.hcard .tag{font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:700}
+.hcard.vir{background:linear-gradient(135deg,rgba(139,92,246,.18),var(--pan) 70%)}
+.hcard.vir .ic{background:linear-gradient(135deg,var(--vi),var(--vi2))}
+.tip{margin-top:4px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:12px;padding:10px 12px;font-size:11px;color:rgba(255,255,255,.55)}
+/* ---- iv/ev ---- */
+.mon{border:1px solid var(--line);background:var(--pan);border-radius:14px;padding:12px;margin-bottom:10px}
+.mon .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mon img{width:40px;height:40px;object-fit:contain;image-rendering:pixelated}
+.mon .em{font-size:28px;width:40px;text-align:center}
+.mon b{font-size:12px}
+.mon small{font-size:10px;color:rgba(255,255,255,.55)}
+.st{display:grid;grid-template-columns:46px 1fr auto auto;align-items:center;gap:8px;padding:5px 0;font-size:10px;border-top:1px solid rgba(255,255,255,.05)}
+.st .bar{height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.st .bar i{display:block;height:100%}
+.st .bar.ev i{background:linear-gradient(90deg,var(--vi),#c4b5fd)}
+.st .bar.iv i{background:linear-gradient(90deg,var(--go),#fff3b0)}
+.stbtn{border:0;border-radius:7px;padding:5px 7px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap}
+.stbtn.ev{background:var(--vi);color:#fff}
+.stbtn.iv{background:var(--go);color:#000}
+.stbtn:disabled{opacity:.3;cursor:not-allowed}
+/* ---- batalha ---- */
+#ladder{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 10px}
+.ph{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:rgba(255,255,255,.05);color:#fff;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ph.on{border-color:var(--vi);background:var(--vi);box-shadow:0 0 14px rgba(139,92,246,.6)}
+.ph.locked{opacity:.35;cursor:not-allowed}
+.pcard{border-radius:18px;padding:16px;position:relative;overflow:hidden;color:#fff;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
+.pcard .em{font-size:40px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.pcard h2{font-size:17px;margin:8px 0 2px}
+.pcard .rv{font-size:11px;opacity:.85}
+.pcard .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pcard .tag{font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);font-weight:700}
+.pcard .locktxt{font-size:11px;opacity:.85;margin-top:8px}
+#fightbar{margin-top:10px;display:flex;align-items:center;gap:8px}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:rgba(10,14,22,.95);border:1px solid var(--vi);border-radius:10px;padding:10px 14px;font-size:11px;opacity:0;transition:.25s;pointer-events:none;z-index:40;max-width:92vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="top">
+  <button class="btn" id="back" aria-label="Voltar ao mapa">← VOLTAR</button>
+  <h1 class="px">TREINAMENTO</h1>
+  <span class="chip" title="Moedas Virtuosas">🪙 <b id="mo">0</b></span>
+ </div>
+ <div id="body">
+  <div class="view on" id="v-hub">
+   <div class="hub">
+    <button class="hcard" id="goIv">
+     <div class="ic">🧬</div>
+     <h3>IV e EV</h3>
+     <p>Gaste Moedas Virtuosas para fortalecer seus Numius. +8 EV ou +4 IV por clique.</p>
+     <div class="tags"><span class="tag">2🪙 = +8 EV</span><span class="tag">6🪙 = +4 IV</span></div>
+    </button>
+    <button class="hcard vir" id="goVir">
+     <div class="ic">🏆</div>
+     <h3>Batalha Virtuosa</h3>
+     <p id="virP">Fase 1 · vença para ganhar moedas e subir de fase.</p>
+     <div class="tags"><span class="tag" id="virTag">Fase 1</span><span class="tag">Sem risco: derrota não custa nada</span></div>
+    </button>
+   </div>
+   <div class="tip">Dica: fortaleça no IV/EV antes de encarar a próxima fase — cada ponto de EV aumenta dano e resistência.</div>
+  </div>
+
+  <div class="view" id="v-iv">
+   <p><button class="btn" id="backIv">← Voltar</button></p>
+   <div id="ivlist"></div>
+  </div>
+
+  <div class="view" id="v-vir">
+   <p><button class="btn" id="backVir">← Voltar</button></p>
+   <div id="ladder"></div>
+   <div id="pcardwrap"></div>
+  </div>
+ </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const post=o=>parent.postMessage(Object.assign({numius:1},o),'*');
+let D=null,IM={},VIEW='hub',SEL=1;
+let tT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('on'),2200)}
+const SHORT={h:'PS',a:'Atq',sa:'Atq.M',d:'Def',sd:'Def.M',sp:'Vel'};
+
+function show(v){VIEW=v;['hub','iv','vir'].forEach(k=>$('#v-'+k).classList.toggle('on',k===v))}
+
+function hud(){if(!D)return;$('#mo').textContent=D.vc;
+ $('#virP').textContent='Fase '+D.vsel+' · vença para ganhar moedas e subir de fase.';
+ $('#virTag').textContent='Fase '+D.vsel+'/10+';
+}
+
+function ivlist(){
+ const box=$('#ivlist');box.innerHTML='';
+ if(!D.team.length){box.innerHTML='<div class="mon">Sua equipe está vazia.</div>';return}
+ D.team.forEach(m=>{
+  const d=document.createElement('div');d.className='mon';
+  const img=IM['f'+m.i]?`<img src="${IM['f'+m.i]}" alt="">`:`<span class="em">${m.e}</span>`;
+  d.innerHTML=`<div class="hd">${img}<div><b>${m.n}</b><br><small>Nv ${m.l} · ${m.t}${m.t2?' · '+m.t2:''}</small></div></div>`;
+  m.st.forEach(s=>{
+   const evMax=s.ev>=252,ivMax=s.iv>=31,noVc=D.vc<2,noVcIv=D.vc<6;
+   const row=document.createElement('div');row.className='st';
+   row.innerHTML=`<span>${SHORT[s.k]}</span>
+    <span><div class="bar ev" title="EV ${s.ev}/252"><i style="width:${Math.min(100,s.ev/252*100)}%"></i></div><div class="bar iv" style="margin-top:2px" title="IV ${s.iv}/31"><i style="width:${Math.min(100,s.iv/31*100)}%"></i></div></span>
+    <button class="stbtn ev" ${evMax||noVc?'disabled':''}>+8 EV·2🪙</button>
+    <button class="stbtn iv" ${ivMax||noVcIv?'disabled':''}>+4 IV·6🪙</button>`;
+   row.querySelector('.stbtn.ev').onclick=()=>post({k:'ev',i:m.idx,s:s.k});
+   row.querySelector('.stbtn.iv').onclick=()=>post({k:'iv',i:m.idx,s:s.k});
+   d.appendChild(row);
+  });
+  box.appendChild(d);
+ });
+}
+
+function ladder(){
+ const box=$('#ladder');box.innerHTML='';
+ if(SEL>D.vsel)SEL=D.vsel;
+ D.phases.forEach(p=>{
+  const b=document.createElement('button');b.className='ph'+(p.id===SEL?' on':'')+(p.locked?' locked':'');
+  b.textContent=p.id;b.setAttribute('aria-label','Fase '+p.id+(p.locked?' (bloqueada)':''));
+  b.disabled=p.locked;b.onclick=()=>{SEL=p.id;ladder();pcard()};
+  box.appendChild(b);
+ });
+ pcard();
+}
+function pcard(){
+ const p=D.phases.find(x=>x.id===SEL)||D.phases[0];
+ const w=$('#pcardwrap');
+ if(!p){w.innerHTML='';return}
+ w.innerHTML=`<div class="pcard" style="background:linear-gradient(135deg,${p.cor[0]},${p.cor[1]})">
+   <div><span class="em">${p.e}</span>
+    <h2>${p.locked?'???':p.nome}</h2>
+    <div class="rv">${p.locked?'Vença a fase anterior para desbloquear':'Rival: '+p.rival+' · '+p.tatica}</div>
+   </div>
+   <div>
+    <div class="meta">
+     <span class="tag">${p.numios} númios</span>
+     <span class="tag">${p.nivel}</span>
+     <span class="tag">🪙 +${p.r} moedas</span>
+    </div>
+    ${p.locked?`<div class="locktxt">🔒 Bloqueada</div>`:`<div id="fightbar"><button class="btn go" id="fightBtn" style="flex:1">⚔️ LUTAR NA FASE ${p.id}</button></div>`}
+   </div>
+  </div>`;
+ if(!p.locked){const fb=$('#fightBtn');if(fb)fb.onclick=()=>post({k:'fight',n:p.id})}
+}
+
+function render(){if(!D)return;hud();if(VIEW==='iv')ivlist();if(VIEW==='vir')ladder()}
+
+$('#back').onclick=()=>post({k:'nav'});
+$('#goIv').onclick=()=>{show('iv');ivlist()};
+$('#backIv').onclick=()=>show('hub');
+$('#goVir').onclick=()=>{show('vir');SEL=D?D.vsel:1;ladder()};
+$('#backVir').onclick=()=>show('hub');
+addEventListener('keydown',e=>{if(e.key==='Escape')post({k:'nav'})});
+addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
+ if(m.k==='trdata'){if(m.imgs)Object.assign(IM,m.imgs);D=m;render()}
+});
+post({k:'ready'});
+})();
+</script>
+</body>
+</html>
