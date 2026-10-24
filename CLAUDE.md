@@ -207,6 +207,17 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   Elite (16-25), Mestre (26-30) — cada nível tem seu ícone, cor neon e um banco de nomes de treinadores
   (`(n-1) % nomes.length`, cíclico). Andares 1-4/5-9/10-19/20-29/30 têm 2/3/4/5/6 rivais.
   O andar 30 põe uma forma final (estágio 3) mais forte no último rival (`boss` em `twFloor`).
+- Cada andar também tem um "númio principal" só decorativo (`twMain(n)` em `js/data.js`): cicla pelas 3
+  famílias (`(n-1)%3`) e sobe de estágio junto com o nível (Iniciante/Veterano/Elite+Mestre = estágio 1/2/3).
+  Fica igual pra quem olha a torre, mas **não** é o time sorteado de verdade na luta (isso continua aleatório
+  em `twStart`). `twFloor(n)` devolve `spi`/`spn` (índice e nome da espécie); o sprite de verdade (`f`+índice)
+  vem de `btImgs()`, enviado em `imgs` no primeiro `twdata` e cacheado pela tela (`IMGS` em `tower.html`).
+- **Visual**: tela escura em tons de gelo (fontes Outfit + Space Grotesk, não as pixeladas do resto do jogo),
+  com neve caindo, cristais e névoa decorativos no fundo. Os andares aparecem como uma **torre vertical de
+  verdade** (`#grid` em `tower.html`): uma coluna rolável com uma linha ligando os andares, andar 30 no topo e
+  andar 1 embaixo — o jogador sobe a torre rolando pra cima. Cada andar mostra o número, o sprite do númio
+  principal, o nome do treinador e a recompensa; andares bloqueados ficam acinzentados com um cadeado. Ao
+  carregar, a tela rola até o andar selecionado (`scrolled` em `tower.html`, só na primeira renderização).
 - A luta acontece na arena de batalha de verdade: a tela manda `{k:'fight',n}`, o jogo chama `twStart(n)`
   (em `js/battle.js`), que monta o time rival com Numius de verdade (`BASE`, nível ≈ `5+n*1.5` + bônus depois
   do andar 25) e abre `G.screen='battle'`. Ao vencer, `end()` volta para `G.screen='tower'`.

@@ -64,8 +64,14 @@ const TWN={
  Elite:{icon:'🛡️',neon:'#a78bfa',nomes:['Elite Frosta','Comandante Blizzard','Senhora Avalanche','Lorde Permafrost','General Crio','Arquimaga Hiemal','Executor do Frio','Baronesa Geada','Mestre do Nevoeiro','Guardiã do Abismo Gelado']},
  Mestre:{icon:'👑',neon:'#FFD700',nomes:['Mestre Glacius','Oráculo do Gelo Eterno','Imperatriz Inverna','Titã Cryogênico','Avatar do Zero Absoluto']}};
 const twTier=n=>n<=5?'Iniciante':n<=15?'Veterano':n<=25?'Elite':'Mestre';
+/* "Númio principal" de cada andar: só decorativo (a luta de verdade sorteia o time em twStart), mas fica
+   sempre igual pra quem olha a torre — cicla pelas 3 famílias e sobe de estágio junto com o nível. */
+function twMain(n){
+ const tier=twTier(n),fam=(n-1)%3,st=tier==='Iniciante'?0:tier==='Veterano'?1:2;
+ return fam*3+st;
+}
 function twFloor(n){
  const tier=twTier(n),p=TWN[tier],trainer=p.nomes[(n-1)%p.nomes.length],
-  cnt=n<=4?2:n<=9?3:n<=19?4:n<=29?5:6,reward=n*12+10;
- return{floor:n,tier,icon:p.icon,neon:p.neon,trainer,cnt,reward,boss:n===30};
+  cnt=n<=4?2:n<=9?3:n<=19?4:n<=29?5:6,reward=n*12+10,spi=twMain(n);
+ return{floor:n,tier,icon:p.icon,neon:p.neon,trainer,cnt,reward,boss:n===30,spi,spn:S[spi].n};
 }

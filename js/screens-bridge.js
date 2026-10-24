@@ -95,7 +95,7 @@ function twMount(){
 function twData(){
  const best=G.twBest||0;
  return{numius:1,k:'twdata',coins:G.coins||0,best,
-  floors:Array.from({length:30},(_,k)=>{const f=twFloor(k+1);return{id:f.floor,tier:f.tier,icon:f.icon,neon:f.neon,trainer:f.trainer,cnt:f.cnt,reward:f.reward,boss:f.boss,locked:f.floor>best+1}}),
+  floors:Array.from({length:30},(_,k)=>{const f=twFloor(k+1);return{id:f.floor,tier:f.tier,icon:f.icon,neon:f.neon,trainer:f.trainer,cnt:f.cnt,reward:f.reward,boss:f.boss,spi:f.spi,spn:f.spn,locked:f.floor>best+1}}),
   imgs:TW.sent?null:(TW.sent=1,btImgs())};
 }
 function twSend(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('twf');if(TW.ready&&f&&f.contentWindow)f.contentWindow.postMessage(twData(),'*')}
