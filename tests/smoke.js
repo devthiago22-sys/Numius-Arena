@@ -26,7 +26,7 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
 
   console.log('Telas');
   const visible = () => page.evaluate(() => [...document.querySelectorAll('iframe')].filter(f => f.style.display !== 'none' && f.style.visibility !== 'hidden').map(f => f.id).join(','));
-  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf'], ['boss', 'bsf'], ['bag', 'bgf'], ['safari', 'sff'], ['train', 'trf'], ['tower', 'twf']]) {
+  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf'], ['boss', 'bsf'], ['bag', 'bgf'], ['safari', 'sff'], ['train', 'trf'], ['tower', 'twf'], ['trade', 'xcf']]) {
     await page.evaluate(s => { G.screen = s; R(); }, screen); await page.waitForTimeout(1500);
     ok((await visible()) === frame, 'tela "' + screen + '" mostra o iframe ' + frame);
   }
@@ -105,6 +105,17 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   await page.evaluate(() => end());
   ok(await page.evaluate(() => G.screen === 'tower' && G.twBest === 1), 'o time de Nv 18-20 vence o andar 1 (rivais Nv ~6-8) e libera o andar 2');
   ok(await page.evaluate(() => G.coins) >= 22, 'a vitória paga ao menos as 22 moedas da Torre (1*12+10), além do XP da batalha');
+
+  console.log('Troca de Numius');
+  await page.evaluate(() => { G.team = [mk(0, 20), mk(3, 22), mk(6, 18)]; xcOpen(); }); await page.waitForTimeout(2200);
+  const xc = page.frameLocator('#xcf');
+  ok(await page.evaluate(() => XCS.ready), 'tela da troca carregou');
+  ok(await page.evaluate(() => G.screen === 'trade'), 'xcOpen() abre a tela de troca');
+  ok(await xc.locator('.mcard').count() === 3, 'a troca mostra os 3 Numius da equipe pra oferecer');
+  ok((await xc.locator('#stage').innerText()).toLowerCase().includes('não está disponível'), 'fora do claude.ai a troca avisa que o online não está disponível (sem claude.use)');
+  await xc.locator('.mcard').nth(1).click(); await page.waitForTimeout(400);
+  ok(await page.evaluate(() => G.xcSel) === 1, 'escolher um Numiu na lista atualiza a oferta (G.xcSel)');
+  await page.evaluate(() => { G.screen = 'map'; R(); }); await page.waitForTimeout(500);
 
   console.log('Batalha');
   await page.evaluate(() => { G.screen = 'map'; R(); wild(); }); await page.waitForTimeout(3500);

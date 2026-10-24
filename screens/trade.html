@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Troca de Numius</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--mg:#ff2db3;--cy:#22e6ff;--go:#ffd700;--ok:#4ade80;--bad:#ff6b6b}
+html,body{height:100%}
+body{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;background:#07050f;color:#f1e8ff;overflow:hidden;-webkit-tap-highlight-color:transparent;position:relative}
+h1,h2,.ui{font-family:'Outfit',ui-sans-serif,system-ui,sans-serif}
+.neon{text-shadow:0 0 12px rgba(255,45,179,.8),0 0 26px rgba(34,230,255,.3)}
+#bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(900px 560px at 50% -10%,#1a0f33 0%,#0d0820 42%,#07050f 75%,#040208 100%)}
+#bgfx .city{position:absolute;left:0;right:0;bottom:0;height:42%;display:flex;align-items:flex-end;gap:3px;opacity:.5;filter:blur(.2px)}
+#bgfx .bld{flex:none;background:linear-gradient(180deg,#140b28,#0a0618);border-top:1px solid rgba(255,45,179,.25);box-shadow:0 0 10px rgba(34,230,255,.08) inset}
+#bgfx .bld i{position:absolute;display:block;width:3px;height:3px;background:var(--cy);box-shadow:0 0 4px var(--cy)}
+#bgfx .scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+#bgfx .grid{position:absolute;left:0;right:0;bottom:0;height:30%;background-image:linear-gradient(rgba(255,45,179,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(34,230,255,.18) 1px,transparent 1px);background-size:40px 22px;transform:perspective(220px) rotateX(55deg);transform-origin:bottom;opacity:.4}
+#bgfx .orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.16}
+#bgfx .o1{width:360px;height:360px;left:2%;top:4%;background:#ff2db3}
+#bgfx .o2{width:420px;height:420px;right:0;top:20%;background:#22e6ff}
+.bit{position:absolute;top:-6%;font-size:11px;color:rgba(34,230,255,.6);text-shadow:0 0 6px rgba(34,230,255,.6);animation:fall linear infinite;font-family:'Space Grotesk',monospace}
+@keyframes fall{0%{transform:translateY(0)}100%{transform:translateY(112vh)}}
+@media(prefers-reduced-motion:reduce){.bit{display:none}}
+#app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;gap:10px;padding:12px;padding-top:max(12px,env(safe-area-inset-top))}
+#top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid rgba(255,45,179,.22);padding-bottom:10px}
+.back{border:1px solid rgba(34,230,255,.3);background:rgba(255,255,255,.07);color:#f1e8ff;border-radius:999px;padding:8px 14px;font-weight:700;font-size:11px;letter-spacing:.03em;cursor:pointer;white-space:nowrap}
+.back:hover{background:rgba(255,255,255,.13)}
+#title{flex:1;min-width:170px;text-align:center}
+#title h1{font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px;color:#fff}
+#title .ico{display:inline-flex;width:24px;height:24px;border-radius:50%;background:rgba(255,45,179,.16);border:1px solid rgba(255,45,179,.4);align-items:center;justify-content:center;font-size:12px;box-shadow:0 0 12px rgba(255,45,179,.5)}
+#title p{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(34,230,255,.65);font-weight:700;margin-top:3px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,45,179,.3);background:rgba(20,11,40,.8);border-radius:999px;padding:6px 11px;font-size:10px;font-weight:600;white-space:nowrap;color:rgba(241,232,255,.85)}
+.chip b{color:#fff;font-weight:800}
+.chip.on{border-color:var(--ok);color:#bdf7cd}
+.chip.off{border-color:var(--bad);color:#ffc9c9}
+#body{flex:1;min-height:0;overflow:auto;padding-right:2px;display:grid;gap:12px}
+@media(min-width:760px){#body{grid-template-columns:300px 1fr}}
+.pan{border-radius:20px;border:1px solid rgba(255,45,179,.25);background:rgba(18,10,34,.72);backdrop-filter:blur(10px);box-shadow:0 12px 40px rgba(0,0,0,.5),inset 0 0 0 1px rgba(34,230,255,.05);padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.pan .ph{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(241,232,255,.9);font-weight:700;display:flex;align-items:center;gap:6px}
+.pan .ph i{display:inline-flex;width:22px;height:22px;border-radius:7px;background:rgba(20,11,40,1);border:1px solid rgba(255,45,179,.35);align-items:center;justify-content:center;font-size:11px}
+#roster{overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.mcard{all:unset;display:flex;align-items:center;gap:9px;padding:8px;border-radius:12px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer}
+.mcard:hover{background:rgba(255,255,255,.07)}
+.mcard.sel{border-color:var(--mg);background:rgba(255,45,179,.12);box-shadow:0 0 14px rgba(255,45,179,.3)}
+.mcard .sp{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.07);background-size:cover;background-position:center;flex:none}
+.mcard .inf{flex:1;min-width:0}
+.mcard .inf b{display:block;font-size:11.5px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcard .inf small{font-size:9.5px;color:rgba(241,232,255,.55)}
+.hint{font-size:10.5px;color:rgba(241,232,255,.5);line-height:1.5}
+#stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:280px;text-align:center}
+.terms{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap}
+.term{width:140px;border-radius:16px;border:1px solid rgba(34,230,255,.3);background:rgba(10,6,20,.6);padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.term .sp{width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.06);background-size:cover;background-position:center;box-shadow:0 0 16px rgba(34,230,255,.25)}
+.term b{font-size:12px;color:#fff}
+.term small{font-size:10px;color:rgba(241,232,255,.6)}
+.term .ok{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--ok);color:#042a1a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:0 0 10px rgba(74,222,128,.6);opacity:0;transform:scale(.5);transition:.2s}
+.term .ok.show{opacity:1;transform:scale(1)}
+.swapico{font-size:26px;color:var(--mg);text-shadow:0 0 14px rgba(255,45,179,.7);animation:spin 3s linear infinite}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.swapico{animation:none}}
+.btn{border:none;border-radius:12px;padding:12px 18px;font-size:12px;font-weight:800;letter-spacing:.03em;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn.go{background:linear-gradient(90deg,var(--mg),#9333ea);color:#fff;box-shadow:0 0 22px rgba(255,45,179,.4)}
+.btn.go:hover{filter:brightness(1.1)}
+.btn.go:disabled{opacity:.35;cursor:not-allowed;filter:none}
+.btn.gh{background:rgba(255,255,255,.08);color:#f1e8ff;border:1px solid rgba(255,255,255,.18)}
+.btn.gh:hover{background:rgba(255,255,255,.14)}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid rgba(255,45,179,.2);border-top-color:var(--mg);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+#online .list{display:flex;flex-direction:column;gap:5px;max-height:120px;overflow-y:auto}
+#online .row{font-size:10px;color:rgba(241,232,255,.65);display:flex;justify-content:space-between;gap:6px;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:5px 8px}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:rgba(14,8,24,.96);border:1px solid var(--mg);border-radius:10px;padding:10px 14px;font-size:11px;opacity:0;transition:.25s;pointer-events:none;z-index:40;max-width:92vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#roster::-webkit-scrollbar,#body::-webkit-scrollbar,#online .list::-webkit-scrollbar{width:7px}
+#roster::-webkit-scrollbar-thumb,#body::-webkit-scrollbar-thumb,#online .list::-webkit-scrollbar-thumb{background:linear-gradient(var(--mg),var(--cy));border-radius:999px}
+</style>
+</head>
+<body>
+<div id="bgfx">
+ <div class="orb o1"></div><div class="orb o2"></div>
+ <div class="city" id="cityWrap"></div>
+ <div class="grid"></div>
+ <div class="scan"></div>
+ <div id="bitWrap"></div>
+</div>
+<div id="app">
+ <div id="top">
+  <button class="back" id="back" aria-label="Voltar ao mapa">← Voltar ao mapa</button>
+  <div id="title">
+   <h1 class="neon"><span class="ico">🌆</span>CIDADE NEXUS — TROCA DE NUMIUS</h1>
+   <p>Terminal de Permuta • Rede Online</p>
+  </div>
+  <div class="chips">
+   <span class="chip" id="onlineChip">● conectando…</span>
+   <span class="chip">Trocas feitas <b id="done">0</b></span>
+  </div>
+ </div>
+ <div id="body">
+  <div class="pan">
+   <div class="ph"><i>📦</i>Sua equipe</div>
+   <div id="roster"></div>
+   <div class="hint">Toque num Númio pra oferecer. Precisa ter pelo menos 2 na equipe pra poder trocar.</div>
+  </div>
+  <div class="pan" id="stagePan">
+   <div id="stage"></div>
+   <div id="online"></div>
+  </div>
+ </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const post=o=>parent.postMessage(Object.assign({numius:1},o),'*');
+let D=null,IMGS={};
+let tT=0;function toast(t){const e=$('#toast');if(!t)return;e.textContent=t;e.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('on'),2600)}
+
+(function deco(){
+ const c=$('#cityWrap');
+ for(let i=0;i<26;i++){
+  const b=document.createElement('div'),h=30+Math.sin(i*1.3)*20+(i%5)*14;
+  b.className='bld';b.style.width=(14+i%4*4)+'px';b.style.height=h+'px';
+  const nw=1+i%3;for(let w=0;w<nw;w++){const win=document.createElement('i');win.style.left=(20+w*40)+'%';win.style.bottom=(15+w*22)+'%';win.style.opacity=((i*7+w*3)%10)/10+.2;b.appendChild(win)}
+  c.appendChild(b);
+ }
+ const w=$('#bitWrap'),gl=['01','10','□','◇','1'];
+ for(let i=0;i<22;i++){
+  const s=document.createElement('span');s.className='bit';s.textContent=gl[i%gl.length];
+  s.style.left=(i*4.6%100)+'%';s.style.animationDelay=(i*0.37%7)+'s';s.style.animationDuration=(8+i%7)+'s';
+  s.style.color=i%2===0?'rgba(255,45,179,.55)':'rgba(34,230,255,.55)';
+  w.appendChild(s);
+ }
+})();
+
+function roster(){
+ const r=$('#roster');r.innerHTML='';
+ D.team.forEach(m=>{
+  const b=document.createElement('button');
+  b.className='mcard'+(m.k===D.sel?' sel':'');
+  const sp=IMGS['f'+m.i];
+  b.innerHTML=`<span class="sp" style="${sp?`background-image:url('${sp}')`:''}"></span><span class="inf"><b>${m.n}</b><small>Nv ${m.l} · ${m.t}${m.t2?'/'+m.t2:''}</small></span>`;
+  b.disabled=D.st==='paired'||D.st==='search';
+  b.onclick=()=>post({k:'offer',i:m.k});
+  r.appendChild(b);
+ });
+}
+function term(data,ok,label){
+ const sp=data?IMGS['f'+data.i]:null;
+ return `<div class="term">${ok?'<span class="ok show">✓</span>':''}
+  <span class="sp" style="${sp?`background-image:url('${sp}')`:''}"></span>
+  <b>${data?data.n:'—'}</b><small>${label}${data&&data.l?' · Nv '+data.l:''}</small></div>`;
+}
+function stage(){
+ const s=$('#stage'),on=$('#online');
+ if(!D.online){s.innerHTML=`<p style="font-size:12px;color:rgba(241,232,255,.75);max-width:280px">A Troca de Numius online não está disponível aqui. Abra o jogo pelo claude.ai, com a sua conta logada (não por link público), para trocar.</p>`;on.innerHTML='';return}
+ if(D.st==='paired'){
+  s.innerHTML=`<div class="terms">${term(D.mine,D.meOk,'Você oferece')}<span class="swapico">⇄</span>${term(D.partner,D.partner&&D.partner.ok,(D.partner&&D.partner.nm)||'Treinador')}</div>
+   <div style="display:flex;gap:10px">
+    <button class="btn gh" id="cancelBtn">✖ Cancelar</button>
+    <button class="btn go" id="confirmBtn" ${D.meOk?'disabled':''}>✅ ${D.meOk?'Aguardando o outro…':'Confirmar troca'}</button>
+   </div>
+   <p class="hint">Os dois precisam confirmar pra troca valer.</p>`;
+  const cb=$('#cancelBtn');if(cb)cb.onclick=()=>post({k:'cancel'});
+  const fb=$('#confirmBtn');if(fb)fb.onclick=()=>post({k:'confirm'});
+  on.innerHTML='';
+  return;
+ }
+ if(D.st==='search'){
+  s.innerHTML=`<div class="spin"></div><p style="font-size:12px;color:rgba(241,232,255,.8)">Procurando outro treinador na Rede Nexus…</p><button class="btn gh" id="cancelBtn">✖ Cancelar busca</button>`;
+  const cb=$('#cancelBtn');if(cb)cb.onclick=()=>post({k:'cancel'});
+  on.innerHTML=D.players.length?`<div class="ph" style="margin-bottom:6px"><i>📡</i>Treinadores na rede</div><div class="list">${D.players.map(p=>`<div class="row"><span>${p.nm}</span><span>${p.searching?'🔎 procurando':'online'} · oferece ${p.off}</span></div>`).join('')}</div>`:'';
+  return;
+ }
+ if(!D.mine){s.innerHTML=`<p style="font-size:12px;color:rgba(241,232,255,.7)">Escolha um Númio na sua equipe pra oferecer.</p>`;on.innerHTML='';return}
+ s.innerHTML=`<div class="terms">${term(D.mine,false,'Sua oferta')}<span class="swapico">⇄</span><div class="term" style="border-style:dashed;opacity:.5"><span class="sp"></span><b>?</b><small>Outro treinador</small></div></div>
+  <button class="btn go" id="searchBtn" ${D.canOffer?'':'disabled'}>🔎 Buscar troca</button>
+  ${D.canOffer?'':'<p class="hint">Você precisa de pelo menos 2 Númios na equipe pra trocar um deles.</p>'}`;
+ const sb=$('#searchBtn');if(sb)sb.onclick=()=>post({k:'search'});
+ on.innerHTML='';
+}
+function render(){
+ if(!D)return;
+ const oc=$('#onlineChip');oc.textContent=D.online?'● on-line':'● indisponível aqui';oc.className='chip '+(D.online?'on':'off');
+ $('#done').textContent=D.done;
+ roster();stage();
+ toast(D.msg);
+}
+$('#back').onclick=()=>post({k:'nav'});
+addEventListener('keydown',e=>{if(e.key==='Escape')post({k:'nav'})});
+addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
+ if(m.k==='xcdata'){if(m.imgs)IMGS=m.imgs;D=m;render()}
+});
+post({k:'ready'});
+})();
+</script>
+</body>
+</html>

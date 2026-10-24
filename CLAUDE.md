@@ -30,8 +30,9 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
 13. `legend.js`: **lendários invocáveis** (`LEG`, `lgCast`, `lgEnd`, `tyOf`, barra `lgBarSync`, animação `lgFx`) e ponte da **Mochila** (`bgMount/bgData/bgSend`).
 14. `safari.js`: **Zona Safari** (sorteio `sfSpin`, cruzamento `sfBreed`, ponte `sfMount/sfData/sfSend`).
 15. `missions.js`: **Missões** (tabela `MIS`, `msAdd`, `msClaim`, ponte `msMount/msData/msSend`) e a Moeda Safari.
-16. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
-17. `main.js`: `boot()`.
+16. `trade.js`: **Troca de Numius** online (sala peer-to-peer, `XC`, `xcOpen/xcOnPeers`, ponte `xcMount/xcData/xcSend`).
+17. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
+18. `main.js`: `boot()`.
 
 Regras:
 - **Nunca reordene** os scripts nem chame, no nível superior de um arquivo, funções definidas em arquivos
@@ -49,7 +50,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `lgf` login | `ready`, `login`, `signup`, `guest` | `err` |
 | `hf` hero | `ready`, `hero` | |
 | `sf` starter | `ready`, `pick` | `imgs` |
-| `mnf` menu | `ready`, `nav` (to: gyms, tac, team, dex, pvp, train, heal, cfg, exit) | `data` |
+| `mnf` menu | `ready`, `nav` (to: gyms, tac, team, dex, pvp, train, tower, trade, heal, cfg, exit) | `data` |
 | `tbf` táticas | `ready`, `nav`, `tac` | `data` |
 | `hcf` cura | `ready`, `healed`, `back`, `music` | dados em `window.NXT` (injetado no srcdoc) |
 | `eqf` equipe | `ready`, `mv`, `nav`, `cfg`, `leg` (`id` ou `null`) | `team` (inclui `legs`) |
@@ -62,6 +63,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `msf` missões | `ready`, `nav`, `claim` (`id`) | `msdata`, `msclaim` |
 | `trf` treinamento | `ready`, `nav`, `ev` (`i`,`s`), `iv` (`i`,`s`), `fight` (`n`) | `trdata` |
 | `twf` torre de gelo | `ready`, `nav`, `fight` (`n`) | `twdata` |
+| `xcf` troca de numius | `ready`, `nav`, `offer` (`i`), `search`, `cancel`, `confirm` | `xcdata` |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -225,3 +227,27 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   `B.tw===(G.twBest||0)+1` em `foeDown()` (`js/battle.js`); senão só avisa que já foi vencido antes. Andares
   além de `G.twBest+1` aparecem bloqueados; andares já vencidos continuam jogáveis (sem recompensa de novo).
 - Estado salvo: só `G.twBest` (campo `tw` do `save()`, sem mudar `v`).
+
+## Troca de Numius (`js/trade.js` + `screens/trade.html`)
+- Ilha "CIDADE NEXUS" (antigo "Canion de Brasa"), `nav:"trade"` em `screens/menu.html` — mesma posição/arte
+  da ilha de antes, só recolorida (`filter:"hue-rotate(255deg)..."` no `<img>` do card, campo `c.filter` em
+  `screens/menu.html`) pra puxar pro roxo/magenta/ciano em vez do laranja de lava. **Não há arte nova**: este
+  ambiente não tem uma ferramenta de geração de imagem, só pode recolorir a arte existente por CSS. Se quiser
+  uma ilustração de cidade futurista de verdade, me mande o arquivo (`assets/screens/menu-3.webp` é o que
+  seria trocado) do mesmo jeito que mandou as telas de Treinamento/Torre de Gelo. A aba **BATALHAS TÁTICAS**
+  da lista lateral do menu continua existindo e aponta pra arena tática de sempre (`G.screen==='tac'`) — só a
+  ilha mudou de destino, igual já tinha acontecido com Ginásios → Torre de Gelo.
+- Reaproveita a **mesma sala peer-to-peer do PvP** (`ensureRoom()` em `js/pvp.js`, `claude.use('room')`, só
+  funciona dentro do claude.ai com conta logada) com campos de presença próprios, prefixo `xc`, que convivem
+  na mesma presença sem atrapalhar o pareamento do PvP (`PV.room`/`PV.peers` são compartilhados).
+- Fluxo: escolhe um Numiu da equipe pra oferecer (`G.xcSel`) → `xcSearch()` entra em busca (`xcSt:'search'`
+  na presença) → `xcOnPeers()` pareia dois treinadores buscando (mesma lógica de desafio/aceite do PvP,
+  `xcChallenge`/`xcAcceptFrom`, pra evitar duas pessoas se pareando com alvos diferentes ao mesmo tempo) →
+  os dois veem a oferta um do outro e confirmam (`xcConfirm`, grava `xcOk`) → quando os dois aparelhos veem
+  `xcOk` batendo com o mesmo `xcId` dos dois lados, cada um aplica a troca **sozinho e localmente**
+  (`pvpBuild` monta o Numiu recebido a partir do `xcOff` do outro lado) — não precisa de servidor de verdade
+  porque o resultado não depende de sorte (sem `RR()`), só dos dois lados concordarem.
+- Exige equipe com **2+ Numius** pra poder oferecer um (não dá pra ficar com 0). Fora do claude.ai (sem sala),
+  a tela avisa que a troca online não está disponível, igual o PvP.
+- Contador `G.xcDone` (campo `xd` do `save()`, sem mudar `v`) soma a cada troca concluída; a barrinha da ilha
+  no mapa (`isl.canion` em `mnData()`) mostra o progresso até 10 trocas.

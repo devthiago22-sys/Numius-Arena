@@ -6,13 +6,18 @@ const peerOf=id=>PV.peers.find(p=>p.peer===id&&!p.sameTab);
 function pvpPres(patch){if(PV.room)PV.room.presence(patch).catch(()=>{})}
 const pvpCompact=()=>G.team.slice(0,6).map(m=>({i:m.i,l:m.l,v:STK.map(k=>m.iv[k]==null?15:m.iv[k]),e:STK.map(k=>m.ev[k]||0),mv:m.mv||0}));
 function pvpBuild(c){const m={i:c.i|0,l:Math.max(1,Math.min(100,c.l|0)),xp:0,iv:Object.fromEntries(STK.map((k,j)=>[k,Math.max(0,Math.min(31,c.v[j]==null?15:c.v[j]|0))])),ev:Object.fromEntries(STK.map((k,j)=>[k,Math.max(0,Math.min(252,(c.e&&c.e[j])|0))]))};m.mv=(Array.isArray(c.mv)&&c.mv.length>=1&&c.mv.length<=4&&c.mv.every(x=>Number.isInteger(x)&&x>=0&&x<MOVES.length))?c.mv.slice():initMoves(m.i,m.l);m.pp=m.mv.map(k=>MOVES[k].pp);calc(m);m.hp=m.max;return m}
-async function pvpOpen(){
- G.screen='pvp';R();
+/* Sala peer-to-peer única, compartilhada pelo PvP (acima) e pela Troca de Numius (js/trade.js, prefixo xc
+   nos campos de presença). Quem chegar primeiro conecta; o outro reaproveita a mesma sala. */
+async function ensureRoom(){
  if(!PV.init){PV.init=1;
   try{PV.room=(typeof claude!=='undefined'&&claude.use)?await claude.use('room'):null}catch(e){PV.room=null}
   PV.ok=!!PV.room;
-  if(PV.room)PV.room.onPeers(ch=>{PV.peers=ch.peers;pvpOnPeers()},()=>{PV.ok=false;if(G.screen==='pvp')R()});
+  if(PV.room)PV.room.onPeers(ch=>{PV.peers=ch.peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers()},()=>{PV.ok=false;if(G.screen==='pvp'||G.screen==='trade')R()});
  }
+}
+async function pvpOpen(){
+ G.screen='pvp';R();
+ await ensureRoom();
  pvpAnnounce();R();
 }
 const pv0=()=>G.pvp||(G.pvp={lp:0,w:0,l:0});
