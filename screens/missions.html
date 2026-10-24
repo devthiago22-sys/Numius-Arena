@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Missões</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'JetBrains Mono',ui-monospace,monospace}
+:root{--bg:#0f1219;--pan:#141926;--line:rgba(255,255,255,.10);--cy:#00f0ff;--go:#ffd700;--ok:#4ade80}
+html,body{height:100%}
+body{background:var(--bg);color:#fff;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.px{font-family:'Press Start 2P',monospace;letter-spacing:.04em}
+#app{height:100%;display:flex;flex-direction:column;gap:10px;padding:12px;padding-top:max(12px,env(safe-area-inset-top))}
+#top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:11px;color:var(--go);text-shadow:0 0 12px rgba(255,215,0,.45);flex:1;min-width:110px}
+.btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;border-radius:10px;padding:9px 12px;font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:.15s}
+.btn:hover{background:rgba(255,255,255,.12)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;white-space:nowrap}
+.chip b{color:var(--go)}
+#tabs{display:flex;gap:6px}
+.tab{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.04);color:rgba(255,255,255,.65);border-radius:10px;padding:10px 6px;font-size:10px;font-weight:700;letter-spacing:.1em;cursor:pointer;position:relative;transition:.15s}
+.tab:hover{color:#fff}
+.tab.on{background:rgba(0,240,255,.1);border-color:rgba(0,240,255,.45);color:var(--cy)}
+.tab .n{position:absolute;top:-7px;right:-5px;background:var(--ok);color:#06240f;border-radius:999px;font-size:9px;padding:2px 6px;box-shadow:0 0 10px rgba(74,222,128,.6)}
+#sub{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.08em}
+#list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.m{border:1px solid var(--line);background:var(--pan);border-radius:12px;padding:11px;display:flex;gap:11px;align-items:center}
+.m.done{border-color:rgba(74,222,128,.4);background:linear-gradient(90deg,rgba(74,222,128,.07),var(--pan) 60%)}
+.m.got{opacity:.5}
+.m .ic{width:34px;height:34px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.m .bd{flex:1;min-width:0}
+.m .nm{font-size:12px;font-weight:700}
+.m .ds{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px}
+.bar{height:7px;border-radius:999px;background:rgba(255,255,255,.08);margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#00f0ff,#4ade80);transition:width .4s}
+.m .rt{font-size:10px;color:rgba(255,255,255,.45);margin-top:4px}
+.m .rw{flex:none;text-align:right;min-width:92px}
+.m .rw b{color:var(--go);font-size:12px}
+.claim{margin-top:5px;width:100%;border:0;border-radius:9px;padding:8px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;background:var(--go);color:#000;cursor:pointer;box-shadow:0 0 16px rgba(255,215,0,.35)}
+.claim:hover{filter:brightness(1.1)}
+.tag{display:inline-block;font-size:9px;letter-spacing:.1em;padding:4px 7px;border-radius:7px;border:1px solid}
+.tag.ok{color:var(--ok);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.08)}
+.tag.no{color:rgba(255,255,255,.4);border-color:var(--line)}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:rgba(10,14,22,.95);border:1px solid var(--go);border-radius:10px;padding:10px 14px;font-size:11px;opacity:0;transition:.25s;pointer-events:none;z-index:40;max-width:92vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+@keyframes pop{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+.m{animation:pop .22s ease-out both}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:520px){h1{font-size:9px}.m .rw{min-width:76px}.m .ic{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="top">
+  <button class="btn" id="back" aria-label="Voltar ao mapa">← VOLTAR</button>
+  <h1 class="px">MISSÕES</h1>
+  <span class="chip" title="Moedas Safari">🪙 <b id="mo">0</b></span>
+ </div>
+ <div id="tabs">
+  <button class="tab on" data-t="d">DIÁRIAS<span class="n" id="nd" hidden>0</span></button>
+  <button class="tab" data-t="w">SEMANAIS<span class="n" id="nw" hidden>0</span></button>
+  <button class="tab" data-t="g">DO JOGO<span class="n" id="ng" hidden>0</span></button>
+ </div>
+ <div id="sub"></div>
+ <div id="list"></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const post=o=>parent.postMessage(Object.assign({numius:1},o),'*');
+let D=null,TAB='d';
+let tT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('on'),2400)}
+const IC={d:'🌙',w:'📅',g:'🏆'};
+const hhmm=ms=>{ms=Math.max(0,ms|0);const d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1000);
+ return d?d+'d '+h+'h':(h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')};
+const meia=()=>{const n=new Date(),m=new Date();m.setHours(24,0,0,0);return m-n};
+function sub(){if(!D)return;
+ $('#sub').textContent=TAB==='d'?('Zeram em '+hhmm(meia())+' · as diárias juntas pagam '+D.ms.day+' moedas, o bastante para 5 invocações em cada região')
+  :TAB==='w'?('Zeram em '+hhmm(D.ms.wl)+' · junto com o Boss semanal')
+  :'Só se cumprem uma vez. Cada invocação na Zona Safari custa '+D.ms.sum+' moedas.'}
+setInterval(sub,1000);
+function badge(id,n){const e=$(id);e.textContent=n;e.hidden=!n}
+function render(){if(!D)return;const L=D.ms[TAB]||[];
+ $('#mo').textContent=D.ms.mo;
+ badge('#nd',D.ms.d.filter(m=>m.ok&&!m.got).length);
+ badge('#nw',D.ms.w.filter(m=>m.ok&&!m.got).length);
+ badge('#ng',D.ms.g.filter(m=>m.ok&&!m.got).length);
+ const box=$('#list');box.innerHTML='';
+ L.forEach(m=>{const d=document.createElement('div');d.className='m'+(m.got?' got':m.ok?' done':'');
+  const pc=Math.round(Math.min(1,m.v/m.g)*100);
+  d.innerHTML=`<div class="ic">${IC[TAB]}</div><div class="bd">
+   <div class="nm">${m.n}</div><div class="ds">${m.d}</div>
+   <div class="bar"><i style="width:${pc}%"></i></div>
+   <div class="rt">${Math.min(m.v,m.g)} / ${m.g}</div></div>
+   <div class="rw"><b>+${m.r}</b> 🪙<div class="w"></div></div>`;
+  const w=d.querySelector('.w');
+  if(m.got)w.innerHTML='<span class="tag no">RESGATADA</span>';
+  else if(m.ok){const b=document.createElement('button');b.className='claim';b.textContent='RESGATAR';b.onclick=()=>post({k:'claim',id:m.id});w.appendChild(b)}
+  else w.innerHTML='<span class="tag no">EM ANDAMENTO</span>';
+  box.appendChild(d)});
+ if(!L.length)box.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,.4);padding:18px;text-align:center">Nenhuma missão por aqui.</div>';
+ sub()}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));render()});
+$('#back').onclick=()=>post({k:'nav',to:'map'});
+addEventListener('keydown',e=>{if(e.key==='Escape')post({k:'nav',to:'map'})});
+addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
+ if(m.k==='msdata'){D=m;render()}
+ else if(m.k==='msclaim'){if(m.err){toast(m.err);return}D.ms=m.ms;toast('+'+m.r+' Moedas Safari!');render()}
+});
+post({k:'ready'});
+})();
+</script>
+</body>
+</html>

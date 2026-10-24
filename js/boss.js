@@ -46,6 +46,7 @@ function bsMember(src,id,tr,me,ai){
   mv:moves(m).slice(0,4).map(x=>({n:x.n,t:x.t,p:x.p,c:x.c==='e'?'e':'f',x:x.x||''})),alive:true,def:0,fz:0,vd:0,dm:0,lastDm:0}
 }
 function bsNew(bi,pick){
+ msAdd('boss');
  const bd=BOSSES[bi],mine=G.team[pick]||G.team[0],L=mine.l;
  const BL=BSX.lv;
  const Z={s:(Date.now()^(bi*7919))>>>0,bi,n:0,ci:0,charging:false,over:null,mono:0};

@@ -27,9 +27,10 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
     táticas, **arena de batalha** `btMount/btData/btSend`) e `authCore`.
 12. `boss.js`: **Boss semanal** (raid): chefes `BOSSES`, simulação `bsNew/bsTurn`, recompensas, ovos, ponte `bsMount/bsData/bsSend`.
 13. `legend.js`: **lendários invocáveis** (`LEG`, `lgCast`, `lgEnd`, `tyOf`, barra `lgBarSync`, animação `lgFx`) e ponte da **Mochila** (`bgMount/bgData/bgSend`).
-14. `safari.js`: ponte da **Zona Safari** (`sfMount/sfData/sfSend`, `sfCatch` grava o Numiu do vínculo).
-15. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
-16. `main.js`: `boot()`.
+14. `safari.js`: **Zona Safari** (sorteio `sfSpin`, cruzamento `sfBreed`, ponte `sfMount/sfData/sfSend`).
+15. `missions.js`: **Missões** (tabela `MIS`, `msAdd`, `msClaim`, ponte `msMount/msData/msSend`) e a Moeda Safari.
+16. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
+17. `main.js`: `boot()`.
 
 Regras:
 - **Nunca reordene** os scripts nem chame, no nível superior de um arquivo, funções definidas em arquivos
@@ -56,7 +57,8 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `btf` arena de batalha | `ready`, `bact` (`move`,`swap`,`swapTo`,`cap`,`flee`,`leave`,`end`) | `bimgs`, `bstate` (`seq`,`st`,`evs`) |
 | `bsf` boss semanal | `ready`, `nav`, `start` (`pick`), `turn` (`a`: `{k:'mv',i}` ou `{k:'def'}`), `hatch` | `bsdata`, `bsstart`, `bsturn`, `bshatch` |
 | `bgf` mochila | `ready`, `nav` (map, boss), `unlock` (`id`), `hatch` | `bgdata`, `bgunlock`, `bghatch` |
-| `sff` zona safari | `ready`, `nav`, `catch` (`i`, `l`) | `sfdata`, `sfcaught` |
+| `sff` zona safari | `ready`, `nav`, `spin` (`z`), `breed` (`a`,`b`), `take` (`u`), `release` (`u`) | `sfdata`, `sfspin`, `sfbreed`, `sftake`, `sfrelease` |
+| `msf` missões | `ready`, `nav`, `claim` (`id`) | `msdata`, `msclaim` |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -140,19 +142,35 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 - Tela em HTML/JS puro (não é bundle React). Mostra o mapa `assets/screens/safari-map.webp` com **4 zonas
   clicáveis** e o **laboratório no meio do lago** (`assets/screens/safari-lab.webp`).
 - **O jogo faz os sorteios, a tela só mostra.** Tudo vive em `G.sf` (salvo como `sf` no `save()`, sem mudar `v`):
-  `d` dia dos giros, `sp` giros restantes, `mo` Moedas Safari, `lab` estoque do laboratório, `u` próximo id.
-  `sfState()` zera os giros quando vira o dia (meia-noite local, por isso a tela só mostra um relógio).
+  `mo` Moedas Safari, `lab` estoque do laboratório, `u` próximo id.
 - Zona -> família (`SFZ`): GELO = Hydrake, FOGO = Blazleo, PLANTA = Byron, DESERTO = mista. Clicar numa zona abre
-  o **altar de invocação** (`openZone`): 5 cartas viradas para baixo e o botão INVOCAR. Cada invocação gasta uma das
-  5 do dia (`SFSPIN`), chama `sfSpin` — que sorteia 5 Numius (estágio 1/2/3 em 72/23/5%, nível conforme o estágio),
-  guarda no laboratório (limite `SFLAB` 60) e soma os níveis em Moedas Safari — e a tela vira as cartas **uma a uma**
-  (`reveal`), somando as moedas conforme cada um aparece. Nada aparece antes de a pessoa invocar.
+  o **altar de invocação** (`openZone`): 5 cartas viradas para baixo e o botão INVOCAR. Cada invocação **custa
+  `MSSUM` (20) Moedas Safari**, chama `sfSpin` — que sorteia 5 Numius (estágio 1/2/3 em 72/23/5%, nível conforme o
+  estágio) e guarda no laboratório (limite `SFLAB` 60) — e a tela vira as cartas **uma a uma** (`reveal`). Nada
+  aparece antes de a pessoa invocar. Invocar **não paga moeda**: a moeda vem das missões.
 - Cruzamento (`sfBreed`): mesma espécie, sexos diferentes, custa `SFCOST` (50) moedas. O filhote **nasce e fica
   no laboratório**, nível (a+b)/2 + 0 a 5, com a marca `nb` (NOVO). Dois cliques num card chamam `sfTake`, que
   cria o Numiu de verdade (`mk`) e põe na equipe (máx. 6).
-- Mensagens: a tela manda `ready`, `nav`, `spin` (`z`), `breed` (`a`,`b`), `take` (`u`), `release` (`u`); o jogo
-  responde `sfdata`, `sfspin`, `sfbreed`, `sftake`, `sfrelease`. Toda resposta traz `sf` atualizado — se mexer em
-  `G.sf` por fora (teste, console), chame `sfSend()` para a tela ver.
+- Mensagens: veja a tabela de iframes. Toda resposta traz `sf` atualizado — se mexer em `G.sf` por fora (teste,
+  console), chame `sfSend()` para a tela ver.
 - No menu principal a Safari **não tem ilha própria**: a ilha que era o Porto Avelar (`id:"porto"`, arte `menu-4.webp`)
   virou "SAFARI ZONE" com `nav:"safari"` — o pedido foi não acrescentar ilha nova ao mapa. O PvP continua na lista
-  lateral. A barrinha dessa ilha mostra as invocações que sobraram (`isl.porto` em `mnData`).
+  lateral. A barrinha dessa ilha mostra as Moedas Safari em relação ao orçamento do dia (`isl.porto` em `mnData`).
+
+## Missões e Moeda Safari (`js/missions.js` + `screens/missions.html`)
+- Três listas na tabela **`MIS`**: `d` diárias (zeram à meia-noite), `w` semanais (zeram junto com o Boss, usam
+  `bsWeek()`) e `g` do jogo (permanentes). **Para trocar as missões mexa só nessa tabela** — o resto do motor não
+  liga para o conteúdo.
+- Cada missão é `{id, n, d, g (meta), r (moedas), ev}` — conta chamadas de `msAdd('ev')` — ou `{..., f:()=>número}`,
+  que lê o estado do jogo na hora (insígnias, mostruário, nível…). O `id` precisa ser único e começar com `d_`,
+  `w_` ou `g_`; trocar o `id` zera o progresso daquela missão.
+- `msAdd(ev,n)` é chamado em: `foeDown` (`win`, e `tac` quando é batalha tática), insígnia nova (`gym`), `pvpResolve`
+  (`win`), Centro de Cura (`heal`), `sfSpin` (`sum`), `sfBreed` (`breed`) e `bsNew` (`boss`). Para uma missão nova
+  que precise de um evento que ainda não existe, acrescente a chamada no ponto certo do jogo.
+- Estado salvo em `G.ms` (campo `ms` do `save()`, sem mudar `v`): `d` dia, `w` semana, `p` progresso por id,
+  `c` já resgatadas. `msClaim(id)` soma a recompensa em `sfState().mo`.
+- **Moeda Safari** é a mesma moeda das invocações. `MSSUM` (20) é o custo de uma invocação e `MSDAY` (= 20×5×4 = 400)
+  é o que as diárias juntas pagam: 5 invocações em cada uma das 4 regiões. Mudou `MSSUM`? Reveja as recompensas das
+  diárias para a conta continuar fechando (o teste de fumaça confere isso).
+- No menu a aba **MISSÕES** fica na lista lateral, logo abaixo de BATALHAS TÁTICAS, com a contagem de missões
+  prontas para resgate (`cnt.missoes` em `mnData`, de `msCount()`).

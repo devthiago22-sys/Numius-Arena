@@ -86,8 +86,9 @@ function foeDown(){
  B.log.push(`${S[e.i].n} desmaiou!`);evp({t:'faint',s:'e'});gain(p,e);
  if(B.queue.length){B.foe=B.queue.shift();B.log.push(`${B.tt?'Treinador '+B.tt:B.vt?'O rival':GY[B.gym].l} enviou ${S[B.foe.i].n} (Nv ${B.foe.l})!`);evp({t:'send',s:'e',mon:btSnap(B.foe)})}
  else{B.over='win';
+  if(!B.msw){B.msw=1;msAdd('win');if(B.tt)msAdd('tac')}
   if(B.vt){const r=2+B.vt;G.vc=(G.vc||0)+r;G.vbest=Math.max(G.vbest||0,B.vt);G.vn=B.vt+1;G.vsel=B.vt+1;B.log.push(`🪙 +${r} Moedas Virtuosas!`)}
-  if(!B.wild&&!B.tt&&!B.vt&&!G.badges.includes(B.gym)){G.badges.push(B.gym);B.log.push(`🏅 Você ganhou a ${GY[B.gym].n}!`);rewardMon(B.gym)}}
+  if(!B.wild&&!B.tt&&!B.vt&&!G.badges.includes(B.gym)){G.badges.push(B.gym);msAdd('gym');B.log.push(`🏅 Você ganhou a ${GY[B.gym].n}!`);rewardMon(B.gym)}}
 }
 function turn(k){
  const B=G.battle;if(B.over)return;if(B.pvp)return pvpAct({t:'a',k});B.log=[];if(k>=0&&act().pp&&act().pp[k]<=0)k=-1;

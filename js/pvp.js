@@ -65,7 +65,7 @@ function pvpResolve(B,actA,actB){
  for(const r of order){const at=A0[r];if(at.hp<=0)continue;const df=ac(oth(r));if(!df)continue;B.foe=ac(oth(B.role));{let kk=acts[r].k;if(kk>=0&&(!at.mv[kk]||at.pp[kk]<=0))kk=-1;B.log.push(hit(at,df,kk))};if(df.hp<=0)B.log.push(`${S[df.i].n} de ${nm(oth(r))} desmaiou!`)}
  B.foe=ac(oth(B.role))||B.oq[0];
  if(G.team.some(m=>m.hp>0)&&B.oq.some(m=>m.hp>0)){turnFx(B);regen(B);B.foe=ac(oth(B.role))||B.foe;lgEnd(B)}
- if(!G.team.some(m=>m.hp>0))B.over='lose';else if(!B.oq.some(m=>m.hp>0))B.over='win';
+ if(!G.team.some(m=>m.hp>0))B.over='lose';else if(!B.oq.some(m=>m.hp>0)){B.over='win';if(!B.msw){B.msw=1;msAdd('win')}}
  B.foe=B.oq.find(m=>m.hp>0)||B.oq[0];
  RR=Math.random;
 }

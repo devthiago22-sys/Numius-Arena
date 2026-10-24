@@ -5,13 +5,14 @@
 const SF={n:'safari',ready:false};
 /* zona -> família de Numius (fam -1 = qualquer; o Deserto é a zona mista) */
 const SFZ={GELO:0,FOGO:1,PLANTA:2,DESERTO:-1};
-const SFSPIN=5,SFCOST=50,SFLAB=60,SFDRAW=5;
-function sfToday(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
-/* estado salvo: d = dia dos giros, sp = giros restantes, mo = moedas, lab = estoque, u = próximo id */
+/* Invocar custa Moeda Safari (`MSSUM`, em js/missions.js). A moeda vem das missões diárias,
+   que pagam o bastante para 5 invocações em cada uma das 4 regiões. */
+const SFCOST=50,SFLAB=60,SFDRAW=5;
+/* estado salvo: mo = Moedas Safari, lab = estoque do laboratório, u = próximo id */
 function sfState(){
- if(!G.sf)G.sf={d:'',sp:SFSPIN,mo:120,lab:[],u:1};
- const t=sfToday();if(G.sf.d!==t){G.sf.d=t;G.sf.sp=SFSPIN}
+ if(!G.sf)G.sf={mo:200,lab:[],u:1};
  if(!Array.isArray(G.sf.lab))G.sf.lab=[];
+ if(G.sf.mo==null)G.sf.mo=200;
  return G.sf;
 }
 function sfMount(){
@@ -35,12 +36,12 @@ function sfRoll(z){
 function sfSpin(z){
  if(SFZ[z]===undefined)return{err:'Zona desconhecida.'};
  const st=sfState();
- if(st.sp<=0)return{err:'Sem giros! Volta amanhã.'};
- st.sp--;const got=[];let coins=0,full=0;
- for(let k=0;k<SFDRAW;k++){const m=sfRoll(z);m.u=st.u++;coins+=m.l;reg(m.i);
+ if(st.mo<MSSUM)return{err:'Faltam Moedas Safari. Cumpra as missões diárias.'};
+ st.mo-=MSSUM;const got=[];let full=0;
+ for(let k=0;k<SFDRAW;k++){const m=sfRoll(z);m.u=st.u++;reg(m.i);
   if(st.lab.length<SFLAB)st.lab.push(m);else full++;got.push(m)}
- st.mo+=coins;save();
- return{ok:1,z,got,coins,full,sf:sfPub()};
+ msAdd('sum');save();
+ return{ok:1,z,got,cost:MSSUM,full,sf:sfPub()};
 }
 /* cruzamento: mesma espécie, sexos diferentes, custa SFCOST moedas.
    O filhote nasce no próprio laboratório, com nível (a+b)/2 + 0 a 5. */
@@ -54,7 +55,7 @@ function sfBreed(ua,ub){
  st.mo-=SFCOST;
  const l=Math.max(1,Math.min(60,Math.floor((a.l+b.l)/2)+Math.floor(Math.random()*6)));
  const baby={u:st.u++,i:a.i,l,sx:Math.random()<.5?'M':'F',z:a.z,nb:1};
- st.lab.push(baby);reg(baby.i);save();
+ st.lab.push(baby);reg(baby.i);msAdd('breed');save();
  return{ok:1,baby,sf:sfPub()};
 }
 /* tira um Numiu do laboratório e põe na equipe */
@@ -71,7 +72,7 @@ function sfRelease(u){
  if(k<0)return{err:'Numiu não está no laboratório.'};
  st.lab.splice(k,1);save();return{ok:1,sf:sfPub()};
 }
-const sfPub=()=>{const st=sfState();return{mo:st.mo,sp:st.sp,max:SFSPIN,cost:SFCOST,cap:SFLAB,lab:st.lab}};
+const sfPub=()=>{const st=sfState();return{mo:st.mo,sum:MSSUM,cost:SFCOST,cap:SFLAB,lab:st.lab}};
 function sfData(){
  const h=G.hero||{g:'f',skin:1,col:0,name:'Você'};
  return{numius:1,k:'sfdata',hero:{g:h.g==='m'?'m':'f',skin:h.skin|0,hair:(h.hair!=null?h.hair:h.col)|0,name:String(h.name||'Você')},
