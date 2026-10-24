@@ -44,22 +44,23 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
 
   console.log('Zona Safari');
   await page.evaluate(() => { G.screen = 'safari'; R(); }); await page.waitForTimeout(2200);
-  const sf = (await Promise.all(page.frames().map(async f => await f.evaluate(() => !!document.querySelector('#world')).catch(() => false) ? f : null))).find(Boolean);
-  ok(!!sf, 'mapa da zona safari desenhou');
-  if (sf) {
-    /* anda até o capim alto e fica pisando nele: isso abre o encontro, que é a parte
-       da tela que mais usa função de outro trecho do arquivo (já quebrou uma vez) */
-    await page.keyboard.down('ArrowLeft'); await page.waitForTimeout(1500); await page.keyboard.up('ArrowLeft');
-    let enc = false;
-    for (let i = 0; i < 44 && !enc; i++) {
-      const k = i % 2 ? 'ArrowUp' : 'ArrowDown';
-      await page.keyboard.down(k); await page.waitForTimeout(170); await page.keyboard.up(k);
-      enc = await sf.evaluate(() => { const e = document.querySelector('#enc'); return !!e && e.className.includes('on'); }).catch(() => false);
-    }
-    await page.waitForTimeout(1200);
-    ok(enc, 'encontro selvagem abriu na zona safari');
-    ok(await sf.evaluate(() => [...document.querySelectorAll('#enc button')].some(b => /SINTONIZAR/i.test(b.textContent))).catch(() => false), 'laço de sintonia aparece no encontro');
-  }
+  const sf = page.frameLocator('#sff');
+  ok(await page.evaluate(() => SF.ready), 'tela da zona safari carregou');
+  const spins0 = await page.evaluate(() => G.sf.sp);
+  await sf.locator('#zGELO').click(); await page.waitForTimeout(800);
+  ok(await page.evaluate(() => G.sf.sp) === spins0 - 1, 'o giro gastou uma rodada do dia');
+  ok(await sf.locator('#drawG .card').count() === 5, 'o sorteio trouxe 5 Numius');
+  ok(await page.evaluate(() => G.sf.lab.length) === 5, 'os Numius ficaram no laboratório');
+  await sf.locator('#drawX').click(); await page.waitForTimeout(250);
+  /* cruza um casal da mesma espécie e leva o filhote para a equipe */
+  await page.evaluate(() => { G.sf.lab = [{ u: 901, i: 0, l: 20, sx: 'M', z: 'GELO' }, { u: 902, i: 0, l: 24, sx: 'F', z: 'GELO' }]; G.sf.mo = 999; sfSend(); });
+  await sf.locator('#labbtn').click(); await page.waitForTimeout(500);
+  await sf.locator('#labG .card[data-u="902"]').click(); await sf.locator('#labG .card[data-u="901"]').click(); await page.waitForTimeout(300);
+  await sf.locator('#cross').click(); await page.waitForTimeout(700);
+  ok(await page.evaluate(() => G.sf.lab.some(m => m.nb)) === true, 'o cruzamento gerou um filhote no laboratório');
+  const nt = await page.evaluate(() => G.team.length);
+  await sf.locator('#labG .card').first().dblclick(); await page.waitForTimeout(700);
+  ok(await page.evaluate(() => G.team.length) === nt + 1, 'dois cliques levam o Numiu do laboratório para a equipe');
 
   console.log('Batalha');
   await page.evaluate(() => { G.screen = 'map'; R(); wild(); }); await page.waitForTimeout(3500);

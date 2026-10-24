@@ -137,28 +137,19 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 - Imagens dos lendários fora dos iframes: classes `.lgimg-*` em `style.css` (o build embute `url(../assets/...)` do CSS).
 
 ## Zona Safari (`js/safari.js` + `screens/safari.html`)
-- Mapa explorável 64×48 (semente fixa), desenhado em **tiles de pixel art 16×16** no estilo Game Boy / GBA.
-  `TGR` guarda as grades de letras de cada tile (grama, capim alto em 2 quadros, água em 2 quadros, areia, trilha,
-  lava, flores, árvore 32×32, pedra, cerca) e `TPAL` as paletas por região; `tile(nome,regiao)` pinta e guarda em
-  cache. `buildTerrain()` pinta o mapa inteiro **uma vez** numa tela de 1024×768 (16 px por casa) e `draw()` recorta
-  essa tela com `imageSmoothingEnabled=false`. As grades vêm de `tools/safari_tiles.py` (gerador com
-  pré-visualização em PNG) — edite lá, rode e cole a saída.
-- A escala é inteira: `PS` (2 a 7) é o tamanho do pixel e `TSZ = 16*PS`. A câmera é arredondada para múltiplos de
-  `PS`, senão o pixel art treme ao andar. Água, lava e capim alto animam trocando de quadro; o capim da casa do
-  jogador troca de quadro sozinho (parece que mexeu) e é redesenhado **depois** do jogador, cobrindo as pernas.
-- 4 regiões: Lago Espelhado (linha Hydrake), Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central
-  (qualquer). Encontros no capim alto (13% por passo).
-- Encontro: cenário pintado por região (`drawScene`), Numiu animado pelo mesmo motor de sprites vivos do Boss
-  (`Live`), entrada pulando do capim e reações a cada ação. O direcional só aparece em telas de toque.
-- O personagem anda com setas/WASD ou o direcional. No mapa ele é um **sprite 20×28 em pixel art** (estilo Pokémon
-  de GBA/NDS): `GBA` guarda 8 variantes (2 gêneros × 4 cabelos), cada uma com 9 quadros de 560 letras (parado +
-  2 passos, para baixo, cima e lado; a direita é o lado espelhado). As letras são índices de cor (`O` contorno,
-  `H/h/L` cabelo, `S/s` pele, `E/W` olho, `J/j/I` casaco, `A/a` braço, `N` mão, `G/g` detalhe, `K` cinto,
-  `P/p` perna, `B/b` bota) e `heroSheet(S)` pinta os 9 quadros num canvas ampliado, trocando cabelo por
-  `HAIR[g][hair]` e pele por `SKIN[skin]`; no feminino o comprimento do cabelo também muda. `drawHero` escolhe o
-  quadro pela direção e alterna o pé a cada casa (`pl.par`). As grades vêm de `tools/hero_sprite.py`, que desenha
-  por formas (elipses e retângulos) e fecha o contorno sozinho. O retrato do encontro continua usando
-  `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
-- Captura sem bola, o **Laço de Sintonia**: VÍNCULO (0-100) e AGITAÇÃO. Ações: Sintonizar (4 batidas no ritmo da aura:
-  Perfeito/Bom/Fora), Fruta calmante (10 por visita), Observar (revela o temperamento) e Sair. Agitação alta = chance de fuga.
-  Vínculo 100 -> `catch` -> `sfCatch` (equipe máx. 6). Visita: 500 passos. Raridade: estágio 1/2/3 = 72/23/5%.
+- Tela em HTML/JS puro (não é bundle React). Mostra o mapa `assets/screens/safari-map.webp` com **4 zonas
+  clicáveis** e o **laboratório no meio do lago** (`assets/screens/safari-lab.webp`).
+- **O jogo faz os sorteios, a tela só mostra.** Tudo vive em `G.sf` (salvo como `sf` no `save()`, sem mudar `v`):
+  `d` dia dos giros, `sp` giros restantes, `mo` Moedas Safari, `lab` estoque do laboratório, `u` próximo id.
+  `sfState()` zera os giros quando vira o dia (meia-noite local, por isso a tela só mostra um relógio).
+- Zona -> família (`SFZ`): GELO = Hydrake, FOGO = Blazleo, PLANTA = Byron, DESERTO = mista. Cada giro
+  (`sfSpin`) sorteia 5 Numius — estágio 1/2/3 em 72/23/5%, nível conforme o estágio — guarda no laboratório
+  (limite `SFLAB` 60) e soma os níveis em Moedas Safari. São 5 giros por dia (`SFSPIN`).
+- Cruzamento (`sfBreed`): mesma espécie, sexos diferentes, custa `SFCOST` (50) moedas. O filhote **nasce e fica
+  no laboratório**, nível (a+b)/2 + 0 a 5, com a marca `nb` (NOVO). Dois cliques num card chamam `sfTake`, que
+  cria o Numiu de verdade (`mk`) e põe na equipe (máx. 6).
+- Mensagens: a tela manda `ready`, `nav`, `spin` (`z`), `breed` (`a`,`b`), `take` (`u`), `release` (`u`); o jogo
+  responde `sfdata`, `sfspin`, `sfbreed`, `sftake`, `sfrelease`. Toda resposta traz `sf` atualizado — se mexer em
+  `G.sf` por fora (teste, console), chame `sfSend()` para a tela ver.
+- No menu principal a Safari **é uma ilha** (`id:"safari"`, arte `assets/screens/menu-safari.webp`), não um item
+  da lista lateral; a barrinha da ilha mostra os giros que sobraram (`isl.safari` em `mnData`).
