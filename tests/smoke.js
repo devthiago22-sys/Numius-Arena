@@ -47,11 +47,13 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   const sf = page.frameLocator('#sff');
   ok(await page.evaluate(() => SF.ready), 'tela da zona safari carregou');
   const spins0 = await page.evaluate(() => G.sf.sp);
-  await sf.locator('#zGELO').click(); await page.waitForTimeout(800);
-  ok(await page.evaluate(() => G.sf.sp) === spins0 - 1, 'o giro gastou uma rodada do dia');
-  ok(await sf.locator('#drawG .card').count() === 5, 'o sorteio trouxe 5 Numius');
+  await sf.locator('#zGELO').click(); await page.waitForTimeout(400);
+  ok(await sf.locator('#zG .card.back').count() === 5, 'o altar da zona abre com 5 cartas viradas');
+  await sf.locator('#zGo').click(); await page.waitForTimeout(2600);
+  ok(await page.evaluate(() => G.sf.sp) === spins0 - 1, 'a invocação gastou uma das 5 do dia');
+  ok(await sf.locator('#zG .card:not(.back)').count() === 5, 'as 5 cartas viraram e mostraram os Numius');
   ok(await page.evaluate(() => G.sf.lab.length) === 5, 'os Numius ficaram no laboratório');
-  await sf.locator('#drawX').click(); await page.waitForTimeout(250);
+  await sf.locator('#zX').click(); await page.waitForTimeout(250);
   /* cruza um casal da mesma espécie e leva o filhote para a equipe */
   await page.evaluate(() => { G.sf.lab = [{ u: 901, i: 0, l: 20, sx: 'M', z: 'GELO' }, { u: 902, i: 0, l: 24, sx: 'F', z: 'GELO' }]; G.sf.mo = 999; sfSend(); });
   await sf.locator('#labbtn').click(); await page.waitForTimeout(500);

@@ -142,14 +142,17 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 - **O jogo faz os sorteios, a tela só mostra.** Tudo vive em `G.sf` (salvo como `sf` no `save()`, sem mudar `v`):
   `d` dia dos giros, `sp` giros restantes, `mo` Moedas Safari, `lab` estoque do laboratório, `u` próximo id.
   `sfState()` zera os giros quando vira o dia (meia-noite local, por isso a tela só mostra um relógio).
-- Zona -> família (`SFZ`): GELO = Hydrake, FOGO = Blazleo, PLANTA = Byron, DESERTO = mista. Cada giro
-  (`sfSpin`) sorteia 5 Numius — estágio 1/2/3 em 72/23/5%, nível conforme o estágio — guarda no laboratório
-  (limite `SFLAB` 60) e soma os níveis em Moedas Safari. São 5 giros por dia (`SFSPIN`).
+- Zona -> família (`SFZ`): GELO = Hydrake, FOGO = Blazleo, PLANTA = Byron, DESERTO = mista. Clicar numa zona abre
+  o **altar de invocação** (`openZone`): 5 cartas viradas para baixo e o botão INVOCAR. Cada invocação gasta uma das
+  5 do dia (`SFSPIN`), chama `sfSpin` — que sorteia 5 Numius (estágio 1/2/3 em 72/23/5%, nível conforme o estágio),
+  guarda no laboratório (limite `SFLAB` 60) e soma os níveis em Moedas Safari — e a tela vira as cartas **uma a uma**
+  (`reveal`), somando as moedas conforme cada um aparece. Nada aparece antes de a pessoa invocar.
 - Cruzamento (`sfBreed`): mesma espécie, sexos diferentes, custa `SFCOST` (50) moedas. O filhote **nasce e fica
   no laboratório**, nível (a+b)/2 + 0 a 5, com a marca `nb` (NOVO). Dois cliques num card chamam `sfTake`, que
   cria o Numiu de verdade (`mk`) e põe na equipe (máx. 6).
 - Mensagens: a tela manda `ready`, `nav`, `spin` (`z`), `breed` (`a`,`b`), `take` (`u`), `release` (`u`); o jogo
   responde `sfdata`, `sfspin`, `sfbreed`, `sftake`, `sfrelease`. Toda resposta traz `sf` atualizado — se mexer em
   `G.sf` por fora (teste, console), chame `sfSend()` para a tela ver.
-- No menu principal a Safari **é uma ilha** (`id:"safari"`, arte `assets/screens/menu-safari.webp`), não um item
-  da lista lateral; a barrinha da ilha mostra os giros que sobraram (`isl.safari` em `mnData`).
+- No menu principal a Safari **não tem ilha própria**: a ilha que era o Porto Avelar (`id:"porto"`, arte `menu-4.webp`)
+  virou "SAFARI ZONE" com `nav:"safari"` — o pedido foi não acrescentar ilha nova ao mapa. O PvP continua na lista
+  lateral. A barrinha dessa ilha mostra as invocações que sobraram (`isl.porto` em `mnData`).

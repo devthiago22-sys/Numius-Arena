@@ -63,6 +63,14 @@ h1{font-size:11px;color:var(--cy);text-shadow:0 0 12px rgba(0,240,255,.5);flex:1
 #toast.on{opacity:1;transform:translateX(-50%)}
 @keyframes pop{0%{transform:scale(.3);opacity:0}45%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
 .pop{animation:pop .4s ease-out both}
+/* carta virada para baixo, antes da invocação */
+.card.back{cursor:default;display:flex;align-items:center;justify-content:center;min-height:132px;
+ background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.07),rgba(0,0,0,0) 65%),var(--pan);
+ border-style:dashed;color:var(--z,#00f0ff);font-size:24px;text-shadow:0 0 14px currentColor}
+.card.back.wait{animation:breathe 1.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+@keyframes flip{0%{transform:rotateY(90deg) scale(.8);opacity:0}60%{transform:rotateY(0) scale(1.08);opacity:1}100%{transform:rotateY(0) scale(1)}}
+.flip{animation:flip .42s ease-out both}
 @keyframes heart{0%{transform:scale(.2);opacity:0}30%{transform:scale(1.4);opacity:1}60%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}
 #heart{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:52px;pointer-events:none}
 #heart.on{display:flex;animation:heart 1.3s ease-out forwards}
@@ -92,12 +100,15 @@ h1{font-size:11px;color:var(--cy);text-shadow:0 0 12px rgba(0,240,255,.5);flex:1
   </button>
   <div id="hint">Clique numa zona para soltar um giro · o laboratório cruza Numius</div>
 
-  <!-- resultado do giro -->
-  <div class="sheet" id="draw">
-   <div class="row"><h2 class="px" id="drawT">SORTEIO</h2><span style="flex:1"></span><button class="btn" id="drawX">FECHAR</button></div>
-   <div class="msg ok" id="drawM"></div>
-   <div class="grid" id="drawG"></div>
-   <div style="font-size:10px;color:rgba(255,255,255,.5)">Eles ficam guardados no laboratório.</div>
+  <!-- altar de invocação da zona -->
+  <div class="sheet" id="zone">
+   <div class="row"><h2 class="px" id="zT">ZONA</h2><span style="flex:1"></span>
+    <span class="chip cy" title="Invocações de hoje">🔮 <b id="zSp">0</b>/<span id="zSpM">5</span></span>
+    <button class="btn" id="zX">FECHAR</button></div>
+   <div class="msg ok" id="zM">Invoque para descobrir quem aparece.</div>
+   <div class="grid" id="zG"></div>
+   <button class="btn go" id="zGo" style="height:48px">INVOCAR</button>
+   <div style="font-size:10px;color:rgba(255,255,255,.5)">Cada invocação gasta uma das 5 do dia, chama 5 Numius da zona e eles ficam guardados no laboratório.</div>
   </div>
 
   <!-- laboratório -->
@@ -143,11 +154,28 @@ function card(m,opt){const d=document.createElement('button');d.className='card'
  d.innerHTML=`<img src="${IM['f'+m.i]||''}" alt="${spn(m.i)}"><div class="nm" style="color:${ZC[m.z]||'#fff'}">${spn(m.i)}</div><div class="lv">Nv ${m.l}</div><span class="sx ${m.sx}">${m.sx==='M'?'♂':'♀'}</span>`+(m.nb?'<span class="nb">NOVO</span>':'');
  d.dataset.u=m.u;return d}
 
-function drawPanel(r){const g=$('#drawG');g.innerHTML='';
- r.got.forEach((m,k)=>{const c=card(m);c.classList.add('pop');c.style.animationDelay=(k*.08)+'s';c.disabled=true;c.style.cursor='default';g.appendChild(c)});
- $('#drawT').textContent='SORTEIO · '+(ZN[r.z]||r.z);
- $('#drawM').textContent='+'+r.coins+' Moedas Safari'+(r.full?' · laboratório lotado, '+r.full+' não couberam':'');
- $('#draw').classList.add('on')}
+/* ---------- altar: a pessoa invoca, as cartas viram uma a uma ---------- */
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let ZONE=null,BUSY=false;
+function zSlots(n){const g=$('#zG');g.innerHTML='';
+ for(let k=0;k<n;k++){const d=document.createElement('div');d.className='card back'+(BUSY?' wait':'');
+  d.style.setProperty('--z',ZC[ZONE]||'#00f0ff');d.innerHTML='<span>✦</span>';
+  if(BUSY&&!RM)d.style.animationDelay=(k*.12)+'s';g.appendChild(d)}}
+function openZone(z){ZONE=z;BUSY=false;
+ $('#zT').textContent=ZN[z]||z;$('#zT').style.color=ZC[z]||'var(--cy)';
+ $('#zM').textContent='Invoque para descobrir quem aparece.';$('#zM').className='msg ok';
+ zSlots(5);zHud();$('#zone').classList.add('on')}
+function zHud(){if(!D)return;$('#zSp').textContent=D.sf.sp;$('#zSpM').textContent=D.sf.max;
+ const b=$('#zGo');b.disabled=BUSY||D.sf.sp<=0;b.textContent=BUSY?'INVOCANDO…':(D.sf.sp<=0?'SEM INVOCAÇÕES HOJE':'INVOCAR')}
+/* vira uma carta por vez, somando as moedas conforme cada Numiu aparece */
+function reveal(r){const g=$('#zG'),base=D.sf.mo-r.coins;let acc=0;
+ r.got.forEach((m,k)=>{const put=()=>{const c=card(m);c.disabled=true;c.style.cursor='default';
+   if(!RM)c.classList.add('flip');g.replaceChild(c,g.children[k]);
+   acc+=m.l;$('#mo').textContent=base+acc;$('#mo2').textContent=base+acc;
+   if(k===r.got.length-1){BUSY=false;zHud();
+    $('#zM').textContent='+'+r.coins+' Moedas Safari · guardados no laboratório'+(r.full?' (lotado: '+r.full+' não couberam)':'');
+    $('#zM').className='msg '+(r.full?'no':'ok');hud();labList();slots()}};
+  RM?put():setTimeout(put,120+k*340)})}
 
 function labList(){const g=$('#labG');g.innerHTML='';if(!D)return;
  const L=D.sf.lab.slice().reverse();
@@ -167,19 +195,23 @@ function slots(){
  M.textContent=t;M.className='msg '+(ok?'ok':'no');C.disabled=!ok;C.textContent='CRUZAR - '+(D?D.sf.cost:50)+' MOEDAS SAFARI'}
 
 /* ---------- ações ---------- */
-document.querySelectorAll('.zone').forEach(b=>b.onclick=()=>{if(!D)return;if(D.sf.sp<=0){toast('Sem giros! Volta amanhã.');return}post({k:'spin',z:b.dataset.z})});
+document.querySelectorAll('.zone').forEach(b=>b.onclick=()=>{if(!D)return;openZone(b.dataset.z)});
+$('#zGo').onclick=()=>{if(!D||BUSY)return;if(D.sf.sp<=0){toast('Sem invocações! Volta amanhã.');return}
+ BUSY=true;zHud();zSlots(5);$('#zM').textContent='Chamando quem mora na zona…';$('#zM').className='msg ok';
+ post({k:'spin',z:ZONE})};
+$('#zX').onclick=()=>{if(BUSY)return;$('#zone').classList.remove('on')};
 $('#labbtn').onclick=()=>{$('#lab').classList.add('on');slots();labList()};
 $('#labX').onclick=()=>$('#lab').classList.remove('on');
-$('#drawX').onclick=()=>$('#draw').classList.remove('on');
 $('#back').onclick=()=>post({k:'nav',to:'map'});
 $('#clear').onclick=()=>{SEL={M:null,F:null};slots();labList()};
 $('#cross').onclick=()=>{if(SEL.F&&SEL.M)post({k:'breed',a:SEL.F.u,b:SEL.M.u})};
-addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#draw').classList.contains('on'))$('#draw').classList.remove('on');
+addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#zone').classList.contains('on')){if(!BUSY)$('#zone').classList.remove('on')}
  else if($('#lab').classList.contains('on'))$('#lab').classList.remove('on');else post({k:'nav',to:'map'})}});
 
 addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
  if(m.k==='sfdata'){if(m.imgs)Object.assign(IM,m.imgs);D=m;hud();labList();slots()}
- else if(m.k==='sfspin'){if(m.err){toast(m.err);return}D.sf=m.sf;hud();drawPanel(m);labList();slots()}
+ else if(m.k==='sfspin'){if(m.err){BUSY=false;zHud();$('#zM').textContent=m.err;$('#zM').className='msg no';zSlots(5);toast(m.err);return}
+  D.sf=m.sf;$('#sp').textContent=m.sf.sp;zHud();reveal(m)}
  else if(m.k==='sfbreed'){if(m.err){toast(m.err);return}D.sf=m.sf;SEL={M:null,F:null};
   const h=$('#heart');h.classList.remove('on');void h.offsetWidth;h.classList.add('on');setTimeout(()=>h.classList.remove('on'),1400);
   toast('Nasceu um '+spn(m.baby.i)+' Nv '+m.baby.l+'! Ficou no laboratório.');hud();labList();slots()}
