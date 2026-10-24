@@ -86,11 +86,69 @@ Pontos importantes:
 - Golpes: cada númio sabe até 4; aprende por nível (`LS`/`initMoves`); `cc` = usos (PP), restaurados no
   Centro de cura.
 
+### Schema do save (hoje só em `localStorage`, versão `v:5`)
+Documentado a partir de `save()`/`load()` em `js/state.js` — é o "contrato" a seguir pra desenhar as tabelas
+do banco na Fase 2 do backend. Dois registros hoje, os dois em `localStorage`:
+
+**Conta** (`mon-users`, objeto `{[id]: {...}}` em `U()`/`setU()`):
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| `email` | string | sim | minúsculo, é a chave de login |
+| `salt` | string (base64) | sim | gerado no cadastro |
+| `hash` | string (base64) | sim | PBKDF2(senha, salt, 100k iterações, SHA-256) — **hoje calculado só no navegador**, a Fase 1 precisa mover isso pro servidor |
+| `data` | objeto | não (`null` até o primeiro save) | é o save abaixo |
+
+**Save** (`data`, campo salvo por `save()`, chave de versão `v`):
+| Campo | Tipo | Obrigatório | Default no `load()` | O que é |
+|---|---|---|---|---|
+| `v` | number | sim | — | versão do formato; `load()` zera o progresso se vier diferente de 5 (migração ainda é "tudo ou nada") |
+| `team` | Numiu[] | sim | — | equipe atual (máx. 6), ver shape do Numiu abaixo |
+| `badges` | number[] | sim | — | insígnias de ginásio conquistadas |
+| `coins` | number | não | `0` | moedas comuns |
+| `hero` | `{g,skin,col,name}` \| null | não | `null` | personagem (gênero, skin, cor, nome) |
+| `dex` | number[] | não | `[]` | espécies já registradas no mostruário |
+| `tac` | `{[tipo]: {w,best,q?}}` | não | `{}` | progresso da Arena Tática por tipo (vitórias, melhor nível da escada batido) |
+| `pv` | objeto \| null | não | `null` | estado do PvP (`G.pvp`) |
+| `vc`/`vn`/`vbest` | number | não | `0`/`1`/`0` | Moedas Virtuosas, fase atual/selecionada e melhor fase da Batalha Virtuosa (Treinamento) |
+| `bs` | objeto \| null | não | `null` | Boss semanal: semana, melhor dano, recompensa recebida |
+| `fr` | `{aurelion,nyxar,chronos}` | não | zerado | fragmentos de dragão |
+| `eg` | number | não | `0` | ovos no inventário |
+| `lg` | `{[id]:1}` | não | `{}` | lendários liberados na Mochila |
+| `ls` | id \| null | não | `null` | lendário selecionado pra arena |
+| `sc`/`sf` | number / objeto | não | `0`/`null` | contador de Moeda Safari e estado da Zona Safari (`G.sf`: moedas, laboratório, próximo id) |
+| `ms` | objeto \| null | não | `null` | missões: dia/semana atual, progresso por id, resgatadas |
+| `tw` | number | não | `0` | melhor andar vencido na Torre de Gelo |
+| `xd` | number | não | `0` | trocas concluídas na Troca de Numius |
+
+**Numiu** (item de `team`, moldado por `mk()`/`calc()` em `js/state.js`):
+| Campo | Tipo | O que é |
+|---|---|---|
+| `i` | number | índice da espécie em `S` (já reflete a forma evoluída atual) |
+| `l` | number | nível |
+| `xp` | number | XP acumulado no nível atual |
+| `iv` | `{h,a,sa,d,sd,sp}` 0-31 | IVs por atributo (vida, ataque, atq.especial, defesa, def.especial, velocidade) |
+| `ev` | `{h,a,sa,d,sd,sp}` 0-252 | EVs por atributo |
+| `hp`/`max` | number | vida atual / máxima (derivados de `calc`, não persistidos separado do resto) |
+| `mv` | number[] (≤4) | índices em `MOVES` dos golpes conhecidos |
+| `pp` | number[] | usos restantes de cada golpe em `mv` |
+
+Isso cobre tudo que **um usuário** salva hoje. Não documentei estruturas efêmeras (estado de uma partida de
+PvP em andamento, presença de sala) porque elas não são persistidas — nascem e morrem dentro da sessão.
+
 ## PvP (determinismo)
 O duelo é calculado nos dois aparelhos e precisa dar o **mesmo resultado**. Por isso `hit()` usa `RR()`
 (gerador com semente), nunca `Math.random()`. Qualquer função chamada por `pvpResolve` deve ser
 determinística e não pode depender do estado local de um só jogador. A sala usa `claude.use('room')`,
 que só existe dentro do claude.ai.
+
+## Back-end (planejado, ainda não implementado)
+Decisão da Fase 0 do roadmap de backend: **Supabase** (banco Postgres + autenticação + API + realtime,
+tudo hospedado lá mesmo — sem servidor Node próprio). Quando a implementação começar:
+- Auth do Supabase substitui o par `mon-users`/PBKDF2 local (`js/state.js`) — login/cadastro passam a ser
+  chamadas de API em vez de só `localStorage`.
+- O schema do save (seção "Dados e salvamento" acima) é o ponto de partida pra desenhar as tabelas.
+- Lógica determinística que já existe pra validar no servidor (via Edge Functions, que também rodam
+  JS/TS): `hit()`/`pvpResolve` (PvP), `bsTurn`/`bsRng` (Boss semanal), a resolução de troca em `trade.js`.
 
 ## Pré-visualização no claude.ai
 Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 16 MB, reduza imagens
