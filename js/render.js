@@ -57,13 +57,6 @@ function R(){
   else{const x=MOVES[q.k];
    h=`<h1>📘 Novo golpe!</h1><div class=card><div class=mon><span class=sp>${S[q.m.i].e}</span><div><b>${S[q.m.i].n}</b> <small>Nv ${q.m.l}</small><br><small>quer aprender <b>${x.n}</b><br>${x.t} · poder ${x.p} · cc ${x.pp}</small></div></div></div><p class=mut>${S[q.m.i].n} já sabe 4 golpes. Escolha um para esquecer ou não aprenda o novo:</p><div class=row style="flex-direction:column">${q.m.mv.map((k,j)=>`<button style="flex:none" onclick="learnForget(${j})">Esquecer ${MOVES[k].n}<br><small>${MOVES[k].t} · poder ${MOVES[k].p} · cc ${MOVES[k].pp}</small></button>`).join('')}<button style="flex:none" onclick="learnSkip()">Não aprender ${x.n}</button></div>`}
  }
- else if(G.screen==='numios'){
-  const d=G.dex||[],tm=G.team.map(m=>m.i);
-  const list=[...G.team.map(m=>({i:m.i,m})),...DEX.filter(i=>d.includes(i)&&!tm.includes(i)).map(i=>({i,m:null}))];
-  h=`<h1>Númios</h1><small>${list.length} númios que você já teve · ${G.team.length}/6 na equipe</small><p><button onclick="G.screen='map';R()">Voltar ao mapa</button></p>`;
-  h+=list.map(({i,m})=>{const s=S[i],mm=m||{i,l:[5,16,36][s.s-1]},mv=(m&&m.mv?m.mv:initMoves(i,mm.l)).map(k=>MOVES[k]);
-   return `<div class=card><div class=mon><span class=sp>${s.e}</span><div><b>${s.n}</b> <small>#${String(DEX.indexOf(i)+1).padStart(3,'0')} · ${s.t}${s.t2?' · '+s.t2:''}</small><br><small>${m?'Nv '+m.l+' · '+m.hp+'/'+m.max+' PS · na equipe':'Já teve · fora da equipe'}</small></div></div><div class=wkb style="margin:8px 0 0"><b>✨ ${PA(mm).n}</b><br>${pdesc(mm)}</div><div class=mvs>${mv.map(x=>`<span class=mvc>${TE[x.t]||'⚪'} ${x.n}<small>${x.t} · poder ${mp(x,mm)} · cc ${x.pp}${x.x==='dr'?' · drena PS':x.x==='cr'?' · crítico':''}</small></span>`).join('')}</div></div>`}).join('');
- }
  else if(G.screen==='dexd'){
   const i=G.dd,s=S[i],{w,r}=wk({i}),f=s.fam,st=[i],d=G.dex||[];
   h=`<h1>${s.n}</h1><small>#${String(DEX.indexOf(i)+1).padStart(3,'0')} · Forma única · ${s.t}${s.t2?' · '+s.t2:''}</small><p><button onclick="G.screen='dex';R()">Voltar ao mostruário</button></p><div class=card style="text-align:center"><span class=sp style="font-size:104px;display:block;width:auto">${s.e}</span></div><h2>Linha de evolução</h2><div class=evl>${st.map((x,k)=>`<div class="evs ${d.includes(x)?'':'sh'} ${x===i?'cur':''}"><span class=sp>${S[x].e}</span><small>${d.includes(x)?S[x].n:'???'}</small><small>Forma única</small></div>`).join('<span class=arr>➜</span>')}</div><h2>Habilidade passiva</h2><div class=card><b>✨ ${S[i].ab[0]}</b><br><small>${pdesc({i})}</small></div><h2>Golpes aprendidos por nível</h2>${LS(f).map(([lv,k])=>`<div class=card><b>${TE[MOVES[k].t]||'⚪'} ${MOVES[k].n}</b><br><small>${MOVES[k].t} · poder ${MOVES[k].p} · cc ${MOVES[k].pp}${MOVES[k].x==='dr'?' · drena PS':MOVES[k].x==='cr'?' · sempre crítico':''} · ${lv===1?'Golpe inicial':'Aprende no Nv '+lv}</small></div>`).join('')}<h2>Fraquezas e resistências</h2><div class=card><b>Fraco contra:</b> ${w.join(' · ')||'—'}<br><b>Resiste a:</b> ${r.join(' · ')||'—'}</div>`;
@@ -101,12 +94,11 @@ function R(){
  }
  else if(G.screen==='map'&&!G.mfb){h=`<div id=mnph></div>`}
  else if(G.screen==='map'){
-  const nb=G.badges.length,hurt=G.team.filter(m=>m.hp<m.max).length,lastDex=(G.dex||[]).length?G.dex[G.dex.length-1]:(G.team[0]&&G.team[0].i)||0,gi=Math.min(nb,7);
+  const nb=G.badges.length,hurt=G.team.filter(m=>m.hp<m.max).length,gi=Math.min(nb,7);
   const it=[
    [GYX[gi].e,'Ginásios',nb+'/8',"G.screen='gyms';R()"],
    ['⚔️','Batalhas táticas','8',"G.screen='tac';R()"],
    [S[(G.team[0]||{i:0}).i].e,'Equipe',G.team.length+'/6',"G.screen='team';R()"],
-   [S[lastDex].e,'Númios',(G.dex||[]).length+'',"G.screen='numios';R()"],
    ['📖','Mostruário',(G.dex||[]).length+'/'+DEX.length,"G.screen='dex';R()"],
    ['🤝','PvP online','','pvpOpen()'],
    ['🏋️','Treinamento',(G.vc||0)+' 🪙',"G.screen='train';R()"],

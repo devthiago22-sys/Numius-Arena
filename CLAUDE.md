@@ -48,7 +48,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `lgf` login | `ready`, `login`, `signup`, `guest` | `err` |
 | `hf` hero | `ready`, `hero` | |
 | `sf` starter | `ready`, `pick` | `imgs` |
-| `mnf` menu | `ready`, `nav` (to: gyms, tac, team, numios, dex, pvp, train, heal, cfg, exit) | `data` |
+| `mnf` menu | `ready`, `nav` (to: gyms, tac, team, dex, pvp, train, heal, cfg, exit) | `data` |
 | `tbf` táticas | `ready`, `nav`, `tac` | `data` |
 | `hcf` cura | `ready`, `healed`, `back`, `music` | dados em `window.NXT` (injetado no srcdoc) |
 | `eqf` equipe | `ready`, `mv`, `nav`, `cfg`, `leg` (`id` ou `null`) | `team` (inclui `legs`) |
