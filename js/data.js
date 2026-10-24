@@ -19,6 +19,9 @@ const wk=m=>{const w=[],r=[],we=[];TYX.forEach(t=>{const e=effv(t,m);if(e>1){w.p
 const wkHTML=m=>{const{w,r}=wk(m);return `<div class=wkb><b>Tipo:</b> ${S[m.i].t}${S[m.i].t2?' · '+S[m.i].t2:''}<br><b>Fraco contra:</b> ${w.join(' · ')||'—'}<br><b>Resiste a:</b> ${r.join(' · ')||'—'}<br><b>Evolução:</b> ${S[m.i].x!==undefined?'Nv '+(S[m.i].s===1?16:36)+' → '+S[S[m.i].x].n:'forma final'}<br><b>Habilidade:</b> ${PA(m).n} — ${pdesc(m)}</div>`};
 const MV={Fogo:'Chama',Água:'Jato d\'água',Planta:'Folha-lâmina',Elétrico:'Choque',Pedra:'Pedrada',Gelo:'Raio gelado',Psíquico:'Confusão',Voador:'Rajada'};
 const TY=['Fogo','Água','Planta','Elétrico','Pedra','Gelo','Psíquico','Voador'],TN=['Iniciante','Esperto','Estrategista','Mestre'],TE={Fogo:'🔥',Água:'💧',Planta:'🍃',Elétrico:'⚡',Pedra:'🪨',Gelo:'❄️',Psíquico:'🔮',Voador:'🪶',Dragão:'🐉',Luz:'✨',Trevas:'🌑',Cósmico:'🌌'};
+/* Arena Tática: escada de níveis por tipo (não escalona sozinha a cada vitória — vence o nível N pra
+   liberar o N+1, igual às fases da Batalha Virtuosa / andares da Torre). */
+const TACLV=[5,10,15,20,25,30,40,50,60,70];
 const TYX=[...TY,'Dragão'];
 const MOVES=[{n:'Investida',t:'Normal',p:45},{n:'Pancada',t:'Normal',p:60},...TY.map(t=>({n:MV[t],t,p:60})),...FAM.slice(0,20).flatMap((g,f)=>g[6].map(([n,t,p,x],j)=>({n,t,p,x,f,j})))];
 MOVES.push({n:'Golpe Pesado',t:'Normal',p:75});

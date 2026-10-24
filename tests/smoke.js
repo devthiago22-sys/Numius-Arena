@@ -120,18 +120,23 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   await page.evaluate(() => { G.screen = 'map'; R(); }); await page.waitForTimeout(500);
 
   console.log('Arena Tática');
-  await page.evaluate(() => { G.team = [mk(0, 40)]; G.screen = 'tac'; R(); }); await page.waitForTimeout(2200);
+  await page.evaluate(() => { G.team = [mk(0, 40)]; G.tac = {}; G.screen = 'tac'; R(); }); await page.waitForTimeout(2200);
   const tb = page.frameLocator('#tbf');
   ok(await page.evaluate(() => TB.ready), 'tela da arena tática carregou');
-  ok(await tb.locator('.tcard').count() === 8, 'a arena tática mostra os 8 tipos');
+  ok(await tb.locator('.tcard').count() === 8, 'a arena tática mostra um treinador por tipo (8 no total)');
   await tb.locator('.tcard').first().click(); await page.waitForTimeout(400);
-  ok(await tb.locator('#lvSlider').count() === 1, 'escolher um tipo mostra o seletor de nível');
-  await tb.locator('#lvSlider').evaluate(el => { el.value = 60; el.dispatchEvent(new Event('input')); }); await page.waitForTimeout(300);
-  ok((await tb.locator('#lvNum').innerText()) === 'Nv 60', 'o seletor de nível vai de 5 a 70, de 5 em 5');
-  await tb.locator('#fightBtn').click(); await page.waitForTimeout(1500);
-  ok(await page.evaluate(() => G.screen === 'battle' && G.battle.tt === 'Fogo' && G.battle.tl === 60), 'escolher Nv 60 na Arena Tática inicia a batalha nesse nível, sem depender de vitórias anteriores');
-  ok(await page.evaluate(() => G.battle.tier === 3), 'Nv 60 cai na dificuldade "Mestre" (tier 3)');
-  await page.evaluate(() => end());
+  ok(await tb.locator('.ph').count() === 10, 'o treinador tem uma escada de 10 níveis');
+  ok(await tb.locator('.ph.locked').count() === 9, 'só o nível 1 vem liberado na primeira vez, o resto fica cinza');
+  await tb.locator('.ph').first().click(); await page.waitForTimeout(300);
+  await tb.locator('#fightBtn').click(); await page.waitForTimeout(1800);
+  ok(await page.evaluate(() => G.screen === 'battle' && G.battle.tt === 'Fogo' && G.battle.tl === 5), 'o nível 1 da escada abre a batalha no Nv 5 (primeiro da tabela TACLV)');
+  ok(await page.evaluate(() => G.battle.tier === 0), 'Nv 5 cai na dificuldade "Iniciante" (tier 0)');
+  await page.evaluate(() => turn(0)); await page.waitForTimeout(1600);
+  let tacTries = 0;
+  while (await page.evaluate(() => G.battle && !G.battle.over) && tacTries++ < 25) { await page.evaluate(() => turn(0)); await page.waitForTimeout(1600); }
+  await page.evaluate(() => end()); await page.waitForTimeout(1500);
+  ok(await page.evaluate(() => G.tac.Fogo && G.tac.Fogo.w === 1 && G.tac.Fogo.best === 5), 'vencer o nível 1 (Nv 5) registra a vitória e o melhor nível batido');
+  ok(await tb.locator('.ph.locked').count() === 8, 'vencer o nível 1 libera o nível 2 (só 8 continuam bloqueados)');
   await page.evaluate(() => { G.screen = 'map'; R(); }); await page.waitForTimeout(500);
 
   console.log('Batalha');

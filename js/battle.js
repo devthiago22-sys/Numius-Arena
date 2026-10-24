@@ -157,11 +157,14 @@ function twStart(n){
 }
 function trEV(i,s){const m=G.team[i];m.ev[s]=m.ev[s]||0;if((G.vc||0)<2||m.ev[s]>=252){G.note='Moedas Virtuosas insuficientes ou limite de EV atingido.';R();return}G.vc-=2;m.ev[s]=Math.min(252,m.ev[s]+8);const o=m.max;calc(m);m.hp+=m.max-o;save();R()}
 function trIV(i,s){const m=G.team[i];m.iv[s]=m.iv[s]==null?15:m.iv[s];if((G.vc||0)<6||m.iv[s]>=31){G.note='Moedas Virtuosas insuficientes ou IV já no máximo.';R();return}G.vc-=6;m.iv[s]=Math.min(31,m.iv[s]+4);const o=m.max;calc(m);m.hp+=m.max-o;save();R()}
-/* Arena Tática: o jogador escolhe o tipo E o nível (5 a 70, de 5 em 5) — não escalona mais sozinha a cada
-   vitória (isso ficava difícil demais). A dificuldade da IA (`tier`) só depende do nível escolhido. */
-const tacLvl=l=>Math.max(5,Math.min(70,Math.round((l||5)/5)*5));
+/* Arena Tática: o jogador escolhe o tipo e, dentro dele, um nível de uma escada fixa (TACLV, em data.js) —
+   não escalona mais sozinha a cada vitória (isso ficava difícil demais). Vencer o nível N libera o N+1,
+   igual às fases da Batalha Virtuosa / andares da Torre; a dificuldade da IA (`tier`) só depende do nível. */
+const tacLvl=l=>TACLV.reduce((b,x)=>Math.abs(x-(l||TACLV[0]))<Math.abs(b-(l||TACLV[0]))?x:b,TACLV[0]);
+const tacUnlocked=t=>{const T=(G.tac&&G.tac[t])||{best:0};return Math.min(TACLV.length,1+TACLV.filter(x=>x<=(T.best||0)).length)};
 function tac(t,lvl){
- const L=tacLvl(lvl||Math.max(5,(G.team[0]||{l:5}).l)),tier=L<25?0:L<45?1:L<60?2:3;
+ const unl=tacUnlocked(t);let idx=TACLV.indexOf(tacLvl(lvl||TACLV[0]));if(idx<0)idx=0;if(idx>unl-1)idx=unl-1;
+ const L=TACLV[idx],tier=L<25?0:L<45?1:L<60?2:3;
  const T=G.tac||(G.tac={});T[t]=T[t]||{w:0,best:0};
  const pool=(p=>p.length?p:BASE.slice())([...S.keys()].filter(i=>(S[i].t===t||S[i].t2===t)&&BASE.includes(i)));
  const q=Array.from({length:6},(_,k)=>mk(pool[k%pool.length],L)),f=q.shift();

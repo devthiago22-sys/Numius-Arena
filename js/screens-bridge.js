@@ -218,15 +218,16 @@ function tbMount(){
  tbToggle();
 }
 function tbData(){
- const def=tacLvl(G.team[0]?G.team[0].l:5);
- return{numius:1,k:'data',types:TY.map(t=>{const T=(G.tac&&G.tac[t])||{w:0,best:0};return{t,e:TE[t],w:T.w||0,best:T.best||0}}),defLvl:def,canFight:G.team.length>0,
-  imgs:TB.sent?null:(TB.sent=1,btImgs())};
+ return{numius:1,k:'data',levels:TACLV,
+  types:TY.map(t=>{const T=(G.tac&&G.tac[t])||{w:0,best:0},np=TNPC[t]||{e:TE[t],n:t};
+   return{t,e:TE[t],tn:np.n,te:np.e,w:T.w||0,best:T.best||0,unl:tacUnlocked(t)}}),
+  canFight:G.team.length>0,imgs:TB.sent?null:(TB.sent=1,btImgs())};
 }
 function tbSend(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('tbf');if(TB.ready&&f&&f.contentWindow)f.contentWindow.postMessage(tbData(),'*')}
 if(typeof addEventListener==='function')addEventListener('message',e=>{const f=document.getElementById('tbf');if(!f||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;
  if(d.k==='ready'){TB.ready=true;clearTimeout(TB.t);G.tbfb=false;tbSend()}
  else if(d.k==='nav'){G.screen='map';R()}
- else if(d.k==='tac'&&G.screen==='tac'){if(!TY.includes(d.t)||!G.team.length)return;if(!G.team.some(m=>m.hp>0)){goHeal();return}tac(d.t,tacLvl(d.lvl|0))}});
+ else if(d.k==='tac'&&G.screen==='tac'){if(!TY.includes(d.t)||!G.team.length)return;if(!G.team.some(m=>m.hp>0)){goHeal();return}tac(d.t,d.lvl|0)}});
 function tbToggle(){if(typeof document.getElementById!=='function')return;const on=G.screen==='tac'&&!G.tbfb,f=document.getElementById('tbf'),x=document.getElementById('tbx');if(f)f.style.display=on?'block':'none';if(x)x.style.display=on?'block':'none'}
 function mnToggle(){if(typeof document.getElementById!=='function')return;ifv(document.getElementById('mnf'),G.screen==='map'&&!G.mfb,MN)}
 function mnData(){const nb=G.badges.length,dx=(G.dex||[]).length;return{lv:Math.max(1,...G.team.map(m=>m.l)),isl:{vale:Math.min(100,(G.vbest||0)*10),cristal:Math.round((G.twBest||0)/30*100),canion:Math.min(100,Math.round((G.xcDone||0)/10*100)),porto:Math.min(100,Math.round(sfState().mo/MSDAY*100))},name:G.hero?String(G.hero.name):(ME||'Convidado'),coins:G.coins||0,guest:!ME,sub:ME?'conectado':'sem salvar',bl:['Pd','Ag','El','Pl','Ge','Vo','Ps','Fo'],bc:GY.map(g=>ARENA[g.ty][1]),be:GY.map((g,i)=>G.badges.includes(i)),bn:GY.map(g=>g.n),cnt:{gyms:nb+'/8',tac:'8',team:G.team.length+'/6',dex:dx+'/'+DEX.length,bag:''+(Object.keys(G.leg||{}).length+'/3'),missoes:''+msCount()}}}

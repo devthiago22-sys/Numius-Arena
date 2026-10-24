@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Arena Tática</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Space Grotesk',ui-sans-serif,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'JetBrains Mono',ui-monospace,monospace}
 :root{--bg:#160c08;--pan:#231309;--line:rgba(255,255,255,.10);--or:#ff7a3d;--or2:#ffb020;--ok:#4ade80;--bad:#ff6b6b}
 html,body{height:100%}
-body{background:radial-gradient(circle at 20% -10%,#3a1a0c,var(--bg) 60%);color:#fff;overflow:hidden;-webkit-tap-highlight-color:transparent}
-h1,h2,.px{font-family:'Outfit',sans-serif}
+body{background:var(--bg);color:#fff;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.px{font-family:'Press Start 2P',monospace;letter-spacing:.04em}
 #app{height:100%;display:flex;flex-direction:column;gap:10px;padding:12px;padding-top:max(12px,env(safe-area-inset-top))}
 #top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-h1{font-size:15px;font-weight:800;color:var(--or2);text-shadow:0 0 14px rgba(255,122,61,.45);flex:1;min-width:120px;letter-spacing:.02em}
-.btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;transition:.15s;white-space:nowrap}
+h1{font-size:11px;color:var(--or2);text-shadow:0 0 14px rgba(255,122,61,.5);flex:1;min-width:120px}
+.btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;border-radius:10px;padding:9px 12px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:.15s;white-space:nowrap}
 .btn:hover{background:rgba(255,255,255,.12)}
 .btn:disabled{opacity:.35;cursor:not-allowed}
 .btn.go{background:linear-gradient(90deg,var(--or),var(--or2));color:#1a0c04;border-color:transparent;box-shadow:0 0 22px rgba(255,122,61,.45)}
@@ -23,34 +23,29 @@ h1{font-size:15px;font-weight:800;color:var(--or2);text-shadow:0 0 14px rgba(255
 #body{flex:1;min-height:0;overflow:auto;padding-right:2px}
 .view{display:none}
 .view.on{display:block}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media(min-width:460px){.grid{grid-template-columns:repeat(4,1fr)}}
+/* ---- hub (personagens) ---- */
+.hub{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media(min-width:460px){.hub{grid-template-columns:repeat(4,1fr)}}
 .tcard{border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer;text-align:left;color:#fff;background:var(--pan);position:relative;overflow:hidden;transition:.15s}
 .tcard:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.22)}
-.tcard.on{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset,0 0 18px rgba(255,122,61,.35)}
-.tcard .em{font-size:28px}
-.tcard b{display:block;font-size:12px;margin:6px 0 4px}
-.tcard .tags{display:flex;gap:5px;flex-wrap:wrap}
-.tcard .tag{font-size:9px;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:700;white-space:nowrap}
-.tcard .tag.best{color:var(--or2)}
-.tip{margin-top:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:12px;padding:10px 12px;font-size:11px;color:rgba(255,255,255,.6);line-height:1.45}
-/* ---- nível ---- */
-#lvbox{border:1px solid var(--line);background:var(--pan);border-radius:16px;padding:14px;margin-top:12px}
-#lvbox h3{font-size:13px;margin-bottom:2px}
-#lvbox .sub{font-size:11px;color:rgba(255,255,255,.55);margin-bottom:12px}
-#lvRow{display:flex;align-items:center;gap:10px}
-.step{border:1px solid var(--line);background:rgba(255,255,255,.07);color:#fff;width:38px;height:38px;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;flex:none}
-.step:disabled{opacity:.3;cursor:not-allowed}
-#lvSlider{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:999px;background:linear-gradient(90deg,var(--or),var(--or2));outline:none}
-#lvSlider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--or);cursor:pointer}
-#lvSlider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--or);cursor:pointer}
-#lvNum{font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;color:var(--or2);min-width:64px;text-align:center}
-#tierRow{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
-.tchip{font-size:10px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-weight:700}
-.tchip.on{background:var(--or);color:#1a0c04;border-color:transparent}
-#fightbar{margin-top:14px;display:flex;gap:8px}
-.foeprev{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:rgba(255,255,255,.6)}
-.foeprev img{width:28px;height:28px;object-fit:contain;image-rendering:pixelated}
+.tcard .av{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:8px}
+.tcard b{display:block;font-size:11px;margin-bottom:2px}
+.tcard small{display:block;font-size:9px;color:rgba(255,255,255,.55);margin-bottom:6px}
+.tcard .tag{font-size:9px;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:700}
+.tip{margin-top:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:12px;padding:10px 12px;font-size:11px;color:rgba(255,255,255,.6);line-height:1.5}
+/* ---- escada de níveis ---- */
+#ladder{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 10px}
+.ph{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:rgba(255,255,255,.05);color:#fff;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ph.on{border-color:var(--or);background:var(--or);color:#1a0c04;box-shadow:0 0 14px rgba(255,122,61,.6)}
+.ph.locked{opacity:.35;cursor:not-allowed}
+.pcard{border-radius:18px;padding:16px;position:relative;overflow:hidden;color:#fff;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#3a1a0c,var(--pan) 75%)}
+.pcard .av{font-size:40px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.pcard h2{font-size:17px;margin:8px 0 2px;font-family:'JetBrains Mono',monospace}
+.pcard .rv{font-size:11px;opacity:.85}
+.pcard .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pcard .tag{font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);font-weight:700}
+.pcard .locktxt{font-size:11px;opacity:.85;margin-top:8px}
+#fightbar{margin-top:10px;display:flex;align-items:center;gap:8px}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:rgba(10,8,6,.95);border:1px solid var(--or);border-radius:10px;padding:10px 14px;font-size:11px;opacity:0;transition:.25s;pointer-events:none;z-index:40;max-width:92vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -60,24 +55,19 @@ h1{font-size:15px;font-weight:800;color:var(--or2);text-shadow:0 0 14px rgba(255
 <div id="app">
  <div id="top">
   <button class="btn" id="back" aria-label="Voltar ao mapa">← VOLTAR</button>
-  <h1>⚔️ ARENA TÁTICA</h1>
+  <h1 class="px">ARENA TÁTICA</h1>
  </div>
  <div id="body">
-  <div class="grid" id="types"></div>
-  <div id="lvbox" style="display:none">
-   <h3 id="lvTitle">Escolha o nível</h3>
-   <div class="sub">A dificuldade da IA depende só do nível escolhido — não aumenta sozinha a cada vitória.</div>
-   <div id="lvRow">
-    <button class="step" id="lvDown" aria-label="Diminuir nível">−</button>
-    <input type="range" id="lvSlider" min="5" max="70" step="5" value="5">
-    <button class="step" id="lvUp" aria-label="Aumentar nível">+</button>
-    <div id="lvNum">Nv 5</div>
-   </div>
-   <div id="tierRow"></div>
-   <div class="foeprev" id="foeprev"></div>
-   <div id="fightbar"><button class="btn go" id="fightBtn" style="flex:1">⚔️ LUTAR</button></div>
+  <div class="view on" id="v-hub">
+   <div class="hub" id="types"></div>
+   <div class="tip">Escolha um treinador por tipo. Dentro, uma escada de níveis — vença o nível pra liberar o
+    próximo. Só o primeiro vem liberado da primeira vez.</div>
   </div>
-  <div class="tip">Vença no nível que escolher para ganhar XP e treinar sua equipe. Quanto maior o nível, mais fortes os treinadores rivais — escolha o que combina com sua equipe agora.</div>
+  <div class="view" id="v-lvl">
+   <p><button class="btn" id="backLvl">← Voltar</button></p>
+   <div id="ladder"></div>
+   <div id="pcardwrap"></div>
+  </div>
  </div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -85,52 +75,68 @@ h1{font-size:15px;font-weight:800;color:var(--or2);text-shadow:0 0 14px rgba(255
 (function(){
 const $=s=>document.querySelector(s);
 const post=o=>parent.postMessage(Object.assign({numius:1},o),'*');
-let D=null,IM={},SEL=null,LV=5;
+let D=null,IM={},VIEW='hub',SEL=null,LVIDX=0;
 let tT=0;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>e.classList.remove('on'),2200)}
 const TN=['Iniciante','Esperto','Estrategista','Mestre'];
 const tierOf=l=>l<25?0:l<45?1:l<60?2:3;
-const snap=l=>Math.max(5,Math.min(70,Math.round(l/5)*5));
+
+function show(v){VIEW=v;['hub','lvl'].forEach(k=>$('#v-'+k).classList.toggle('on',k===v))}
 
 function types(){
  const box=$('#types');box.innerHTML='';
  if(!D){box.innerHTML='<div class="tip">Carregando...</div>';return}
  D.types.forEach(t=>{
-  const b=document.createElement('button');b.className='tcard'+(t.t===SEL?' on':'');
-  b.innerHTML=`<span class="em">${t.e}</span><b>${t.t}</b>
-   <div class="tags"><span class="tag">🏆 ${t.w||0}</span>${t.best?`<span class="tag best">Melhor: Nv ${t.best}</span>`:''}</div>`;
-  b.onclick=()=>{SEL=t.t;LV=snap(D.defLvl||5);types();showLv()};
+  const b=document.createElement('button');b.className='tcard';
+  b.innerHTML=`<div class="av">${t.te||t.e}</div><b>${t.tn}</b><small>${t.e} ${t.t}</small>
+   <span class="tag">${t.unl}/${D.levels.length} níveis</span>`;
+  b.onclick=()=>{SEL=t.t;LVIDX=Math.max(0,(t.unl||1)-1);show('lvl');ladder()};
   box.appendChild(b);
  });
 }
 
-function foeprev(){
- $('#foeprev').innerHTML=`Treinador de ${SEL} · Nv ${LV} · ${TN[tierOf(LV)]}`;
+function cur(){return D.types.find(x=>x.t===SEL)}
+
+function ladder(){
+ const T=cur();if(!T)return;
+ const box=$('#ladder');box.innerHTML='';
+ if(LVIDX>T.unl-1)LVIDX=T.unl-1;if(LVIDX<0)LVIDX=0;
+ D.levels.forEach((lv,i)=>{
+  const locked=i>=T.unl;
+  const b=document.createElement('button');b.className='ph'+(i===LVIDX?' on':'')+(locked?' locked':'');
+  b.textContent=i+1;b.setAttribute('aria-label','Nível '+(i+1)+(locked?' (bloqueado)':''));
+  b.disabled=locked;b.onclick=()=>{LVIDX=i;ladder()};
+  box.appendChild(b);
+ });
+ pcard();
+}
+function pcard(){
+ const T=cur();if(!T)return;
+ const lv=D.levels[LVIDX],locked=LVIDX>=T.unl,tier=tierOf(lv);
+ const w=$('#pcardwrap');
+ w.innerHTML=`<div class="pcard">
+   <div><span class="av">${T.te||T.e}</span>
+    <h2>${locked?'???':T.tn+' — Nv '+lv}</h2>
+    <div class="rv">${locked?'Vença o nível anterior para desbloquear':'Tipo '+T.t+' · '+TN[tier]}</div>
+   </div>
+   <div>
+    <div class="meta">
+     <span class="tag">Nível ${LVIDX+1}/${D.levels.length}</span>
+     <span class="tag">${TN[tier]}</span>
+    </div>
+    ${locked?`<div class="locktxt">🔒 Bloqueado</div>`:`<div id="fightbar"><button class="btn go" id="fightBtn" style="flex:1">⚔️ LUTAR (Nv ${lv})</button></div>`}
+   </div>
+  </div>`;
+ if(!locked){const fb=$('#fightBtn');fb.disabled=!D.canFight;fb.textContent=D.canFight?'⚔️ LUTAR (Nv '+lv+')':'Equipe vazia';
+  fb.onclick=()=>{if(!D.canFight){toast('Sua equipe está vazia.');return}post({k:'tac',t:SEL,lvl:lv})}}
 }
 
-function showLv(){
- if(!SEL){$('#lvbox').style.display='none';return}
- $('#lvbox').style.display='block';
- $('#lvTitle').textContent='Nível da batalha — '+SEL;
- $('#lvSlider').value=LV;$('#lvNum').textContent='Nv '+LV;
- const tr=$('#tierRow');tr.innerHTML='';
- TN.forEach((n,i)=>{const c=document.createElement('span');c.className='tchip'+(tierOf(LV)===i?' on':'');c.textContent=n;tr.appendChild(c)});
- foeprev();
- $('#fightBtn').disabled=!D.canFight;
- $('#fightBtn').textContent=D.canFight?'⚔️ LUTAR (Nv '+LV+')':'Equipe vazia';
-}
-
-function setLv(v){LV=snap(v);showLv()}
-
-function render(){if(!D)return;types();if(SEL)showLv()}
+function render(){if(!D)return;types();if(VIEW==='lvl'&&SEL)ladder()}
 
 $('#back').onclick=()=>post({k:'nav'});
-$('#lvSlider').oninput=e=>setLv(+e.target.value);
-$('#lvDown').onclick=()=>setLv(LV-5);
-$('#lvUp').onclick=()=>setLv(LV+5);
-$('#fightBtn').onclick=()=>{if(!SEL)return;if(!D.canFight){toast('Sua equipe está vazia.');return}post({k:'tac',t:SEL,lvl:LV})};
+$('#backLvl').onclick=()=>show('hub');
 addEventListener('keydown',e=>{if(e.key==='Escape')post({k:'nav'})});
 addEventListener('message',e=>{const m=e.data||{};if(!m.numius)return;
- if(m.k==='data'){if(m.imgs)Object.assign(IM,m.imgs);D=m;if(!SEL)LV=snap(D.defLvl||5);render()}
+ if(m.k==='data'){if(m.imgs)Object.assign(IM,m.imgs);D=m;render()}
 });
 post({k:'ready'});
 })();
