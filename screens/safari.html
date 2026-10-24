@@ -520,7 +520,8 @@ function drawScene(t){const w=innerWidth,h=innerHeight,c=ex,r=W?W.reg:pl.reg,S2=
  // faixa do meio: água, lava ou árvores
  if(r==='lago'){c.fillStyle='#3b8fd8';c.fillRect(0,hz-h*.03,w,h*.08);c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=2;for(let i=0;i<14;i++){const x=(i*97+t*30)%w,y=hz-h*.01+(i%3)*h*.022;c.beginPath();c.moveTo(x,y);c.lineTo(x+22,y);c.stroke()}}
  else if(r==='vulcao'){const gg=c.createLinearGradient(0,hz-h*.03,0,hz+h*.04);gg.addColorStop(0,'#ffd34d');gg.addColorStop(1,'#ff5a1a');c.fillStyle=gg;c.fillRect(0,hz-h*.025,w,h*.05);for(let i=0;i<8;i++){const b=(t*.7+i*.13)%1;c.strokeStyle=`rgba(255,240,160,${1-b})`;c.lineWidth=2;c.beginPath();c.arc((i*157)%w,hz,4+b*10,0,6.29);c.stroke()}}
- else if(r==='floresta'||r==='campo'){const ts2=Math.round(Math.min(w,h)*.09);for(let i=0;i<9;i++){const s=treeSpr(r==='floresta'?(i%2?'pine':'oak'):'oak',i%3,ts2);c.drawImage(s,(i*w/8.5)-s.width/2,hz-s.height*.86)}}
+ else if(r==='floresta'||r==='campo'){const ts2=Math.round(Math.min(w,h)*.2/2)*2,s=tile('TREE',r);c.imageSmoothingEnabled=false;
+  for(let i=0;i<9;i++)c.drawImage(s,Math.round((i*w/8.5)-ts2/2),Math.round(hz-ts2*.86),ts2,ts2);c.imageSmoothingEnabled=true}
  // chão
  g=c.createLinearGradient(0,hz,0,h);g.addColorStop(0,S2.gr[0]);g.addColorStop(1,S2.gr[1]);c.fillStyle=g;c.fillRect(0,hz,w,h-hz);
  c.fillStyle='rgba(255,255,255,.06)';for(let i=0;i<5;i++){c.beginPath();c.ellipse(w*(i*.25+.1),hz+h*(.08+i*.08),w*.3,h*.012,0,0,6.29);c.fill()}
