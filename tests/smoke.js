@@ -115,6 +115,8 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   ok((await xc.locator('#stage').innerText()).toLowerCase().includes('não está disponível'), 'fora do claude.ai a troca avisa que o online não está disponível (sem claude.use)');
   await xc.locator('.mcard').nth(1).click(); await page.waitForTimeout(400);
   ok(await page.evaluate(() => G.xcSel) === 1, 'escolher um Numiu na lista atualiza a oferta (G.xcSel)');
+  ok(await xc.locator('#createRmBtn').count() === 1, 'a sala de amigos mostra o botão de criar sala');
+  ok(await xc.locator('#codeIn').count() === 1, 'a sala de amigos mostra o campo pra entrar com um código');
   await page.evaluate(() => { G.screen = 'map'; R(); }); await page.waitForTimeout(500);
 
   console.log('Batalha');

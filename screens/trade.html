@@ -75,6 +75,12 @@ h1,h2,.ui{font-family:'Outfit',ui-sans-serif,system-ui,sans-serif}
 @media(prefers-reduced-motion:reduce){.spin{animation:none}}
 #online .list{display:flex;flex-direction:column;gap:5px;max-height:120px;overflow-y:auto}
 #online .row{font-size:10px;color:rgba(241,232,255,.65);display:flex;justify-content:space-between;gap:6px;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:5px 8px}
+#roomBox{border-radius:14px;border:1px solid rgba(34,230,255,.25);background:rgba(10,6,20,.55);padding:10px;display:flex;flex-direction:column;gap:8px}
+#roomBox .rmrow{display:flex;gap:6px}
+#roomBox input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:9px;color:#fff;padding:8px 9px;font-size:11px;font-family:'Space Grotesk',monospace;letter-spacing:.06em;text-transform:uppercase}
+#roomBox input::placeholder{color:rgba(241,232,255,.4);text-transform:none;letter-spacing:0}
+.btn.sm{padding:8px 11px;font-size:10.5px;border-radius:9px}
+.code{font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;letter-spacing:.12em;color:var(--cy);text-shadow:0 0 10px rgba(34,230,255,.6);text-align:center;padding:6px 0}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:rgba(14,8,24,.96);border:1px solid var(--mg);border-radius:10px;padding:10px 14px;font-size:11px;opacity:0;transition:.25s;pointer-events:none;z-index:40;max-width:92vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
 #roster::-webkit-scrollbar,#body::-webkit-scrollbar,#online .list::-webkit-scrollbar{width:7px}
@@ -106,6 +112,8 @@ h1,h2,.ui{font-family:'Outfit',ui-sans-serif,system-ui,sans-serif}
    <div class="ph"><i>📦</i>Sua equipe</div>
    <div id="roster"></div>
    <div class="hint">Toque num Númio pra oferecer. Precisa ter pelo menos 2 na equipe pra poder trocar.</div>
+   <div class="ph"><i>🔑</i>Sala de amigos</div>
+   <div id="roomBox"></div>
   </div>
   <div class="pan" id="stagePan">
    <div id="stage"></div>
@@ -156,6 +164,23 @@ function term(data,ok,label){
   <span class="sp" style="${sp?`background-image:url('${sp}')`:''}"></span>
   <b>${data?data.n:'—'}</b><small>${label}${data&&data.l?' · Nv '+data.l:''}</small></div>`;
 }
+function roomBox(){
+ const b=$('#roomBox');if(!b)return;
+ const locked=D.st==='paired';
+ if(D.rm){
+  b.innerHTML=`<p class="hint">Sala privada — só quem tiver este código pareia com você.</p><div class="code">${D.rm}</div>
+   <div class="rmrow"><button class="btn gh sm" id="copyBtn" style="flex:1">📋 Copiar código</button></div>
+   <button class="btn gh sm" id="leaveRmBtn" ${locked?'disabled':''}>🚪 Sair da sala (voltar ao público)</button>`;
+  const cp=$('#copyBtn');if(cp)cp.onclick=()=>{try{navigator.clipboard.writeText(D.rm)}catch(e){}toast('Código copiado! Manda pro seu amigo.')};
+  const lv=$('#leaveRmBtn');if(lv)lv.onclick=()=>post({k:'room',op:'leave'});
+  return;
+ }
+ b.innerHTML=`<p class="hint">Sem sala: você pareia com qualquer treinador on-line. Crie uma sala ou entre com o código de um amigo pra trocar só com ele.</p>
+  <button class="btn gh sm" id="createRmBtn" ${locked?'disabled':''}>✨ Criar sala</button>
+  <div class="rmrow"><input id="codeIn" maxlength="9" placeholder="XXXX-XXXX"><button class="btn gh sm" id="joinRmBtn" ${locked?'disabled':''}>Entrar</button></div>`;
+ const cr=$('#createRmBtn');if(cr)cr.onclick=()=>post({k:'room',op:'create'});
+ const jn=$('#joinRmBtn');if(jn)jn.onclick=()=>{const v=$('#codeIn').value;if(v)post({k:'room',op:'join',code:v})};
+}
 function stage(){
  const s=$('#stage'),on=$('#online');
  if(!D.online){s.innerHTML=`<p style="font-size:12px;color:rgba(241,232,255,.75);max-width:280px">A Troca de Numius online não está disponível aqui. Abra o jogo pelo claude.ai, com a sua conta logada (não por link público), para trocar.</p>`;on.innerHTML='';return}
@@ -172,7 +197,7 @@ function stage(){
   return;
  }
  if(D.st==='search'){
-  s.innerHTML=`<div class="spin"></div><p style="font-size:12px;color:rgba(241,232,255,.8)">Procurando outro treinador na Rede Nexus…</p><button class="btn gh" id="cancelBtn">✖ Cancelar busca</button>`;
+  s.innerHTML=`<div class="spin"></div><p style="font-size:12px;color:rgba(241,232,255,.8)">${D.rm?`Procurando dentro da sala <b style="color:#fff">${D.rm}</b>…`:'Procurando outro treinador na Rede Nexus…'}</p><button class="btn gh" id="cancelBtn">✖ Cancelar busca</button>`;
   const cb=$('#cancelBtn');if(cb)cb.onclick=()=>post({k:'cancel'});
   on.innerHTML=D.players.length?`<div class="ph" style="margin-bottom:6px"><i>📡</i>Treinadores na rede</div><div class="list">${D.players.map(p=>`<div class="row"><span>${p.nm}</span><span>${p.searching?'🔎 procurando':'online'} · oferece ${p.off}</span></div>`).join('')}</div>`:'';
   return;
@@ -188,7 +213,7 @@ function render(){
  if(!D)return;
  const oc=$('#onlineChip');oc.textContent=D.online?'● on-line':'● indisponível aqui';oc.className='chip '+(D.online?'on':'off');
  $('#done').textContent=D.done;
- roster();stage();
+ roster();roomBox();stage();
  toast(D.msg);
 }
 $('#back').onclick=()=>post({k:'nav'});

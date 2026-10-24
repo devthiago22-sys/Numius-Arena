@@ -4,15 +4,26 @@
    A troca em si é determinística (sem RR()): não existe "servidor" de verdade, então cada aparelho aplica
    a troca sozinho assim que vê os dois lados com o mesmo `xcId` confirmado (`xcOk`) — não precisa de
    autoridade central porque o resultado (trocar A por B) não depende de sorte. */
-const XC={st:'idle',with:null,id:null,ok:null,out:null,seen:{},gone:0,doneId:null};
+const XC={st:'idle',with:null,id:null,ok:null,out:null,rm:null,seen:{},gone:0,doneId:null};
 const xc1=m=>({i:m.i,l:m.l,v:STK.map(k=>m.iv[k]==null?15:m.iv[k]),e:STK.map(k=>m.ev[k]||0),mv:m.mv||0});
 const xcOffNow=()=>{const m=G.xcSel!=null?G.team[G.xcSel]:null;return m?xc1(m):null};
-const xcOthers=()=>PV.peers.filter(p=>!p.sameTab&&p.kind==='viewer'&&p.presence&&p.presence.xc===1);
+/* Sem sala de amigos escolhida, só pareia com quem também está em xcRm:null (pool público); com sala, só
+   pareia com quem tem o mesmo código (xcRm) — mesmo truque do PV.rm no PvP (pvOthers em screens-bridge.js). */
+const xcOthers=()=>PV.peers.filter(p=>!p.sameTab&&p.kind==='viewer'&&p.presence&&p.presence.xc===1&&(p.presence.xcRm||null)===(XC.rm||null));
 async function xcOpen(){
  G.xcfb=0;G.screen='trade';R();
  await ensureRoom();
  if(G.xcSel==null||!G.team[G.xcSel])G.xcSel=G.team.length>1?0:null;
- pvpPres({xc:1,nm:String((G.hero&&G.hero.name)||'Treinador').slice(0,14),xcSt:XC.st,xcOff:xcOffNow(),xcWith:null,xcId:null,xcOk:null,xcCh:null});
+ pvpPres({xc:1,nm:String((G.hero&&G.hero.name)||'Treinador').slice(0,14),xcSt:XC.st,xcOff:xcOffNow(),xcRm:XC.rm||null,xcWith:null,xcId:null,xcOk:null,xcCh:null});
+ R();
+}
+function xcRoom(op,code){
+ if(!PV.ok)return;
+ if(op==='create'){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=n=>Array.from({length:n},()=>A[Math.floor(Math.random()*A.length)]).join('');XC.rm=r(4)+'-'+r(4)}
+ else if(op==='join'){const c=String(code||'').trim().toUpperCase();if(!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(c)){PV.msg='Código inválido. Use o formato XXXX-XXXX.';R();return}XC.rm=c}
+ else if(op==='leave')XC.rm=null;
+ XC.st='idle';XC.with=null;XC.id=null;XC.ok=null;XC.out=null;
+ pvpPres({xcRm:XC.rm||null,xcSt:'idle',xcWith:null,xcId:null,xcOk:null,xcCh:null});
  R();
 }
 function xcSelect(i){if(XC.with||!G.team[i])return;G.xcSel=i;pvpPres({xcOff:xcOffNow()});R()}
@@ -26,8 +37,8 @@ function xcAcceptFrom(peer){const p=peerOf(peer);if(!p||!p.presence.xcCh||p.pres
  pvpPres({xcAcc:bid,xcSt:'paired',xcWith:peer,xcId:bid,xcOk:null,xcCh:null});R();
 }
 function xcConfirm(){if(!XC.with||!XC.id)return;XC.ok=XC.id;pvpPres({xcOk:XC.id});R()}
-function xcLeave(){XC.st='idle';XC.with=null;XC.id=null;XC.ok=null;XC.out=null;
- pvpPres({xc:null,nm:null,xcSt:null,xcOff:null,xcWith:null,xcId:null,xcOk:null,xcCh:null,xcAcc:null});
+function xcLeave(){XC.st='idle';XC.with=null;XC.id=null;XC.ok=null;XC.out=null;XC.rm=null;
+ pvpPres({xc:null,nm:null,xcSt:null,xcOff:null,xcRm:null,xcWith:null,xcId:null,xcOk:null,xcCh:null,xcAcc:null});
  G.screen='map';R();
 }
 function xcOnPeers(){
@@ -75,7 +86,7 @@ function xcMount(){
 }
 function xcData(){
  const mp=myPeer(),partner=XC.with&&peerOf(XC.with),msg=PV.msg||'';if(PV.msg)PV.msg='';
- return{numius:1,k:'xcdata',online:PV.ok===true,st:XC.st,done:G.xcDone||0,msg,
+ return{numius:1,k:'xcdata',online:PV.ok===true,st:XC.st,rm:XC.rm||null,done:G.xcDone||0,msg,
   team:G.team.map((m,k)=>({k,i:m.i,n:S[m.i].n,l:m.l,t:S[m.i].t,t2:S[m.i].t2||null})),
   sel:G.xcSel,canOffer:G.team.length>1,
   mine:(G.xcSel!=null&&G.team[G.xcSel])?{i:G.team[G.xcSel].i,n:S[G.team[G.xcSel].i].n,l:G.team[G.xcSel].l}:null,
@@ -94,4 +105,5 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  else if(d.k==='search'){xcSearch()}
  else if(d.k==='cancel'){xcCancel()}
  else if(d.k==='confirm'){xcConfirm()}
+ else if(d.k==='room'){xcRoom(d.op,d.code)}
 });

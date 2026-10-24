@@ -63,7 +63,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `msf` missões | `ready`, `nav`, `claim` (`id`) | `msdata`, `msclaim` |
 | `trf` treinamento | `ready`, `nav`, `ev` (`i`,`s`), `iv` (`i`,`s`), `fight` (`n`) | `trdata` |
 | `twf` torre de gelo | `ready`, `nav`, `fight` (`n`) | `twdata` |
-| `xcf` troca de numius | `ready`, `nav`, `offer` (`i`), `search`, `cancel`, `confirm` | `xcdata` |
+| `xcf` troca de numius | `ready`, `nav`, `offer` (`i`), `search`, `cancel`, `confirm`, `room` (`op`:create/join/leave, `code`) | `xcdata` |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -249,5 +249,13 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   porque o resultado não depende de sorte (sem `RR()`), só dos dois lados concordarem.
 - Exige equipe com **2+ Numius** pra poder oferecer um (não dá pra ficar com 0). Fora do claude.ai (sem sala),
   a tela avisa que a troca online não está disponível, igual o PvP.
+- **Sala de amigos**: mesmo truque do `PV.rm` do PvP (`pvOthers` em `screens-bridge.js`), só que com `XC.rm`
+  e o campo de presença `xcRm`. Sem sala (`XC.rm===null`), `xcOthers()` só pareia com quem também está sem
+  sala (pool público); com um código criado (`xcRoom('create',...)`, formato `XXXX-XXXX` aleatório) ou
+  digitado (`xcRoom('join',code)`), só pareia com quem tiver o mesmo código — é como se fosse outro pool
+  isolado. A tela mostra o código grande pra copiar/compartilhar (`#roomBox` em `screens/trade.html`) e um
+  campo pra entrar com o código de um amigo. `xcRoom('leave',...)` volta pro pool público. Trocar de sala
+  cancela qualquer busca/pareamento em andamento (mesmo reset que `xcCancel`), mas fica bloqueado
+  (`disabled`) enquanto já está pareado (`xcSt==='paired'`) pra não interromper uma troca em andamento.
 - Contador `G.xcDone` (campo `xd` do `save()`, sem mudar `v`) soma a cada troca concluída; a barrinha da ilha
   no mapa (`isl.canion` em `mnData()`) mostra o progresso até 10 trocas.
