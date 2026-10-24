@@ -76,6 +76,8 @@ function R(){
  }
  else if(G.screen==='train'&&!G.trfb){h=`<div id=trph></div>`}
  else if(G.screen==='train'){h=`<h1>🏋️ Treinamento</h1><p>A tela de Treinamento não carregou.</p><p><button onclick="G.trfb=0;G.screen='map';R()">Voltar ao mapa</button></p>`}
+ else if(G.screen==='tower'&&!G.twfb){h=`<div id=twph></div>`}
+ else if(G.screen==='tower'){h=`<h1>❄️ Torre de Gelo</h1><p>A tela da Torre de Gelo não carregou.</p><p><button onclick="G.twfb=0;G.screen='map';R()">Voltar ao mapa</button></p>`}
  else if(G.screen==='tac'){h=`<div id=tbph></div>`}
  else if(G.screen==='team'&&!G.efb){h=`<div id=eqph></div>`}
  else if(G.screen==='team'){
@@ -120,7 +122,7 @@ function R(){
  else{
   const B=G.battle,p=act()||G.team[0];
   if(!G.btfb){h='<div id=btph></div>'}else{
-  h=`<h1>${B.vt?'Batalha Virtuosa — Fase '+B.vt:B.pvp?'PvP: '+B.oname:B.tt?'Batalha tática: '+B.tt:B.wild?'Batalha selvagem':GY[B.gym].c}</h1>${badgesHTML()}${arena(B,p)}<div class="card log">${B.log.map(l=>`<p>${l}</p>`).join('')}</div>`;
+  h=`<h1>${B.vt?'Batalha Virtuosa — Fase '+B.vt:B.tw?'Torre de Gelo — Andar '+B.tw:B.pvp?'PvP: '+B.oname:B.tt?'Batalha tática: '+B.tt:B.wild?'Batalha selvagem':GY[B.gym].c}</h1>${badgesHTML()}${arena(B,p)}<div class="card log">${B.log.map(l=>`<p>${l}</p>`).join('')}</div>`;
   if(B.over){const t=B.pvp?(B.over==='win'?'Você venceu o duelo! 🏆':'Você perdeu o duelo.'):{win:'Vitória! 🎉',lose:'Você perdeu… voltando ao Centro de cura.',fled:'',caught:'',quit:'Desistência registrada. A batalha foi encerrada.'}[B.over];
    h+=`${t?`<p class=win>${t}</p>`:''}<div class=row><button onclick="end()">Continuar</button></div>`}
   else if(B.pick){h+=`<h2>Escolha quem entra</h2><div class=row style="flex-direction:column">${G.team.map((m,i)=>m===p?'':`<button style="flex:none" ${m.hp>0?'':'disabled'} onclick="swapTo(${i})">${S[m.i].e} ${S[m.i].n} · Nv ${m.l} · ${m.hp}/${m.max} PS${m.hp>0?'':' · desmaiado'}</button>`).join('')}<button style="flex:none" onclick="G.battle.pick=false;R()">Cancelar</button></div>`}
@@ -130,6 +132,6 @@ function R(){
  }
  if(G.note&&G.screen!=='battle'){h=`<p class=win role=status>${G.note}</p>`+h;G.note=''}
  if(G.screen!=='map')G.cf=0;
- if(!['auth','battle','bye','cfg','hero','tac'].includes(G.screen)||(G.screen==='team'&&!G.efb)||(G.screen==='gyms'&&!G.gfb)||(G.screen==='dex'&&!G.xfb)||(G.screen==='boss'&&!G.bsfb)||(G.screen==='bag'&&!G.bgfb)||(G.screen==='safari'&&!G.sffb)||(G.screen==='missions'&&!G.msfb)||(G.screen==='train'&&!G.trfb)||(G.screen==='pvp'&&!G.pfb)||(G.screen==='start'&&!G.sfb))h+=`<button class=gear onclick="openCfg()" aria-label="Configurações">⚙️</button>`;
- A.innerHTML=h;if(G.screen==='map')pxDraw();if(G.screen==='auth'&&!G.fb)lgMount();if(G.screen==='hero'&&!G.hfb)hMount();if(G.screen==='start'&&!G.sfb)sMount();else sVis();mnToggle();if(G.screen==='tac'){tbMount();tbSend()}else tbToggle();if(G.screen==='team'&&!G.efb){eqMount();eqSend()}else eqToggle();if(G.screen==='gyms'&&!G.gfb){gyMount();gySend()}else gyToggle();if(G.screen==='dex'&&!G.xfb){dxMount();dxSend()}else dxToggle();if(G.screen==='pvp'&&!G.pfb){pvMount();pvSend()}else pvToggle();if(G.screen==='boss'&&!G.bsfb){bsMount();bsSend()}else bsToggle();if(G.screen==='bag'&&!G.bgfb){bgMount();bgSend()}else bgToggle();if(G.screen==='safari'&&!G.sffb){sfMount();sfSend()}else sfToggle();if(G.screen==='missions'&&!G.msfb){msMount();msSend()}else msToggle();if(G.screen==='train'&&!G.trfb){trMount();trSend()}else trToggle();lgBarSync();if(G.screen==='battle'&&!G.btfb&&G.battle){btMount();btSend()}else btToggle();if(G.screen==='map'&&!G.mfb)mnMount();hcToggle();
+ if(!['auth','battle','bye','cfg','hero','tac'].includes(G.screen)||(G.screen==='team'&&!G.efb)||(G.screen==='gyms'&&!G.gfb)||(G.screen==='dex'&&!G.xfb)||(G.screen==='boss'&&!G.bsfb)||(G.screen==='bag'&&!G.bgfb)||(G.screen==='safari'&&!G.sffb)||(G.screen==='missions'&&!G.msfb)||(G.screen==='train'&&!G.trfb)||(G.screen==='tower'&&!G.twfb)||(G.screen==='pvp'&&!G.pfb)||(G.screen==='start'&&!G.sfb))h+=`<button class=gear onclick="openCfg()" aria-label="Configurações">⚙️</button>`;
+ A.innerHTML=h;if(G.screen==='map')pxDraw();if(G.screen==='auth'&&!G.fb)lgMount();if(G.screen==='hero'&&!G.hfb)hMount();if(G.screen==='start'&&!G.sfb)sMount();else sVis();mnToggle();if(G.screen==='tac'){tbMount();tbSend()}else tbToggle();if(G.screen==='team'&&!G.efb){eqMount();eqSend()}else eqToggle();if(G.screen==='gyms'&&!G.gfb){gyMount();gySend()}else gyToggle();if(G.screen==='dex'&&!G.xfb){dxMount();dxSend()}else dxToggle();if(G.screen==='pvp'&&!G.pfb){pvMount();pvSend()}else pvToggle();if(G.screen==='boss'&&!G.bsfb){bsMount();bsSend()}else bsToggle();if(G.screen==='bag'&&!G.bgfb){bgMount();bgSend()}else bgToggle();if(G.screen==='safari'&&!G.sffb){sfMount();sfSend()}else sfToggle();if(G.screen==='missions'&&!G.msfb){msMount();msSend()}else msToggle();if(G.screen==='train'&&!G.trfb){trMount();trSend()}else trToggle();if(G.screen==='tower'&&!G.twfb){twMount();twSend()}else twToggle();lgBarSync();if(G.screen==='battle'&&!G.btfb&&G.battle){btMount();btSend()}else btToggle();if(G.screen==='map'&&!G.mfb)mnMount();hcToggle();
 }

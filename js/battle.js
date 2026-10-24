@@ -84,11 +84,12 @@ function rewardMon(n){
 function foeDown(){
  const B=G.battle,p=act(),e=B.foe;
  B.log.push(`${S[e.i].n} desmaiou!`);evp({t:'faint',s:'e'});gain(p,e);
- if(B.queue.length){B.foe=B.queue.shift();B.log.push(`${B.tt?'Treinador '+B.tt:B.vt?B.vrv||'O rival':GY[B.gym].l} enviou ${S[B.foe.i].n} (Nv ${B.foe.l})!`);evp({t:'send',s:'e',mon:btSnap(B.foe)})}
+ if(B.queue.length){B.foe=B.queue.shift();B.log.push(`${B.tt?'Treinador '+B.tt:B.vt?B.vrv||'O rival':B.tw?B.twn:GY[B.gym].l} enviou ${S[B.foe.i].n} (Nv ${B.foe.l})!`);evp({t:'send',s:'e',mon:btSnap(B.foe)})}
  else{B.over='win';
   if(!B.msw){B.msw=1;msAdd('win');if(B.tt)msAdd('tac')}
   if(B.vt){const vp=VPH[B.vt-1],r=vp?vp.r:2+B.vt;G.vc=(G.vc||0)+r;G.vbest=Math.max(G.vbest||0,B.vt);G.vn=B.vt+1;G.vsel=B.vt+1;B.log.push(`🪙 +${r} Moedas Virtuosas!`)}
-  if(!B.wild&&!B.tt&&!B.vt&&!G.badges.includes(B.gym)){G.badges.push(B.gym);msAdd('gym');B.log.push(`🏅 Você ganhou a ${GY[B.gym].n}!`);rewardMon(B.gym)}}
+  if(B.tw){if(B.tw===(G.twBest||0)+1){const r=twFloor(B.tw).reward;G.coins=(G.coins||0)+r;G.twBest=B.tw;B.log.push(`❄️ +${r} moedas da Torre de Gelo!`)}else B.log.push('❄️ Andar já vencido antes — sem recompensa extra.')}
+  if(!B.wild&&!B.tt&&!B.vt&&!B.tw&&!G.badges.includes(B.gym)){G.badges.push(B.gym);msAdd('gym');B.log.push(`🏅 Você ganhou a ${GY[B.gym].n}!`);rewardMon(B.gym)}}
 }
 function turn(k){
  const B=G.battle;if(B.over)return;if(B.pvp)return pvpAct({t:'a',k});B.log=[];if(k>=0&&act().pp&&act().pp[k]<=0)k=-1;
@@ -133,7 +134,7 @@ function gym(n){
 function end(){if(G.battle.pvp){pvpEnd();return}
  {const B=G.battle;if(B.tt){const T=G.tac[B.tt];T.seen=[...T.seen,...B.used].slice(-40);if(B.over==='win')T.w++;if(B.over==='quit')T.q=(T.q||0)+1}}
  if(G.battle.over==='lose')G.team.forEach(m=>{m.hp=m.max;restPP(m)});
- const tt=G.battle.tt,gy=G.battle.gym,vt=G.battle.vt;G.battle=null;const dst=vt?'train':tt?'tac':gy!==undefined?'gyms':'map';if(vt)G.trfb=0;if(G.learn&&G.learn.length){G.after=dst;G.screen='learn'}else G.screen=dst;save();R();
+ const tt=G.battle.tt,gy=G.battle.gym,vt=G.battle.vt,tw=G.battle.tw;G.battle=null;const dst=vt?'train':tw?'tower':tt?'tac':gy!==undefined?'gyms':'map';if(vt)G.trfb=0;if(tw)G.twfb=0;if(G.learn&&G.learn.length){G.after=dst;G.screen='learn'}else G.screen=dst;save();R();
 }
 function learnCheck(p){LS(S[p.i].fam).filter(a=>a[0]===p.l).forEach(([lv,k])=>{if(p.mv.includes(k))return;if(p.mv.length<4){p.mv.push(k);p.pp.push(MOVES[k].pp);G.battle.log.push(`📘 ${S[p.i].n} aprendeu ${MOVES[k].n}!`)}else{(G.learn=G.learn||[]).push({m:p,k});G.battle.log.push(`📘 ${S[p.i].n} quer aprender ${MOVES[k].n}!`)}})}
 function learnNext(){if(G.learn&&G.learn.length){R();return}G.screen=G.after||'map';G.after=null;save();R()}
@@ -145,6 +146,13 @@ function vstart(n){
   if(tier>=2){const t=S[m.i].t,c=TY.map(x=>({x,s:seen.reduce((s,y)=>s+mult(x,y),0)+(x===t?.5:0)})).sort((a,b)=>b.s-a.s)[0].x,dm=m.mv.slice();if(c!==t)dm[1]=2+TY.indexOf(c);m.mv=dm;restPP(m)}
   calc(m);m.hp=m.max;return m}),f=q.shift();
  G.battle={wild:false,vt:n,vrv:rival,tier,pot:tier>=3?2:0,used:[],foe:f,queue:q,log:[`Batalha Virtuosa — Fase ${n}${vp?' · '+vp.nome:''}! ${rival} enviou ${S[f.i].n} (Nv ${f.l})!`],over:null};
+ G.screen='battle';R();
+}
+function twStart(n){
+ const f=twFloor(n),boss=n===30,L=Math.max(5,5+Math.floor(n*1.5)+(n>25?n-25:0));
+ const q=Array.from({length:f.cnt},(_,k)=>{const last=boss&&k===f.cnt-1,p3=S.map((s,i)=>i).filter(i=>S[i].s===3),pool=last&&p3.length?p3:BASE;
+  return mk(pool[rnd(pool.length)],L+rnd(3)+(last?5:0))}),fo=q.shift();
+ G.battle={wild:false,tw:n,twn:f.trainer,used:[],foe:fo,queue:q,log:[`Torre de Gelo — Andar ${n}! ${f.trainer} enviou ${S[fo.i].n} (Nv ${fo.l})!`],over:null};
  G.screen='battle';R();
 }
 function trEV(i,s){const m=G.team[i];m.ev[s]=m.ev[s]||0;if((G.vc||0)<2||m.ev[s]>=252){G.note='Moedas Virtuosas insuficientes ou limite de EV atingido.';R();return}G.vc-=2;m.ev[s]=Math.min(252,m.ev[s]+8);const o=m.max;calc(m);m.hp+=m.max-o;save();R()}

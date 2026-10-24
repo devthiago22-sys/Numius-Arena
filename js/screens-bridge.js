@@ -84,6 +84,27 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  else if(d.k==='ev'){const i=d.i|0;if(G.team[i]&&STK.includes(d.s))trEV(i,d.s)}
  else if(d.k==='iv'){const i=d.i|0;if(G.team[i]&&STK.includes(d.s))trIV(i,d.s)}
  else if(d.k==='fight'){const n=d.n|0;if(n>=1&&n<=(G.vbest||0)+1&&G.team.length){if(!G.team.some(m=>m.hp>0)){goHeal();return}vstart(n)}}});
+const TW={n:'tower',ready:false};
+function twMount(){
+ if(typeof document.createElement!=='function')return;
+ let f=document.getElementById('twf');
+ if(!f){f=document.createElement('iframe');f.id='twf';f.className='lgf';f.title='Torre de Gelo';f.style.zIndex=50;document.body.appendChild(f);f.srcdoc=dec(TW)}
+ if(!TW.ready&&!TW.tt){TW.tt=1;TW.t=setTimeout(()=>{if(!TW.ready&&G.screen==='tower'){G.twfb=1;R()}},12000)}
+ twToggle();
+}
+function twData(){
+ const best=G.twBest||0;
+ return{numius:1,k:'twdata',coins:G.coins||0,best,
+  floors:Array.from({length:30},(_,k)=>{const f=twFloor(k+1);return{id:f.floor,tier:f.tier,icon:f.icon,neon:f.neon,trainer:f.trainer,cnt:f.cnt,reward:f.reward,boss:f.boss,locked:f.floor>best+1}}),
+  imgs:TW.sent?null:(TW.sent=1,btImgs())};
+}
+function twSend(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('twf');if(TW.ready&&f&&f.contentWindow)f.contentWindow.postMessage(twData(),'*')}
+function twToggle(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('twf');if(f)f.style.display=(G.screen==='tower'&&!G.twfb)?'block':'none'}
+if(typeof addEventListener==='function')addEventListener('message',e=>{const f=document.getElementById('twf');if(!f||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;
+ if(d.k==='ready'){TW.ready=true;TW.sent=0;twSend()}
+ else if(G.screen!=='tower')return;
+ else if(d.k==='nav'){G.screen='map';R()}
+ else if(d.k==='fight'){const n=d.n|0;if(n>=1&&n<=30&&n<=(G.twBest||0)+1&&G.team.length){if(!G.team.some(m=>m.hp>0)){goHeal();return}twStart(n)}}});
 const DXS={n:'dex',ready:false,sent:{}};
 function dxMount(){
  if(typeof document.createElement!=='function')return;
@@ -158,7 +179,7 @@ function btCu(c){BT.c=BT.c||{};if(BT.c[c]!==undefined)return BT.c[c];const e=doc
 function btImgs(){const o={};S.forEach((s,i)=>{o['f'+i]=btCu('f'+i);if(s.b)o['b'+i]=btCu('b'+i)});return o}
 function btData(){
  const B=G.battle,p=act()||G.team[0],mv=moves(p);
- const title=B.vt?'Batalha Virtuosa — Fase '+B.vt:B.pvp?'PvP: '+B.oname:B.tt?'Batalha tática: '+B.tt:B.wild?'Batalha selvagem':GY[B.gym].c;
+ const title=B.vt?'Batalha Virtuosa — Fase '+B.vt:B.tw?'Torre de Gelo — Andar '+B.tw:B.pvp?'PvP: '+B.oname:B.tt?'Batalha tática: '+B.tt:B.wild?'Batalha selvagem':GY[B.gym].c;
  let overText='';
  if(B.over)overText=B.pvp?(B.over==='win'?'Você venceu o duelo!':'Você perdeu o duelo.'):({win:'Você venceu a batalha!',lose:'Você perdeu… voltando ao Centro de cura.',fled:'Você escapou com segurança.',caught:'Um novo monstrinho entrou na sua equipe!',quit:'A desistência foi registrada.'})[B.over]||'';
  return{title,wild:!!B.wild,over:B.over||null,overText,
@@ -204,8 +225,8 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  else if(d.k==='tac'&&G.screen==='tac'){const ty=TBMAP[d.tipo];if(!ty||!G.team.length)return;if(!G.team.some(m=>m.hp>0)){goHeal();return}tac(ty)}});
 function tbToggle(){if(typeof document.getElementById!=='function')return;const on=G.screen==='tac',f=document.getElementById('tbf'),x=document.getElementById('tbx');if(f)f.style.display=on?'block':'none';if(x)x.style.display=on?'block':'none'}
 function mnToggle(){if(typeof document.getElementById!=='function')return;ifv(document.getElementById('mnf'),G.screen==='map'&&!G.mfb,MN)}
-function mnData(){const nb=G.badges.length,dx=(G.dex||[]).length,tw=Object.values(G.tac||{}).reduce((a,t)=>a+Math.min(3,(t&&t.w)|0),0);return{lv:Math.max(1,...G.team.map(m=>m.l)),isl:{vale:Math.min(100,(G.vbest||0)*10),cristal:Math.round(nb/8*100),canion:Math.round(tw/24*100),porto:Math.min(100,Math.round(sfState().mo/MSDAY*100))},name:G.hero?String(G.hero.name):(ME||'Convidado'),coins:G.coins||0,guest:!ME,sub:ME?'conectado':'sem salvar',bl:['Pd','Ag','El','Pl','Ge','Vo','Ps','Fo'],bc:GY.map(g=>ARENA[g.ty][1]),be:GY.map((g,i)=>G.badges.includes(i)),bn:GY.map(g=>g.n),cnt:{gyms:nb+'/8',tac:'8',team:G.team.length+'/6',dex:dx+'/'+DEX.length,train:''+(G.vc||0),bag:''+(Object.keys(G.leg||{}).length+'/3'),missoes:''+msCount()}}}
-const NAV={vir:()=>{G.screen='vir';R()},gyms:()=>{G.screen='gyms';R()},tac:()=>{G.screen='tac';R()},team:()=>{G.screen='team';R()},dex:()=>{G.screen='dex';R()},pvp:()=>pvpOpen(),boss:()=>{G.screen='boss';G.bsfb=0;R()},bag:()=>{G.screen='bag';G.bgfb=0;R()},safari:()=>{G.screen='safari';G.sffb=0;R()},missoes:()=>{G.screen='missions';G.msfb=0;R()},train:()=>{G.screen='train';G.trfb=0;R()},heal:()=>goHeal(),cfg:()=>openCfg(),exit:()=>quitGame()};
+function mnData(){const nb=G.badges.length,dx=(G.dex||[]).length,tw=Object.values(G.tac||{}).reduce((a,t)=>a+Math.min(3,(t&&t.w)|0),0);return{lv:Math.max(1,...G.team.map(m=>m.l)),isl:{vale:Math.min(100,(G.vbest||0)*10),cristal:Math.round((G.twBest||0)/30*100),canion:Math.round(tw/24*100),porto:Math.min(100,Math.round(sfState().mo/MSDAY*100))},name:G.hero?String(G.hero.name):(ME||'Convidado'),coins:G.coins||0,guest:!ME,sub:ME?'conectado':'sem salvar',bl:['Pd','Ag','El','Pl','Ge','Vo','Ps','Fo'],bc:GY.map(g=>ARENA[g.ty][1]),be:GY.map((g,i)=>G.badges.includes(i)),bn:GY.map(g=>g.n),cnt:{gyms:nb+'/8',tac:'8',team:G.team.length+'/6',dex:dx+'/'+DEX.length,train:''+(G.vc||0),bag:''+(Object.keys(G.leg||{}).length+'/3'),missoes:''+msCount()}}}
+const NAV={gyms:()=>{G.screen='gyms';R()},tac:()=>{G.screen='tac';R()},team:()=>{G.screen='team';R()},dex:()=>{G.screen='dex';R()},pvp:()=>pvpOpen(),boss:()=>{G.screen='boss';G.bsfb=0;R()},bag:()=>{G.screen='bag';G.bgfb=0;R()},safari:()=>{G.screen='safari';G.sffb=0;R()},missoes:()=>{G.screen='missions';G.msfb=0;R()},train:()=>{G.screen='train';G.trfb=0;R()},tower:()=>{G.screen='tower';G.twfb=0;R()},heal:()=>goHeal(),cfg:()=>openCfg(),exit:()=>quitGame()};
 if(typeof addEventListener==='function')addEventListener('message',e=>{const f=$('#mnf');if(!f||!f.contentWindow||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;if(d.k==='ready'){MN.ready=true;f.contentWindow.postMessage({numius:1,k:'data',d:mnData()},'*');mnToggle()}else if(d.k==='nav'&&NAV[d.to])NAV[d.to]()});
 async function authCore(up,id,pw,em,p2){
  id=String(id||'').trim().toLowerCase();em=String(em||'').trim();pw=String(pw||'');p2=String(p2||'');const u=U();let err='';

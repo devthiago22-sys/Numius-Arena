@@ -56,3 +56,16 @@ const VPH=[
 {nome:'Arena Suprema',numios:5,nivel:'Nv 35+',tatica:'Elite',r:15,rival:'Campeão Lumen',e:'👑',cor:['#059669','#134E4A']},
 {nome:'Eclipse',numios:6,nivel:'Nv 40+',tatica:'Extrema',r:20,rival:'Sombra Eclipse',e:'🌑',cor:['#404040','#000000']},
 {nome:'Lenda Virtuosa',numios:6,nivel:'Nv 50',tatica:'Lendária',r:35,rival:'Avatar Numius',e:'🏆',cor:['#7C3AED','#2D1B69']}];
+/* Torre de Gelo (ilha "Picos de Cristal"). 30 andares em 4 níveis; cada vitória paga moedas (uma vez só por
+   andar, em twStart/foeDown em js/battle.js) e libera o andar seguinte (G.twBest). */
+const TWN={
+ Iniciante:{icon:'🧢',neon:'#10b981',nomes:['Aprendiz Gelda','Novato Frost','Caloura Nevia','Estagiária Glacis','Aprendiz Polar']},
+ Veterano:{icon:'🧥',neon:'#00E5FF',nomes:['Veterana Crystal','Guardião Hail','Maga Snow','Patrulheiro Gélido','Capitã Avalanche','Veterano Blizzard','Caçadora Frost','Monge do Gelo','Sentinela Nival','Domadora Glacial']},
+ Elite:{icon:'🛡️',neon:'#a78bfa',nomes:['Elite Frosta','Comandante Blizzard','Senhora Avalanche','Lorde Permafrost','General Crio','Arquimaga Hiemal','Executor do Frio','Baronesa Geada','Mestre do Nevoeiro','Guardiã do Abismo Gelado']},
+ Mestre:{icon:'👑',neon:'#FFD700',nomes:['Mestre Glacius','Oráculo do Gelo Eterno','Imperatriz Inverna','Titã Cryogênico','Avatar do Zero Absoluto']}};
+const twTier=n=>n<=5?'Iniciante':n<=15?'Veterano':n<=25?'Elite':'Mestre';
+function twFloor(n){
+ const tier=twTier(n),p=TWN[tier],trainer=p.nomes[(n-1)%p.nomes.length],
+  cnt=n<=4?2:n<=9?3:n<=19?4:n<=29?5:6,reward=n*12+10;
+ return{floor:n,tier,icon:p.icon,neon:p.neon,trainer,cnt,reward,boss:n===30};
+}

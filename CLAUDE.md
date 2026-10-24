@@ -24,7 +24,8 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
 9. `screens-core.js`: `dec`, `iw` (iframe pré-carregado), telas Starter e Hero.
 10. `pixel-scene.js`: cenário pixel art do menu antigo (reserva).
 11. `screens-bridge.js`: pontes com as telas em iframe (login, menu, equipe, ginásios, mostruário, PvP,
-    táticas, **arena de batalha** `btMount/btData/btSend`, **treinamento** `trMount/trData/trSend`) e `authCore`.
+    táticas, **arena de batalha** `btMount/btData/btSend`, **treinamento** `trMount/trData/trSend`,
+    **torre de gelo** `twMount/twData/twSend`) e `authCore`.
 12. `boss.js`: **Boss semanal** (raid): chefes `BOSSES`, simulação `bsNew/bsTurn`, recompensas, ovos, ponte `bsMount/bsData/bsSend`.
 13. `legend.js`: **lendários invocáveis** (`LEG`, `lgCast`, `lgEnd`, `tyOf`, barra `lgBarSync`, animação `lgFx`) e ponte da **Mochila** (`bgMount/bgData/bgSend`).
 14. `safari.js`: **Zona Safari** (sorteio `sfSpin`, cruzamento `sfBreed`, ponte `sfMount/sfData/sfSend`).
@@ -60,6 +61,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `sff` zona safari | `ready`, `nav`, `spin` (`z`), `breed` (`a`,`b`), `take` (`u`), `release` (`u`) | `sfdata`, `sfspin`, `sfbreed`, `sftake`, `sfrelease` |
 | `msf` missões | `ready`, `nav`, `claim` (`id`) | `msdata`, `msclaim` |
 | `trf` treinamento | `ready`, `nav`, `ev` (`i`,`s`), `iv` (`i`,`s`), `fight` (`n`) | `trdata` |
+| `twf` torre de gelo | `ready`, `nav`, `fight` (`n`) | `twdata` |
 | `pvf` PvP | `ready`, `challenge`, `accept`, `decline`, `cancel`, `search`, `room`, `nav`, `cfg` | `pvp` |
 
 Pontos importantes:
@@ -195,3 +197,20 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   que abre a arena de batalha de verdade (`G.screen='battle'`). Ao vencer, `end()` (em `battle.js`) volta para
   `G.screen='train'` (antes voltava para a extinta tela `vir`) com `G.vc`/`G.vbest`/`G.vsel` já atualizados.
 - Estado salvo não mudou: `G.vc` (moedas), `G.vbest` (melhor fase), `G.vn`/`G.vsel` (fase atual/selecionada).
+
+## Torre de Gelo (`screens/tower.html` + ponte em `screens-bridge.js`)
+- Tela em HTML/JS puro, acessada **só** pela ilha "PICOS DE CRISTAL" (`nav:"tower"` em `screens/menu.html`,
+  mesma posição/cor/ícone de antes — só o texto e o destino mudaram). A aba **GINÁSIOS** da lista lateral do
+  menu continua existindo e aponta para a tela antiga de ginásios (`G.screen==='gyms'`, insígnias, Campeão da
+  Liga) — são dois sistemas separados; a Torre **não** usa `G.badges`.
+- 30 andares em 4 níveis (tabela `TWN` e `twFloor(n)` em `js/data.js`): Iniciante (1-5), Veterano (6-15),
+  Elite (16-25), Mestre (26-30) — cada nível tem seu ícone, cor neon e um banco de nomes de treinadores
+  (`(n-1) % nomes.length`, cíclico). Andares 1-4/5-9/10-19/20-29/30 têm 2/3/4/5/6 rivais.
+  O andar 30 põe uma forma final (estágio 3) mais forte no último rival (`boss` em `twFloor`).
+- A luta acontece na arena de batalha de verdade: a tela manda `{k:'fight',n}`, o jogo chama `twStart(n)`
+  (em `js/battle.js`), que monta o time rival com Numius de verdade (`BASE`, nível ≈ `5+n*1.5` + bônus depois
+  do andar 25) e abre `G.screen='battle'`. Ao vencer, `end()` volta para `G.screen='tower'`.
+- Recompensa (`n*12+10` moedas, `G.coins`) só é paga **a primeira vez** que o andar é vencido — a checagem é
+  `B.tw===(G.twBest||0)+1` em `foeDown()` (`js/battle.js`); senão só avisa que já foi vencido antes. Andares
+  além de `G.twBest+1` aparecem bloqueados; andares já vencidos continuam jogáveis (sem recompensa de novo).
+- Estado salvo: só `G.twBest` (campo `tw` do `save()`, sem mudar `v`).

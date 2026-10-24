@@ -26,7 +26,7 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
 
   console.log('Telas');
   const visible = () => page.evaluate(() => [...document.querySelectorAll('iframe')].filter(f => f.style.display !== 'none' && f.style.visibility !== 'hidden').map(f => f.id).join(','));
-  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf'], ['boss', 'bsf'], ['bag', 'bgf'], ['safari', 'sff'], ['train', 'trf']]) {
+  for (const [screen, frame] of [['map', 'mnf'], ['gyms', 'gyf'], ['team', 'eqf'], ['dex', 'dxf'], ['pvp', 'pvf'], ['tac', 'tbf'], ['boss', 'bsf'], ['bag', 'bgf'], ['safari', 'sff'], ['train', 'trf'], ['tower', 'twf']]) {
     await page.evaluate(s => { G.screen = s; R(); }, screen); await page.waitForTimeout(1500);
     ok((await visible()) === frame, 'tela "' + screen + '" mostra o iframe ' + frame);
   }
@@ -90,6 +90,21 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   await tr.locator('#fightBtn').click(); await page.waitForTimeout(2200);
   ok(await page.evaluate(() => G.screen === 'battle' && G.battle && G.battle.vt === 1), 'lutar na fase 1 abre a arena de batalha de verdade');
   await page.evaluate(() => { G.battle = null; G.screen = 'map'; R(); }); await page.waitForTimeout(500);
+
+  console.log('Torre de Gelo');
+  await page.evaluate(() => { G.twBest = 0; G.coins = 0; G.screen = 'tower'; G.twfb = 0; R(); }); await page.waitForTimeout(2200);
+  const tw = page.frameLocator('#twf');
+  ok(await page.evaluate(() => TW.ready), 'tela da torre de gelo carregou');
+  ok(await tw.locator('.fl').count() === 30, 'a torre mostra os 30 andares');
+  ok(await tw.locator('.fl.locked').count() === 29, 'só o andar 1 está liberado no começo');
+  await tw.locator('#fightBtn').click(); await page.waitForTimeout(2200);
+  ok(await page.evaluate(() => G.screen === 'battle' && G.battle && G.battle.tw === 1), 'subir o andar 1 abre a arena de batalha de verdade');
+  await page.evaluate(() => { G.team.forEach(m => { m.hp = m.max }); turn(0); }); await page.waitForTimeout(2200);
+  let tries = 0;
+  while (await page.evaluate(() => G.battle && !G.battle.over) && tries++ < 25) { await page.evaluate(() => turn(0)); await page.waitForTimeout(1600); }
+  await page.evaluate(() => end());
+  ok(await page.evaluate(() => G.screen === 'tower' && G.twBest === 1), 'o time de Nv 18-20 vence o andar 1 (rivais Nv ~6-8) e libera o andar 2');
+  ok(await page.evaluate(() => G.coins) >= 22, 'a vitória paga ao menos as 22 moedas da Torre (1*12+10), além do XP da batalha');
 
   console.log('Batalha');
   await page.evaluate(() => { G.screen = 'map'; R(); wild(); }); await page.waitForTimeout(3500);

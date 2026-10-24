@@ -20,7 +20,7 @@ function fxHTML(x,n){
 function sfx(w,d){if(!MUS.on)return;try{if(!ctxA())return;const t=MUS.ac.currentTime+d,n=w?[[523,0,.25],[659,.15,.25],[784,.3,.25],[1047,.45,.3],[1047,.8,.9],[1319,.8,.9],[1568,.8,.9]]:[[392,0,.35],[370,.3,.35],[349,.6,.35],[294,.95,1]];n.forEach(([f,o,l])=>tone(f,t+o,l,w?.1:.06,w?'triangle':'sawtooth'))}catch(e){}}
 function arena(B,p){
  const ev=G.fxq||[];G.fxq=[];
- const ty=B.tt||(B.vt?'Psíquico':B.pvp?'Voador':B.wild?'Planta':GY[B.gym].ty),A=ARENA[ty],eF=B.lf!==B.foe,eM=B.lm!==p,evo=B.evoF,lv=B.lvF;
+ const ty=B.tt||(B.vt?'Psíquico':B.tw?'Gelo':B.pvp?'Voador':B.wild?'Planta':GY[B.gym].ty),A=ARENA[ty],eF=B.lf!==B.foe,eM=B.lm!==p,evo=B.evoF,lv=B.lvF;
  B.lf=B.foe;B.lm=p;B.evoF=0;B.lvF=0;
  const T=n=>n*.9,last=ev.length?T(ev.length-1)+.7:0;
  const side=(m,s,en)=>{
