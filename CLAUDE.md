@@ -141,14 +141,22 @@ O duelo é calculado nos dois aparelhos e precisa dar o **mesmo resultado**. Por
 determinística e não pode depender do estado local de um só jogador. A sala usa `claude.use('room')`,
 que só existe dentro do claude.ai.
 
-## Back-end (planejado, ainda não implementado)
-Decisão da Fase 0 do roadmap de backend: **Supabase** (banco Postgres + autenticação + API + realtime,
-tudo hospedado lá mesmo — sem servidor Node próprio). Quando a implementação começar:
-- Auth do Supabase substitui o par `mon-users`/PBKDF2 local (`js/state.js`) — login/cadastro passam a ser
-  chamadas de API em vez de só `localStorage`.
-- O schema do save (seção "Dados e salvamento" acima) é o ponto de partida pra desenhar as tabelas.
+## Back-end (Supabase)
+Projeto criado: **numius-arena** (region `sa-east-1`), org `devthiago22-sys's Org`, project ref
+`nrkfxlmjztjtpgcrprsv`, URL `https://nrkfxlmjztjtpgcrprsv.supabase.co`. A chave publicável (`sb_publishable_...`,
+segura pra expor no front) ainda não foi colada em nenhum arquivo do jogo — isso é trabalho da Fase 1
+(criar a camada de API/cliente Supabase no front). **A chave `service_role` nunca deve ir pro front nem
+pro repositório** — só é usada do lado do servidor/Edge Functions.
+- Auth do Supabase (`auth.users`) vai substituir o par `mon-users`/PBKDF2 local (`js/state.js`) —
+  login/cadastro passam a ser chamadas de API em vez de só `localStorage`. Ainda não implementado.
+- Tabela `public.saves` já criada (migração `create_saves_table`), uma linha por jogador
+  (`user_id` referenciando `auth.users`), espelhando o schema documentado acima (seção "Schema do save")
+  quase campo a campo — `jsonb` pras estruturas aninhadas (`team`, `tac`, `hero`, etc.), `updated_at`
+  atualizado sozinho por trigger. RLS ligado: cada jogador só lê/escreve a própria linha (`auth.uid() =
+  user_id`), sem policy de `delete` por enquanto. Front ainda não lê/escreve nela — é trabalho da Fase 1/2.
 - Lógica determinística que já existe pra validar no servidor (via Edge Functions, que também rodam
   JS/TS): `hit()`/`pvpResolve` (PvP), `bsTurn`/`bsRng` (Boss semanal), a resolução de troca em `trade.js`.
+  Nenhuma Edge Function criada ainda.
 
 ## Pré-visualização no claude.ai
 Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 16 MB, reduza imagens
