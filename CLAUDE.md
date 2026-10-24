@@ -181,8 +181,9 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   prontas para resgate (`cnt.missoes` em `mnData`, de `msCount()`).
 
 ## Treinamento (`screens/train.html` + ponte em `screens-bridge.js`)
-- Tela em HTML/JS puro (não é bundle React), acessada pela ilha "VALE ANCESTRAL" e pelo item **TREINAMENTO**
-  da lista lateral do menu (`nav:"train"`), e pela tela de reserva do mapa. Substituiu as três telas antigas
+- Tela em HTML/JS puro (não é bundle React), acessada **só** pela ilha "VALE ANCESTRAL" (`nav:"train"` em
+  `screens/menu.html`) — não tem mais item próprio na lista lateral do menu (removido por já estar na ilha;
+  `cnt.train` também saiu de `mnData()` em `js/screens-bridge.js`, era só o contador desse item). Substituiu as três telas antigas
   em HTML inline (`train`, `vir`, `trainiv` em `render.js`) por um único iframe com três visões internas
   (hub, IV/EV, Batalha Virtuosa) — o jogo só conhece `G.screen==='train'`.
 - **IV e EV**: `trEV(i,s)`/`trIV(i,s)` (em `js/battle.js`) já existiam e não mudaram — gastam `G.vc` (Moedas
