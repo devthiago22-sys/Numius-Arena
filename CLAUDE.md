@@ -137,18 +137,27 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 - Imagens dos lendários fora dos iframes: classes `.lgimg-*` em `style.css` (o build embute `url(../assets/...)` do CSS).
 
 ## Zona Safari (`js/safari.js` + `screens/safari.html`)
-- Mapa explorável 64×48 (semente fixa). Terreno orgânico pré-desenhado (`buildTerrain`: máscaras borradas por camada,
-  bordas arredondadas) + detalhes desenhados a cada quadro (árvores, capim que balança, flores, partículas por região) com 4 regiões: Lago Espelhado (linha Hydrake),
-  Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central (qualquer). Encontros no capim alto (13% por passo).
-- Encontro: cenário pintado por região (`drawScene`), Numiu animado pelo mesmo motor de sprites vivos do Boss (`Live`),
-  entrada pulando do capim e reações a cada ação. O direcional só aparece em telas de toque.
-- O personagem anda com setas/WASD ou o direcional na tela. No mapa ele é um **sprite 16x24 estilo GBA (Pokémon Emerald)**:
-  `GBA` guarda 8 variantes (2 gêneros x 4 cabelos), cada uma com 9 quadros de 384 letras (parado/passo A/passo B para baixo,
-  cima e lado; a direita é o quadro do lado espelhado). As letras são índices de cor (`O` contorno, `H/h/L` cabelo, `S/s/N`
-  pele, `E/W` olho, `J/j/A/K/k/G` roupa, `P/p` perna, `B/b` bota) e `heroSheet(S)` pinta os 9 quadros num canvas ampliado
-  (sem suavizar), trocando cabelo por `HAIR[g][hair]` e pele por `SKIN[skin]`. `drawHero` escolhe o quadro pela direção e
-  alterna o pé a cada casa (`pl.par`), com o passo na primeira metade da casa. As grades vêm de
-  `tools/gba_sprite.py` (gerador com pré-visualização). O retrato do encontro continua usando
+- Mapa explorável 64×48 (semente fixa), desenhado em **tiles de pixel art 16×16** no estilo Game Boy / GBA.
+  `TGR` guarda as grades de letras de cada tile (grama, capim alto em 2 quadros, água em 2 quadros, areia, trilha,
+  lava, flores, árvore 32×32, pedra, cerca) e `TPAL` as paletas por região; `tile(nome,regiao)` pinta e guarda em
+  cache. `buildTerrain()` pinta o mapa inteiro **uma vez** numa tela de 1024×768 (16 px por casa) e `draw()` recorta
+  essa tela com `imageSmoothingEnabled=false`. As grades vêm de `tools/safari_tiles.py` (gerador com
+  pré-visualização em PNG) — edite lá, rode e cole a saída.
+- A escala é inteira: `PS` (2 a 7) é o tamanho do pixel e `TSZ = 16*PS`. A câmera é arredondada para múltiplos de
+  `PS`, senão o pixel art treme ao andar. Água, lava e capim alto animam trocando de quadro; o capim da casa do
+  jogador troca de quadro sozinho (parece que mexeu) e é redesenhado **depois** do jogador, cobrindo as pernas.
+- 4 regiões: Lago Espelhado (linha Hydrake), Campo Vulcânico (Blazleo), Floresta Antiga (Byron) e Campina Central
+  (qualquer). Encontros no capim alto (13% por passo).
+- Encontro: cenário pintado por região (`drawScene`), Numiu animado pelo mesmo motor de sprites vivos do Boss
+  (`Live`), entrada pulando do capim e reações a cada ação. O direcional só aparece em telas de toque.
+- O personagem anda com setas/WASD ou o direcional. No mapa ele é um **sprite 20×28 em pixel art** (estilo Pokémon
+  de GBA/NDS): `GBA` guarda 8 variantes (2 gêneros × 4 cabelos), cada uma com 9 quadros de 560 letras (parado +
+  2 passos, para baixo, cima e lado; a direita é o lado espelhado). As letras são índices de cor (`O` contorno,
+  `H/h/L` cabelo, `S/s` pele, `E/W` olho, `J/j/I` casaco, `A/a` braço, `N` mão, `G/g` detalhe, `K` cinto,
+  `P/p` perna, `B/b` bota) e `heroSheet(S)` pinta os 9 quadros num canvas ampliado, trocando cabelo por
+  `HAIR[g][hair]` e pele por `SKIN[skin]`; no feminino o comprimento do cabelo também muda. `drawHero` escolhe o
+  quadro pela direção e alterna o pé a cada casa (`pl.par`). As grades vêm de `tools/hero_sprite.py`, que desenha
+  por formas (elipses e retângulos) e fecha o contorno sozinho. O retrato do encontro continua usando
   `assets/screens/trainer-m|f.webp` (4 cabelos, filtro de pele).
 - Captura sem bola, o **Laço de Sintonia**: VÍNCULO (0-100) e AGITAÇÃO. Ações: Sintonizar (4 batidas no ritmo da aura:
   Perfeito/Bom/Fora), Fruta calmante (10 por visita), Observar (revela o temperamento) e Sair. Agitação alta = chance de fuga.
