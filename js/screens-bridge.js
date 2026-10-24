@@ -207,23 +207,27 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
   else if(d.a==='cap'&&B.wild)cap()
   else if(d.a==='flee'&&B.wild)flee()
   else if(d.a==='leave')leave()}});
-const TB={n:'tactical'};
+const TB={n:'tactical',sent:false};
 function tbMount(){
  if(typeof document.createElement!=='function')return;
  let f=document.getElementById('tbf');
  if(!f){f=document.createElement('iframe');f.id='tbf';f.className='lgf';f.title='Batalhas táticas';f.style.zIndex=50;document.body.appendChild(f);f.srcdoc=dec(TB)}
  let x=document.getElementById('tbx');
  if(!x){x=document.createElement('button');x.id='tbx';x.textContent='✕ Mapa';x.setAttribute('aria-label','Voltar ao mapa');x.style.cssText='position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:60;min-height:36px;padding:6px 12px;font-size:13px;display:none';x.onclick=()=>{G.screen='map';R()};document.body.appendChild(x)}
+ if(!TB.ready){clearTimeout(TB.t);TB.t=setTimeout(()=>{if(!TB.ready){G.tbfb=true;R()}},12000)}
  tbToggle();
 }
-const TBMAP={fogo:'Fogo',agua:'Água',terra:'Pedra',grama:'Planta',eletrico:'Elétrico',gelo:'Gelo',psiquico:'Psíquico',inseto:'Voador'};
-function tbData(){const L=Math.max(5,(G.team[0]||{l:5}).l);return{numius:1,k:'data',t:Object.keys(TBMAP).map(k=>{const T=(G.tac&&G.tac[TBMAP[k]])||{w:0};return{tipo:k,derrotas:T.w||0,tatic:TN[Math.min(3,T.w||0)],nivel:L}})}}
+function tbData(){
+ const def=tacLvl(G.team[0]?G.team[0].l:5);
+ return{numius:1,k:'data',types:TY.map(t=>{const T=(G.tac&&G.tac[t])||{w:0,best:0};return{t,e:TE[t],w:T.w||0,best:T.best||0}}),defLvl:def,canFight:G.team.length>0,
+  imgs:TB.sent?null:(TB.sent=1,btImgs())};
+}
 function tbSend(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('tbf');if(TB.ready&&f&&f.contentWindow)f.contentWindow.postMessage(tbData(),'*')}
 if(typeof addEventListener==='function')addEventListener('message',e=>{const f=document.getElementById('tbf');if(!f||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;
- if(d.k==='ready'){TB.ready=true;tbSend()}
- else if(d.k==='nav'&&d.to==='map'){G.screen='map';R()}
- else if(d.k==='tac'&&G.screen==='tac'){const ty=TBMAP[d.tipo];if(!ty||!G.team.length)return;if(!G.team.some(m=>m.hp>0)){goHeal();return}tac(ty)}});
-function tbToggle(){if(typeof document.getElementById!=='function')return;const on=G.screen==='tac',f=document.getElementById('tbf'),x=document.getElementById('tbx');if(f)f.style.display=on?'block':'none';if(x)x.style.display=on?'block':'none'}
+ if(d.k==='ready'){TB.ready=true;clearTimeout(TB.t);G.tbfb=false;tbSend()}
+ else if(d.k==='nav'){G.screen='map';R()}
+ else if(d.k==='tac'&&G.screen==='tac'){if(!TY.includes(d.t)||!G.team.length)return;if(!G.team.some(m=>m.hp>0)){goHeal();return}tac(d.t,tacLvl(d.lvl|0))}});
+function tbToggle(){if(typeof document.getElementById!=='function')return;const on=G.screen==='tac'&&!G.tbfb,f=document.getElementById('tbf'),x=document.getElementById('tbx');if(f)f.style.display=on?'block':'none';if(x)x.style.display=on?'block':'none'}
 function mnToggle(){if(typeof document.getElementById!=='function')return;ifv(document.getElementById('mnf'),G.screen==='map'&&!G.mfb,MN)}
 function mnData(){const nb=G.badges.length,dx=(G.dex||[]).length;return{lv:Math.max(1,...G.team.map(m=>m.l)),isl:{vale:Math.min(100,(G.vbest||0)*10),cristal:Math.round((G.twBest||0)/30*100),canion:Math.min(100,Math.round((G.xcDone||0)/10*100)),porto:Math.min(100,Math.round(sfState().mo/MSDAY*100))},name:G.hero?String(G.hero.name):(ME||'Convidado'),coins:G.coins||0,guest:!ME,sub:ME?'conectado':'sem salvar',bl:['Pd','Ag','El','Pl','Ge','Vo','Ps','Fo'],bc:GY.map(g=>ARENA[g.ty][1]),be:GY.map((g,i)=>G.badges.includes(i)),bn:GY.map(g=>g.n),cnt:{gyms:nb+'/8',tac:'8',team:G.team.length+'/6',dex:dx+'/'+DEX.length,bag:''+(Object.keys(G.leg||{}).length+'/3'),missoes:''+msCount()}}}
 const NAV={gyms:()=>{G.screen='gyms';R()},tac:()=>{G.screen='tac';R()},team:()=>{G.screen='team';R()},dex:()=>{G.screen='dex';R()},pvp:()=>pvpOpen(),boss:()=>{G.screen='boss';G.bsfb=0;R()},bag:()=>{G.screen='bag';G.bgfb=0;R()},safari:()=>{G.screen='safari';G.sffb=0;R()},missoes:()=>{G.screen='missions';G.msfb=0;R()},train:()=>{G.screen='train';G.trfb=0;R()},tower:()=>{G.screen='tower';G.twfb=0;R()},trade:()=>xcOpen(),heal:()=>goHeal(),cfg:()=>openCfg(),exit:()=>quitGame()};

@@ -119,6 +119,21 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   ok(await xc.locator('#codeIn').count() === 1, 'a sala de amigos mostra o campo pra entrar com um código');
   await page.evaluate(() => { G.screen = 'map'; R(); }); await page.waitForTimeout(500);
 
+  console.log('Arena Tática');
+  await page.evaluate(() => { G.team = [mk(0, 40)]; G.screen = 'tac'; R(); }); await page.waitForTimeout(2200);
+  const tb = page.frameLocator('#tbf');
+  ok(await page.evaluate(() => TB.ready), 'tela da arena tática carregou');
+  ok(await tb.locator('.tcard').count() === 8, 'a arena tática mostra os 8 tipos');
+  await tb.locator('.tcard').first().click(); await page.waitForTimeout(400);
+  ok(await tb.locator('#lvSlider').count() === 1, 'escolher um tipo mostra o seletor de nível');
+  await tb.locator('#lvSlider').evaluate(el => { el.value = 60; el.dispatchEvent(new Event('input')); }); await page.waitForTimeout(300);
+  ok((await tb.locator('#lvNum').innerText()) === 'Nv 60', 'o seletor de nível vai de 5 a 70, de 5 em 5');
+  await tb.locator('#fightBtn').click(); await page.waitForTimeout(1500);
+  ok(await page.evaluate(() => G.screen === 'battle' && G.battle.tt === 'Fogo' && G.battle.tl === 60), 'escolher Nv 60 na Arena Tática inicia a batalha nesse nível, sem depender de vitórias anteriores');
+  ok(await page.evaluate(() => G.battle.tier === 3), 'Nv 60 cai na dificuldade "Mestre" (tier 3)');
+  await page.evaluate(() => end());
+  await page.evaluate(() => { G.screen = 'map'; R(); }); await page.waitForTimeout(500);
+
   console.log('Batalha');
   await page.evaluate(() => { G.screen = 'map'; R(); wild(); }); await page.waitForTimeout(3500);
   ok(await page.evaluate(() => G.screen === 'battle' && !G.btfb && BT.ready), 'arena de batalha carregou');

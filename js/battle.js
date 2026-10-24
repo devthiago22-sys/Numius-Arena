@@ -98,7 +98,7 @@ function turn(k){
   if(p0.hp<=0){B.log.push(`${S[p0.i].n} desmaiou!`);evp({t:'faint',s:'p'});const n=act();if(n){B.log.push(`Você enviou ${S[n.i].n}!`);evp({t:'send',s:'p',mon:btSnap(n)})}else{B.log.push('Você ficou sem monstrinhos…');B.over='lose'}save();R();return}}
  const pl=act(),foeFirst=sx(B.foe,'sp')>sx(pl,'sp');
  if(foeFirst){eTurn();if(B.over||pl.hp<=0){save();R();return}}
- if(B.tt)B.used.push(S[act().i].t);B.log.push(hit(act(),B.foe,k));
+ B.log.push(hit(act(),B.foe,k));
  if(B.foe.hp<=0)foeDown();else{if(!foeFirst)eTurn();if(!B.over)regen(B)}
  lgEnd(B);save();R();
 }
@@ -132,7 +132,7 @@ function gym(n){
  G.battle={wild:false,gym:n,foe:f,queue:q,log:[`${GY[n].l} quer batalhar! Enviou ${S[f.i].n} (Nv ${f.l})!`],over:null};G.screen='battle';R();
 }
 function end(){if(G.battle.pvp){pvpEnd();return}
- {const B=G.battle;if(B.tt){const T=G.tac[B.tt];T.seen=[...T.seen,...B.used].slice(-40);if(B.over==='win')T.w++;if(B.over==='quit')T.q=(T.q||0)+1}}
+ {const B=G.battle;if(B.tt){const T=G.tac[B.tt]||(G.tac[B.tt]={w:0,best:0});if(B.over==='win'){T.w++;T.best=Math.max(T.best||0,B.tl||0)}if(B.over==='quit')T.q=(T.q||0)+1}}
  if(G.battle.over==='lose')G.team.forEach(m=>{m.hp=m.max;restPP(m)});
  const tt=G.battle.tt,gy=G.battle.gym,vt=G.battle.vt,tw=G.battle.tw;G.battle=null;const dst=vt?'train':tw?'tower':tt?'tac':gy!==undefined?'gyms':'map';if(vt)G.trfb=0;if(tw)G.twfb=0;if(G.learn&&G.learn.length){G.after=dst;G.screen='learn'}else G.screen=dst;save();R();
 }
@@ -157,12 +157,15 @@ function twStart(n){
 }
 function trEV(i,s){const m=G.team[i];m.ev[s]=m.ev[s]||0;if((G.vc||0)<2||m.ev[s]>=252){G.note='Moedas Virtuosas insuficientes ou limite de EV atingido.';R();return}G.vc-=2;m.ev[s]=Math.min(252,m.ev[s]+8);const o=m.max;calc(m);m.hp+=m.max-o;save();R()}
 function trIV(i,s){const m=G.team[i];m.iv[s]=m.iv[s]==null?15:m.iv[s];if((G.vc||0)<6||m.iv[s]>=31){G.note='Moedas Virtuosas insuficientes ou IV já no máximo.';R();return}G.vc-=6;m.iv[s]=Math.min(31,m.iv[s]+4);const o=m.max;calc(m);m.hp+=m.max-o;save();R()}
-function tac(t){
- const T=G.tac||(G.tac={});T[t]=T[t]||{w:0,seen:[]};const X=T[t],w=X.w,tier=Math.min(3,w),L=Math.max(5,G.team[0].l),pool=(p=>p.length?p:BASE.slice())([...S.keys()].filter(i=>(S[i].t===t||S[i].t2===t)&&BASE.includes(i)));
- const q=Array.from({length:6},(_,k)=>{const m=mk(pool[k%pool.length],L);m.iv={h:Math.min(31,m.iv.h+6*w),a:Math.min(31,m.iv.a+6*w)};m.ev={h:Math.min(252,30*w),a:Math.min(252,30*w)};
-  if(tier>=2&&X.seen.length){const c=TY.map(x=>({x,s:X.seen.reduce((s,y)=>s+mult(x,y),0)+(x===t?.5:0)})).sort((a,b)=>b.s-a.s)[0].x;const dm=m.mv.slice();if(c!==t)dm[1]=2+TY.indexOf(c);m.mv=dm;restPP(m)}
-  calc(m);m.hp=m.max;return m}),f=q.shift();
- G.battle={wild:false,tt:t,tier,pot:tier>=3?2:0,used:[],foe:f,queue:q,log:[`Treinador ${t} (tática: ${TN[tier]}) enviou ${S[f.i].n} (Nv ${f.l})!`],over:null};G.screen='battle';R();
+/* Arena Tática: o jogador escolhe o tipo E o nível (5 a 70, de 5 em 5) — não escalona mais sozinha a cada
+   vitória (isso ficava difícil demais). A dificuldade da IA (`tier`) só depende do nível escolhido. */
+const tacLvl=l=>Math.max(5,Math.min(70,Math.round((l||5)/5)*5));
+function tac(t,lvl){
+ const L=tacLvl(lvl||Math.max(5,(G.team[0]||{l:5}).l)),tier=L<25?0:L<45?1:L<60?2:3;
+ const T=G.tac||(G.tac={});T[t]=T[t]||{w:0,best:0};
+ const pool=(p=>p.length?p:BASE.slice())([...S.keys()].filter(i=>(S[i].t===t||S[i].t2===t)&&BASE.includes(i)));
+ const q=Array.from({length:6},(_,k)=>mk(pool[k%pool.length],L)),f=q.shift();
+ G.battle={wild:false,tt:t,tl:L,tier,pot:tier>=3?2:0,foe:f,queue:q,log:[`Treinador ${t} (Nv ${L} · ${TN[tier]}) enviou ${S[f.i].n} (Nv ${f.l})!`],over:null};G.screen='battle';R();
 }
 function mvUp(i,d){const j=i+d;if(j<0||j>=G.team.length)return;[G.team[i],G.team[j]]=[G.team[j],G.team[i]];save();R()}
 function setMv(i,s,v){const m=G.team[i],c=(m.mv||defMv(m)).slice();c[s]=+v;m.mv=c;save();R()}

@@ -42,8 +42,9 @@ Regras:
 - Todo estado vive em `G`. Mudou algo visível? Chame `R()`.
 
 ## Telas em iframe (`screens/*.html`)
-Login, hero, starter, menu, tactical, heal, team, gyms, dex, pvp, battle e boss são páginas React já compiladas (minificadas),
-abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com objetos `{numius:1, k:'...'}`:
+Login, hero, starter, menu, heal, team, gyms, dex, pvp, battle e boss são páginas React já compiladas (minificadas);
+tactical, train, tower, trade e as demais telas novas (safari, missions) são HTML/JS puro. Todas abrem em
+`<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com objetos `{numius:1, k:'...'}`:
 
 | Iframe | O jogo escuta (k) | O jogo envia (k) |
 |---|---|---|
@@ -51,7 +52,7 @@ abertas em `<iframe srcdoc>`. O jogo e a tela conversam por `postMessage` com ob
 | `hf` hero | `ready`, `hero` | |
 | `sf` starter | `ready`, `pick` | `imgs` |
 | `mnf` menu | `ready`, `nav` (to: gyms, tac, team, dex, pvp, train, tower, trade, heal, cfg, exit) | `data` |
-| `tbf` táticas | `ready`, `nav`, `tac` | `data` |
+| `tbf` táticas | `ready`, `nav`, `tac` (`t`, `lvl`) | `data` |
 | `hcf` cura | `ready`, `healed`, `back`, `music` | dados em `window.NXT` (injetado no srcdoc) |
 | `eqf` equipe | `ready`, `mv`, `nav`, `cfg`, `leg` (`id` ou `null`) | `team` (inclui `legs`) |
 | `gyf` ginásios | `ready`, `gym`, `nav` | `gyms` |
@@ -236,8 +237,8 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   ambiente não tem uma ferramenta de geração de imagem, só pode recolorir a arte existente por CSS. Se quiser
   uma ilustração de cidade futurista de verdade, me mande o arquivo (`assets/screens/menu-3.webp` é o que
   seria trocado) do mesmo jeito que mandou as telas de Treinamento/Torre de Gelo. A aba **BATALHAS TÁTICAS**
-  da lista lateral do menu continua existindo e aponta pra arena tática de sempre (`G.screen==='tac'`) — só a
-  ilha mudou de destino, igual já tinha acontecido com Ginásios → Torre de Gelo.
+  da lista lateral do menu continua existindo e aponta pra Arena Tática (`G.screen==='tac'`, ver seção própria
+  abaixo) — só a ilha mudou de destino, igual já tinha acontecido com Ginásios → Torre de Gelo.
 - Reaproveita a **mesma sala peer-to-peer do PvP** (`ensureRoom()` em `js/pvp.js`, `claude.use('room')`, só
   funciona dentro do claude.ai com conta logada) com campos de presença próprios, prefixo `xc`, que convivem
   na mesma presença sem atrapalhar o pareamento do PvP (`PV.room`/`PV.peers` são compartilhados).
@@ -260,3 +261,24 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
   (`disabled`) enquanto já está pareado (`xcSt==='paired'`) pra não interromper uma troca em andamento.
 - Contador `G.xcDone` (campo `xd` do `save()`, sem mudar `v`) soma a cada troca concluída; a barrinha da ilha
   no mapa (`isl.canion` em `mnData()`) mostra o progresso até 10 trocas.
+
+## Arena Tática (`screens/tactical.html` + ponte em `screens-bridge.js`)
+- Tela em HTML/JS puro (substituiu o antigo bundle React minificado, que não tinha seletor de nível).
+  Acessada pela aba **BATALHAS TÁTICAS** da lista lateral do menu (`nav:"tac"`) e pela ilha de ginásios antiga.
+- **A dificuldade não escalona mais sozinha a cada vitória.** Antes, `tac(t)` aumentava um `tier` (0-3) por
+  vitória acumulada (`T.w`) e ia pumping IV/EV do time rival a cada vitória — ficava difícil rápido demais.
+  Agora o jogador escolhe o **tipo** (os 8 de sempre: Fogo, Água, Planta, Elétrico, Pedra, Gelo, Psíquico,
+  Voador) **e o nível da batalha**, de **5 a 70, de 5 em 5** (`#lvSlider` na tela, 14 valores). A dificuldade
+  da IA (`tier`, 0=Iniciante/1=Esperto/2=Estrategista/3=Mestre, tabela `TN`) é só uma função do nível escolhido
+  (`L<25?0:L<45?1:L<60?2:3` — mesmos cortes de antes, só que por nível em vez de vitórias), sem pumping de
+  IV/EV nem contra-golpe adaptativo.
+- `tac(t,lvl)` (`js/battle.js`) normaliza o nível com `tacLvl(lvl)` (arredonda pra múltiplo de 5, limita 5-70),
+  monta o time rival (`mk(pool[k%pool.length], L)`) nesse nível e abre a arena de batalha de verdade
+  (`G.screen='battle'`) — a luta em si roda igual à de sempre (`turn`, `hit`...). `end()` só registra
+  `T.w` (vitórias) e `T.best` (maior nível já vencido) por tipo em `G.tac[t]`, salvo em `save()` como `tac`
+  (sem mudar `v`) — não tem mais `T.seen` (histórico de golpes pra contra-ataque).
+- Ponte (`TB` em `screens-bridge.js`): `tbData()` manda `{types:[{t,e,w,best}], defLvl, canFight, imgs}` —
+  `defLvl` sugere o nível do primeiro Numiu da equipe como ponto de partida, `imgs` só vem uma vez (gate
+  `TB.sent`). A tela manda `{k:'tac', t:<nome do tipo>, lvl:<número>}` direto (sem a tradução de ids
+  minúsculos que o bundle antigo usava). Tem o mesmo temporizador de reserva de 12s das outras telas
+  novas (`G.tbfb`); se não responder `ready`, cai na versão simples em HTML (`render.js`).
