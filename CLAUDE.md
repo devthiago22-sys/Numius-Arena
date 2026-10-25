@@ -198,6 +198,17 @@ troca em `trade.js`. Nenhuma Edge Function criada ainda.
 Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 16 MB, reduza imagens
 (WebP, tamanho menor) em vez de remover recursos. Dentro do claude.ai, `claude.use('room')` habilita o PvP.
 
+**O preview (artifact do claude.ai) não serve pra testar o Supabase (Fase 1 do backend).** Páginas
+publicadas como artifact rodam numa sandbox que só permite rede pra um conjunto bem específico de
+coisas (CDNs de bibliotecas, capabilities declaradas) — chamada direta de `fetch`/`supabase-js` pra uma
+API externa qualquer (como `nrkfxlmjztjtpgcrprsv.supabase.co`) **não é permitida**, mesmo a biblioteca
+tendo carregado normal via CDN. Sintoma: toda chamada ao Supabase (RPC, auth) volta com erro genérico,
+igual em qualquer navegador, trocar chave/projeto não muda nada — foi exatamente isso que aconteceu e
+custou um tempo até perceber que não era bug de configuração. Pra testar cadastro/login de verdade,
+use o site publicado (GitHub Pages: `https://devthiago22-sys.github.io/Numius-Arena/`, branch `main`,
+pasta raiz — já configurado), nunca o link do artifact. Confirmado funcionando no GitHub Pages em
+2026-10-24.
+
 ## Convenções
 - Textos em português; manter emojis e `aria-label` nos botões.
 - Respeitar `prefers-reduced-motion` em animações novas.
