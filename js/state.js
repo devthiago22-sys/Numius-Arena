@@ -2,7 +2,7 @@ const $=s=>document.querySelector(s),rnd=n=>Math.floor(Math.random()*n);
 let G={team:[],badges:[],screen:'auth',mode:'in',battle:null};
 let hasSave=false;
 
-function save(){if(!ME||G.rt)return;try{const u=U();if(u[ME]){const d={team:G.team,badges:G.badges,coins:G.coins||0,tac:G.tac||{},pv:G.pvp||null,dex:G.dex||[],hero:G.hero||null,vc:G.vc||0,vn:G.vn||1,vbest:G.vbest||0,bs:G.bs||null,fr:G.frag||null,eg:G.eggs||0,lg:G.leg||null,ls:G.legSel||null,sc:G.sfc||0,sf:G.sf||null,ms:G.ms||null,tw:G.twBest||0,xd:G.xcDone||0,v:5};u[ME].data=d;setU(u);cloudSaveQ(d)}}catch(e){}}
+function save(){if(!ME||G.rt)return;try{const u=U();if(u[ME]){const d={team:G.team,badges:G.badges,coins:G.coins||0,tac:G.tac||{},pv:G.pvp||null,dex:G.dex||[],hero:G.hero||null,vc:G.vc||0,vn:G.vn||1,vbest:G.vbest||0,bs:G.bs||null,fr:G.frag||null,eg:G.eggs||0,lg:G.leg||{},ls:G.legSel||null,sc:G.sfc||0,sf:G.sf||null,ms:G.ms||null,tw:G.twBest||0,xd:G.xcDone||0,v:5};u[ME].data=d;setU(u);cloudSaveQ(d)}}catch(e){}}
 const H=async(p,s)=>{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:Uint8Array.from(atob(s),c=>c.charCodeAt(0)),iterations:100000,hash:'SHA-256'},k,256);return btoa(String.fromCharCode(...new Uint8Array(b)))};
 const U=()=>{try{return JSON.parse(localStorage.getItem('mon-users'))||{}}catch(e){return{}}};
 const setU=u=>{try{localStorage.setItem('mon-users',JSON.stringify(u))}catch(e){}};

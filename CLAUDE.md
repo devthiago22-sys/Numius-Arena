@@ -230,6 +230,16 @@ lê/escreve a própria linha (`auth.uid() = user_id`), sem policy de `delete` po
 - Testar isso **não dá pra fazer no preview do claude.ai** (mesma limitação do Supabase em geral, ver
   seção abaixo) — use o GitHub Pages, de preferência logando com a mesma conta em dois navegadores/
   aparelhos diferentes pra confirmar que o progresso realmente sincroniza.
+- **Bug real encontrado e corrigido (2026-10-25), achado só testando de verdade no GitHub Pages**: toda
+  gravação na nuvem estava falhando (HTTP 400, erro Postgres `23502`, "null value in column \"lg\"") pra
+  praticamente qualquer conta — o `localStorage` continuava salvando normal (mascarando o problema, sem
+  erro visível pro jogador), só aparecia no console do navegador. Causa: a coluna `lg` de `public.saves`
+  é `NOT NULL DEFAULT '{}'::jsonb`, mas `save()` mandava `lg:G.leg||null` — um `null` explícito **não**
+  cai no default da coluna (só um campo omitido cairia), então violava a constraint sempre que
+  `G.leg` estivesse vazio (ex.: personagem recém-criado, antes de liberar qualquer lendário — ou seja, a
+  maioria das contas). Corrigido pra `lg:G.leg||{}`. Conferido por SQL que nenhuma outra coluna tem esse
+  mesmo descasamento (todas as outras `NOT NULL` já recebem valor não-nulo do cliente; todas as
+  `NULLABLE` já usam `||null` sem problema). `npm test` voltou a passar depois do fix.
 
 **Fase 3 — validação de PvP no servidor (implementada, escopo deliberadamente limitado)**: Edge
 Function `pvp-report` (`supabase/functions/pvp-report/index.ts`), chamada por `pvpEnd()` (`js/pvp.js`)
