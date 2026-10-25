@@ -233,9 +233,25 @@ rede, rate limit, etc.) o jogo já salvou o cálculo local antes de tentar — n
 Pra fechar essa lacuna de verdade (confirmar quem realmente venceu, não só limitar o estrago), o próximo
 passo seria portar o motor determinístico de verdade — avaliado e descartado por ora pelo custo/risco.
 
-**Fases seguintes**: o mesmo tipo de validação (limites + auditoria, sem replay completo) pode ser
-replicado pro Boss semanal (`bsTurn`/`bsRng`) e pra Troca de Numius (resolução em `trade.js`). Nenhuma
-Edge Function criada pra esses dois ainda.
+**Fase 4 — recompensa do Boss semanal no servidor (implementada)**: Edge Function `boss-claim`
+(`supabase/functions/boss-claim/index.ts`), chamada por `bsFinish(Z,win)` (`js/boss.js`) só pra conta
+Supabase, e só quando `win` é verdadeiro. Mais simples que o PvP porque aqui a recompensa é um **valor
+fixo** (`BSR`: +5 fragmentos, +500 moedas, +1 ovo) e a semana/dragão da vez saem só do **relógio do
+servidor** (mesmas contas de `bsWeek()`/`bsNow()`, nunca de algo que o cliente manda) — então, em vez de
+limites aproximados, dá pra garantir **exatamente** "no máximo 1 resgate por conta por semana":
+- a trava é um `unique(user_id, week)` em `public.boss_claims` — a Edge Function tenta inserir a linha
+  **antes** de aplicar a recompensa, e se o insert falhar por conflito (`23505`), é porque essa conta já
+  resgatou essa semana (`claimed:false, reason:'already_claimed'`), sem race condition possível;
+- `public.boss_apply_claim` (`security definer`, só `service_role`) soma a recompensa fixa no `fr`
+  (fragmentos por dragão, jsonb), `coins` e `eg` de `public.saves`, atômico;
+- o cliente ainda decide se venceu (`win`) — **não é replay do combate**, mesma ressalva da Fase 3.
+O cliente usa o `fr`/`coins`/`eg` que a função devolve (sobrescreve o já creditado localmente); falha de
+rede não desfaz o crédito local, só deixa de sincronizar com a nuvem dessa vez.
+
+**Fases seguintes**: o mesmo tipo de validação pode ser replicado pra Troca de Numius (resolução em
+`trade.js`) — ali não tem relógio nem recompensa fixa pra se apoiar (depende do que os dois lados
+oferecem), então provavelmente precisa de outra abordagem (ex.: os dois lados assinarem/confirmarem a
+troca pro servidor, não só aplicarem local). Nenhuma Edge Function criada pra isso ainda.
 
 ## Pré-visualização no claude.ai
 Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 16 MB, reduza imagens

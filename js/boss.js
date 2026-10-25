@@ -154,7 +154,20 @@ function bsFinish(Z,win){
  const b=bsd(),bd=BOSSES[Z.bi];let rw=null;
  BSRANK.submit(Z.me.dm,Z.n,win);b.tries++;
  if(win&&!b.claimed){b.claimed=true;G.frag[bd.id]=(G.frag[bd.id]||0)+BSR.frag;G.coins=(G.coins||0)+BSR.coins;G.eggs=(G.eggs||0)+BSR.egg;rw={frag:BSR.frag,coins:BSR.coins,egg:BSR.egg,boss:bd.id}}
- save();return rw;
+ save();
+ /* Fase 4 do backend (ver CLAUDE.md): numa conta Supabase, reporta pra Edge Function `boss-claim`, que
+    recalcula a semana/dragão só pelo relógio do servidor e garante no máximo 1 resgate por semana por
+    conta (unique constraint) — o fr/coins/eg que ela devolve sobrescreve o calculado aqui. */
+ if(win&&SB&&isSbId(ME))bossReport(Z.n).catch(()=>{});
+ return rw;
+}
+async function bossReport(turns){
+ try{
+  const{data:sess}=await SB.auth.getSession();const tok=sess&&sess.session&&sess.session.access_token;if(!tok)return;
+  const r=await fetch(SB_URL+'/functions/v1/boss-claim',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({win:true,turns})});
+  const j=await r.json().catch(()=>null);
+  if(j&&j.ok&&j.claimed&&j.saved){const s=j.saved;if(s.fr)G.frag=s.fr;if(typeof s.coins==='number')G.coins=s.coins;if(typeof s.eg==='number')G.eggs=s.eg;save();if(G.screen==='boss')bsSend()}
+ }catch(e){}
 }
 function bsHatch(){
  const b=bsd();if(!(G.eggs>0))return{err:'Você não tem ovos.'};
