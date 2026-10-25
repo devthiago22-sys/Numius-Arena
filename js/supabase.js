@@ -24,3 +24,36 @@ function cacheAcct(uid,email,username){
  else{u[uid].email=email;u[uid].username=username}
  setU(u);
 }
+
+/* Identifica uma conta Supabase (ME vira o uuid depois de logar por lá — ver authCore em
+   screens-bridge.js) — nome de treinador local nunca bate com esse formato (sem hífen), então não
+   precisa de uma flag separada. */
+const isSbId=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'');
+
+/* Nome pra mostrar na tela. Numa conta Supabase, ME é o uuid (não dá pra mostrar pro jogador) — busca
+   o nome de treinador guardado por cacheAcct(). Numa conta local de antes da Fase 1, ME já É o nome de
+   treinador, então não precisa buscar nada. */
+const meName=()=>{if(!ME)return'';const u=U()[ME];return(u&&u.username)?u.username:ME};
+
+/* Fase 2 do backend — ver CLAUDE.md: espelha o save (já gravado local por save(), em js/state.js) na
+   tabela public.saves, com debounce pra não martelar a API a cada chamada de save() (XP, troca de
+   golpe, etc. chamam save() várias vezes por minuto). O local continua sendo a cópia rápida/offline;
+   a nuvem é só pra sincronizar entre aparelhos. Falha aqui nunca trava o jogo — só loga no console. */
+let SB_SAVE_T=null,SB_SAVE_PEND=null;
+function cloudSaveQ(d){
+ if(!SB||!isSbId(ME))return;
+ SB_SAVE_PEND=d;
+ clearTimeout(SB_SAVE_T);
+ SB_SAVE_T=setTimeout(cloudSaveFlush,1500);
+}
+async function cloudSaveFlush(){
+ if(!SB_SAVE_PEND)return;
+ const d=SB_SAVE_PEND;SB_SAVE_PEND=null;
+ try{
+  const{error}=await SB.from('saves').upsert({user_id:ME,...d},{onConflict:'user_id'});
+  if(error)console.error('[numius] cloudSave falhou:',error);
+ }catch(e){console.error('[numius] cloudSave falhou:',e)}
+}
+/* Grava na nuvem na hora, sem esperar o debounce — usado ao sair, pra não perder os últimos
+   segundos de progresso. */
+function cloudSaveFlushNow(){clearTimeout(SB_SAVE_T);return cloudSaveFlush()}

@@ -8,6 +8,9 @@ async function submitAuth(){
  if(err)G.err=err;else G.f=null;
  R();
 }
-function enter(){const d=U()[ME]&&U()[ME].data;if(d&&d.team&&d.team.length)load();else{G={team:[],badges:[],coins:0,screen:d&&d.hero?'start':'hero',battle:null,hero:d&&d.hero||null};R()}}
+/* Numa conta Supabase a nuvem é quem decide (sincroniza entre aparelhos — ver load() em
+   js/state.js), mesmo que este navegador nunca tenha visto essa conta antes (cache local vazio).
+   Pra conta local de antes da Fase 1/2, continua decidindo pelo cache local, igual sempre foi. */
+async function enter(){if(SB&&isSbId(ME)){await load();return}const d=U()[ME]&&U()[ME].data;if(d&&d.team&&d.team.length)load();else{G={team:[],badges:[],coins:0,screen:d&&d.hero?'start':'hero',battle:null,hero:d&&d.hero||null};R()}}
 function guest(){ME=null;G={team:[],badges:[],coins:0,screen:'hero',battle:null};R()}
-function logout(){musicOff();if(SB&&SB.auth)try{SB.auth.signOut()}catch(e){}ME=null;try{localStorage.removeItem('mon-session')}catch(e){}G={team:[],badges:[],coins:0,screen:'auth',mode:'in',battle:null};R()}
+async function logout(){musicOff();if(SB&&isSbId(ME))try{await cloudSaveFlushNow()}catch(e){}if(SB&&SB.auth)try{SB.auth.signOut()}catch(e){}ME=null;try{localStorage.removeItem('mon-session')}catch(e){}G={team:[],badges:[],coins:0,screen:'auth',mode:'in',battle:null};R()}

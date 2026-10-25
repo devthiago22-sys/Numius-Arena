@@ -180,15 +180,37 @@ existe:
 - Depois de logar pelo Supabase, `ME` passa a ser o **uuid** da conta (não mais o nome de treinador),
   e `cacheAcct()` (`js/supabase.js`) espelha isso num registro local em `mon-users` (sem hash de
   senha, quem autentica é o Supabase) — assim `save()`/`load()`/`enter()` continuam funcionando sem
-  mudar nada. **O progresso de uma conta Supabase ainda só existe neste navegador** (a Fase 2 troca
-  isso por ler/escrever a tabela `saves` de verdade). `logout()` também chama `SB.auth.signOut()`.
+  mudar nada. `logout()` também chama `SB.auth.signOut()`.
+- `ME` virar um uuid também significa que não dá pra mostrar `ME` direto na tela (feio, e o jogador
+  não reconhece). Use `meName()` (`js/supabase.js`): devolve o nome de treinador guardado por
+  `cacheAcct()` pra conta Supabase, ou o próprio `ME` pra conta local antiga (onde `ME` já é o nome).
+  Usado em `js/render.js` (tela do mapa, Configurações, tela de "Até logo") e em `mnData()`
+  (`js/screens-bridge.js`, nome mostrado no menu).
 
-**Fase 2 — save sincronizado (ainda não implementada)**: tabela `public.saves` já criada (migração
-`create_saves_table`), uma linha por jogador (`user_id` referenciando `auth.users`), espelhando o
-schema documentado acima (seção "Schema do save") quase campo a campo — `jsonb` pras estruturas
-aninhadas (`team`, `tac`, `hero`, etc.), `updated_at` atualizado sozinho por trigger. RLS ligado: cada
-jogador só lê/escreve a própria linha (`auth.uid() = user_id`), sem policy de `delete` por enquanto.
-`save()`/`load()` ainda não leem/escrevem nela.
+**Fase 2 — save sincronizado (implementada)**: tabela `public.saves` (migração `create_saves_table`),
+uma linha por jogador (`user_id` referenciando `auth.users`, é a chave primária), espelhando o schema
+documentado acima (seção "Schema do save") quase campo a campo — `jsonb` pras estruturas aninhadas
+(`team`, `tac`, `hero`, etc.), `updated_at` atualizado sozinho por trigger. RLS ligado: cada jogador só
+lê/escreve a própria linha (`auth.uid() = user_id`), sem policy de `delete` por enquanto.
+- `isSbId(id)` (`js/supabase.js`) distingue conta Supabase (uuid, tem hífen) de conta local antiga (nome
+  de treinador, nunca tem hífen) — sem precisar de uma flag separada.
+- `save()` (`js/state.js`) continua gravando em `localStorage` toda vez (rápido, síncrono, like sempre)
+  e também chama `cloudSaveQ(d)` — pra conta Supabase, isso agenda um `upsert` na tabela `saves` com
+  **debounce de 1.5s** (pra não martelar a API a cada XP/golpe/etc., que chamam `save()` várias vezes
+  por minuto); pra conta local, `cloudSaveQ` não faz nada (`isSbId` falha). `cloudSaveFlushNow()`
+  pula o debounce e salva na hora — usado em `logout()` pra não perder os últimos segundos antes de
+  sair.
+- `load()` (`js/state.js`) virou assíncrona e, pra conta Supabase, busca a nuvem **primeiro**: achou a
+  linha em `saves`? usa ela. Não achou mas tem cache local (conta Supabase de antes da Fase 2 migrando
+  pra cima)? usa o cache local E manda pra nuvem (`cloudSaveQ`). Não tem nenhum dos dois? personagem
+  novo (`G.screen='hero'`). O corpo antigo de `load()` virou `applyData(d)`, reaproveitado nos três
+  casos. Pra conta local, nada mudou (lê só do `localStorage`, como sempre).
+- `enter()` (`js/auth.js`) também ficou assíncrona: pra conta Supabase, chama `load()` (que decide tudo
+  acima) **mesmo que o cache local deste navegador esteja vazio** — é o que faz o progresso aparecer
+  num aparelho/navegador novo que nunca viu essa conta. Pra conta local, decide pelo cache como sempre.
+- Testar isso **não dá pra fazer no preview do claude.ai** (mesma limitação do Supabase em geral, ver
+  seção abaixo) — use o GitHub Pages, de preferência logando com a mesma conta em dois navegadores/
+  aparelhos diferentes pra confirmar que o progresso realmente sincroniza.
 
 **Fases seguintes**: lógica determinística que já existe pra validar no servidor (via Edge Functions,
 que também rodam JS/TS): `hit()`/`pvpResolve` (PvP), `bsTurn`/`bsRng` (Boss semanal), a resolução de
