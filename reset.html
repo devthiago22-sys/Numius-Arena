@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redefinir senha — Numius Arena</title>
+<style>
+ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#1e1840,#3a2a5a 40%,#6e4f7e 70%,#ff8a4a);font-family:'Trebuchet MS',sans-serif;color:#1a1840}
+ .card{background:#fff;border-radius:14px;padding:28px 24px;max-width:360px;width:90%;box-shadow:0 12px 32px rgba(0,0,0,.25)}
+ h1{font-size:18px;margin:0 0 8px}
+ p{font-size:13px;color:#4a5a6a;line-height:1.5}
+ label{display:block;font-size:12px;margin:14px 0 4px;font-weight:600}
+ input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cfd4e4;border-radius:8px;font-size:14px}
+ button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:#00ccbb;color:#06241f;font-weight:700;font-size:14px;cursor:pointer}
+ button:disabled{opacity:.5;cursor:default}
+ .msg{font-size:13px;margin-top:12px}
+ .err{color:#a02a44}
+ .ok{color:#1a7a4a}
+ a{color:#077a68}
+</style>
+</head>
+<body>
+<div class="card">
+ <h1>🔑 Redefinir senha</h1>
+ <div id="loading"><p>Verificando o link…</p></div>
+ <div id="form" style="display:none">
+  <p>Escolha sua nova senha pra entrar de novo no Numius Arena.</p>
+  <label for="pw">Nova senha</label>
+  <input id="pw" type="password" minlength="6" autocomplete="new-password">
+  <label for="pw2">Repita a senha</label>
+  <input id="pw2" type="password" minlength="6" autocomplete="new-password">
+  <button id="go">Salvar nova senha</button>
+  <p class="msg" id="msg"></p>
+ </div>
+ <div id="invalid" style="display:none">
+  <p class="err">Esse link de recuperação é inválido ou já expirou. Volte ao jogo e peça um novo link em "Esqueci minha senha".</p>
+  <p><a href="./index.html">← Voltar ao Numius Arena</a></p>
+ </div>
+ <div id="done" style="display:none">
+  <p class="ok">Senha alterada! Já pode voltar e entrar com a senha nova.</p>
+  <p><a href="./index.html">← Voltar ao Numius Arena</a></p>
+ </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.97.0"></script>
+<script>
+/* Página independente do resto do jogo (não passa pelos scripts em js/) — só completa o fluxo de
+   recuperação de senha depois que a pessoa clica no link do e-mail (ver Edge Function
+   password-reset-request e CLAUDE.md). Mesmo projeto/chave de js/supabase.js. */
+const SB_URL='https://nrkfxlmjztjtpgcrprsv.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ya2Z4bG1qenRqdHBnY3JwcnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NzkyMzgsImV4cCI6MjEwODQ1NTIzOH0.UB-LD-7P49Q5dhM_n7yemATlTYAw2dJKL_I_KoHBmvo';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+const $=s=>document.querySelector(s);
+let ready=false;
+sb.auth.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY'&&session){ready=true;$('#loading').style.display='none';$('#form').style.display='block'}
+});
+// Se o link já tiver sido processado antes do listener acima ligar, confirma pela sessão existente.
+setTimeout(async()=>{
+ if(ready)return;
+ const{data}=await sb.auth.getSession();
+ if(data&&data.session){ready=true;$('#loading').style.display='none';$('#form').style.display='block'}
+ else{$('#loading').style.display='none';$('#invalid').style.display='block'}
+},2500);
+$('#go').addEventListener('click',async()=>{
+ const pw=$('#pw').value,pw2=$('#pw2').value,msg=$('#msg'),btn=$('#go');
+ msg.className='msg';msg.textContent='';
+ if(pw.length<6){msg.className='msg err';msg.textContent='A senha precisa ter pelo menos 6 caracteres.';return}
+ if(pw!==pw2){msg.className='msg err';msg.textContent='As senhas não coincidem.';return}
+ btn.disabled=true;msg.textContent='Salvando…';
+ const{error}=await sb.auth.updateUser({password:pw});
+ btn.disabled=false;
+ if(error){msg.className='msg err';msg.textContent='Não foi possível salvar. Tente pedir um novo link.'}
+ else{$('#form').style.display='none';$('#done').style.display='block'}
+});
+</script>
+</body>
+</html>

@@ -326,6 +326,34 @@ Presence do Supabase Realtime quando `claude.use('room')` não existe (fora do c
 (validação de PvP/Boss no servidor) **agora sim podem disparar de verdade**, no GitHub Pages, com conta
 Supabase jogando PvP/Boss por ali.
 
+**Fase 6 — recuperação de senha (implementada)**: como o e-mail de login é sintético (`nome@numius.game`,
+ver Fase 1), não dá pra usar `resetPasswordForEmail` direto — ele manda pro e-mail sintético, que não
+existe. Em vez disso:
+- `profiles.recovery_email` (coluna nova, nullable) guarda um e-mail **real** opcional que o jogador
+  cadastra depois de logado, em Configurações (`js/render.js`, tela `cfg`) — nunca usado pra login, só
+  pra recuperação. Gravado via `set_recovery_email(email)` (RPC `security definer`, só altera a própria
+  linha pelo `auth.uid()` — evita abrir uma rota de `UPDATE` direto na tabela que deixaria trocar outras
+  colunas como `username`). `saveRecoveryEmail()` em `js/auth.js` chama essa RPC.
+- "Esqueci minha senha" (link na tela de login, `ph===3` em `js/render.js`, função `forgotPw()` em
+  `js/auth.js`) pede nome de treinador + o e-mail de recuperação cadastrado e chama a Edge Function
+  `password-reset-request` (`supabase/functions/password-reset-request/index.ts`), **sem** JWT (jogador
+  está deslogado) — por isso essa função tem `verify_jwt:false`, diferente das outras.
+- A função confere se o e-mail bate com `profiles.recovery_email` daquele nome de treinador (resposta
+  **sempre genérica**, de propósito — não revela se a conta ou o e-mail existem), gera o link de
+  recuperação de verdade com `admin.generateLink({type:'recovery'})` pro e-mail **sintético** da conta
+  (só pra gerar o token; `generateLink` nunca manda e-mail sozinho) e **entrega esse link pro e-mail real**
+  via **Resend** (`RESEND_API_KEY`, secret da função — sem essa chave configurada, a função loga o erro
+  e ainda assim devolve a mensagem genérica, pra não travar nem vazar informação). Remetente de teste
+  `onboarding@resend.dev` (funciona sem domínio verificado, dá pra trocar depois).
+- O link do e-mail abre `reset.html` (página solteira na raiz do site, **fora** do `index.html`/`js/` —
+  não passa pelos scripts clássicos do jogo, só carrega `supabase-js` e chama `updateUser({password})`
+  depois que o SDK reconhece a sessão de recuperação pela URL). **Importante**: a URL de redirecionamento
+  (`SITE_URL` + `/reset.html`, por padrão `https://devthiago22-sys.github.io/Numius-Arena/reset.html`)
+  precisa estar na lista de Redirect URLs do projeto (painel do Supabase, Authentication → URL
+  Configuration) — isso não dá pra configurar por SQL/Edge Function, é um passo manual único.
+- Contas antigas (`authCoreLocal`, sem Supabase) **não têm recuperação** — não têm e-mail de verdade
+  nenhum; isso é limitação conhecida, documentada, não corrigida aqui.
+
 ## Convenções
 - Textos em português; manter emojis e `aria-label` nos botões.
 - Respeitar `prefers-reduced-motion` em animações novas.

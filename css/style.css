@@ -182,6 +182,8 @@ button .im{width:1.5em;height:1.5em}
 .tb:active{transform:translateY(4px);box-shadow:0 1px 0 #1b1446}
 .tb.alt{background:#ffe9b8}
 .tpanel{margin-top:12px}
+.linklike{background:transparent;border:0;box-shadow:none;text-decoration:underline;color:#4a3a8a;font:12px 'Trebuchet MS',sans-serif;padding:4px;cursor:pointer}
+.lgfpw{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:60;background:rgba(10,10,20,.72);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:8px 14px;font:11px 'Trebuchet MS',sans-serif;text-decoration:underline;cursor:pointer}
 @media(prefers-reduced-motion:reduce){.cl,.fl,.fl .im,.mas,.sun,.logo,.press,.title .stars i{animation:none}.press{opacity:1}}
 .land{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(#5db8ff,#b7e4ff 55%,#e8f7ff);--m1:#7aa6d9;--m2:#5a86bf;--h1:#5ec27a;--h2:#2f9a55}
 .land.s{background:linear-gradient(#3a2a78,#e0568a 55%,#ffb86b);--m1:#7a4a9a;--m2:#4f2f78;--h1:#4aa060;--h2:#1f6b3a}
