@@ -7,13 +7,39 @@ function pvpPres(patch){if(PV.room)PV.room.presence(patch).catch(()=>{})}
 const pvpCompact=()=>G.team.slice(0,6).map(m=>({i:m.i,l:m.l,v:STK.map(k=>m.iv[k]==null?15:m.iv[k]),e:STK.map(k=>m.ev[k]||0),mv:m.mv||0}));
 function pvpBuild(c){const m={i:c.i|0,l:Math.max(1,Math.min(100,c.l|0)),xp:0,iv:Object.fromEntries(STK.map((k,j)=>[k,Math.max(0,Math.min(31,c.v[j]==null?15:c.v[j]|0))])),ev:Object.fromEntries(STK.map((k,j)=>[k,Math.max(0,Math.min(252,(c.e&&c.e[j])|0))]))};m.mv=(Array.isArray(c.mv)&&c.mv.length>=1&&c.mv.length<=4&&c.mv.every(x=>Number.isInteger(x)&&x>=0&&x<MOVES.length))?c.mv.slice():initMoves(m.i,m.l);m.pp=m.mv.map(k=>MOVES[k].pp);calc(m);m.hp=m.max;return m}
 /* Sala peer-to-peer única, compartilhada pelo PvP (acima) e pela Troca de Numius (js/trade.js, prefixo xc
-   nos campos de presença). Quem chegar primeiro conecta; o outro reaproveita a mesma sala. */
+   nos campos de presença). Quem chegar primeiro conecta; o outro reaproveita a mesma sala.
+   `claude.use('room')` só existe dentro do preview do claude.ai (e só funciona se a Artifact declarar a
+   capability `room` — ver CLAUDE.md). Fora dali (o site de verdade, GitHub Pages), isso é sempre null —
+   então cai pra um canal de Presence do Supabase Realtime (`rtJoin`, abaixo), que funciona em qualquer
+   site e não precisa de login (é um canal público, serve pra convidado/conta local também). Os dois
+   caminhos preenchem o mesmo contrato (`PV.room.presence()`, `PV.ok`, `PV.peers` no formato
+   `{peer,presence,sameTab,kind}`), então o resto do jogo (pvpOnPeers, xcOnPeers, challenge/accept...)
+   não precisa saber qual dos dois está em uso. */
 async function ensureRoom(){
  if(!PV.init){PV.init=1;
   try{PV.room=(typeof claude!=='undefined'&&claude.use)?await claude.use('room'):null}catch(e){PV.room=null}
-  PV.ok=!!PV.room;
-  if(PV.room)PV.room.onPeers(ch=>{PV.peers=ch.peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers()},()=>{PV.ok=false;if(G.screen==='pvp'||G.screen==='trade')R()});
+  if(PV.room){
+   PV.ok=true;
+   PV.room.onPeers(ch=>{PV.peers=ch.peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers()},()=>{PV.ok=false;if(G.screen==='pvp'||G.screen==='trade')R()});
+  }else if(SB){await rtJoin()}else{PV.ok=false}
  }
+}
+function rtJoin(){
+ return new Promise(res=>{
+  try{
+   PV.rtKey=rb();PV.rtState={};
+   const ch=SB.channel('numius-room',{config:{presence:{key:PV.rtKey}}});
+   ch.on('presence',{event:'sync'},()=>{
+    const st=ch.presenceState(),peers=[];
+    for(const k in st){const es=st[k];if(es&&es.length)peers.push({peer:k,presence:es[es.length-1],sameTab:k===PV.rtKey,kind:'viewer'})}
+    PV.peers=peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers();
+   });
+   ch.subscribe(status=>{
+    if(status==='SUBSCRIBED'){PV.ok=true;PV.room={presence:patch=>{Object.assign(PV.rtState,patch);return ch.track(PV.rtState)}};ch.track(PV.rtState).catch(()=>{});res()}
+    else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){PV.ok=false;if(G.screen==='pvp'||G.screen==='trade')R();res()}
+   });
+  }catch(e){PV.ok=false;res()}
+ });
 }
 async function pvpOpen(){
  G.screen='pvp';R();

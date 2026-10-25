@@ -139,8 +139,27 @@ PvP em andamento, presença de sala) porque elas não são persistidas — nasce
 ## PvP (determinismo)
 O duelo é calculado nos dois aparelhos e precisa dar o **mesmo resultado**. Por isso `hit()` usa `RR()`
 (gerador com semente), nunca `Math.random()`. Qualquer função chamada por `pvpResolve` deve ser
-determinística e não pode depender do estado local de um só jogador. A sala usa `claude.use('room')`,
-que só existe dentro do claude.ai.
+determinística e não pode depender do estado local de um só jogador.
+
+### A sala (pareamento online de PvP e Troca de Numius)
+`ensureRoom()` (`js/pvp.js`) tenta dois caminhos, nessa ordem, e os dois preenchem o mesmo contrato
+(`PV.room.presence(patch)`, `PV.ok`, `PV.peers` no formato `{peer,presence,sameTab,kind}`) — o resto do
+jogo (`pvpOnPeers`, `xcOnPeers`, desafiar/aceitar...) não sabe qual dos dois está em uso:
+1. `claude.use('room')` — só existe dentro do **preview do claude.ai**, e só funciona se a Artifact tiver
+   declarado a capability `room` ao publicar (`capabilities:{room:{}}` na chamada do Artifact tool — ver
+   seção de pré-visualização mais abaixo; **ficou sem declarar por várias publicações até 2026-10-24**).
+2. Se isso não existir (fora do claude.ai — o site de verdade, GitHub Pages) **e** o Supabase estiver
+   disponível (`SB`), cai pra um **canal de Presence do Supabase Realtime** (`rtJoin()`, mesmo arquivo):
+   canal público (`SB.channel('numius-room',{config:{presence:{key}}})`, sem `private:true`) — funciona
+   com a chave `anon` normal, sem precisar de login nem de policy de RLS extra (canal público é assim por
+   design do Realtime), então serve tanto pra conta Supabase quanto pra convidado/conta local. A chave de
+   presença (`PV.rtKey`) é um id aleatório por aba (`rb()`, de `js/battle.js`), não a conta — então duas
+   abas da mesma conta aparecem como dois pares distintos, igual ao `sameTab` do `claude.use('room')`.
+3. Se nenhum dos dois der: `PV.ok=false`, a tela avisa que o online não está disponível (comportamento
+   de sempre, sem mudança).
+Isso resolve a antiga limitação ("PvP só funciona dentro do claude.ai"): agora também funciona no site
+publicado de verdade, onde vivem as contas Supabase — ou seja, **agora sim existe um caminho onde conta
+Supabase e PvP/Troca coexistem** (via Realtime), diferente do que valia antes dessa mudança.
 
 ## Back-end (Supabase)
 Projeto: **numius-arena** (region `sa-east-1`), org `devthiago22-sys's Org`, project ref
@@ -275,14 +294,12 @@ fora do claude.ai. Isso ficou sem declarar por várias publicações (só foi no
 2026-10-24, versão 45) — **ao publicar este artifact pela primeira vez numa sessão nova** (sem reaproveitar
 a mesma `url`), lembre de declarar de novo; reaproveitando a mesma `url` a declaração anterior persiste
 (só se perde se um publish mandar `capabilities:{}` por engano).
-**E mesmo com isso corrigido, conta Supabase e sala de PvP/Troca nunca coexistem**: Supabase só funciona
-fora do claude.ai (GitHub Pages, pela sandbox acima) e `claude.use('room')` só existe dentro do claude.ai
-— são ambientes mutuamente exclusivos por design da plataforma. Na prática hoje: PvP/Troca funcionam no
-preview do claude.ai só com conta convidada ou conta local antiga (não Supabase); e uma conta Supabase no
-GitHub Pages nunca tem PvP/Troca disponível. As Fases 3 e 4 (validação de PvP/Boss no servidor, atrás de
-`isSbId(ME)`) por isso nunca disparam de verdade hoje — ficam prontas pro dia em que o PvP ganhar outro
-transporte (ex.: canais do Supabase Realtime em vez da sala do claude.ai), mas é bom ter isso em mente
-antes de investir mais nessa linha (ex.: uma Fase 5 pra Troca de Numius teria o mesmo problema).
+**Atualização (mesmo dia, depois da versão 45)**: a limitação do parágrafo acima ("Supabase e sala de
+PvP/Troca nunca coexistem") foi resolvida — `ensureRoom()` (`js/pvp.js`) agora cai pra um canal de
+Presence do Supabase Realtime quando `claude.use('room')` não existe (fora do claude.ai). Ver a seção
+"A sala" em "## PvP (determinismo)", mais acima, pros detalhes. Isso significa que as Fases 3 e 4
+(validação de PvP/Boss no servidor) **agora sim podem disparar de verdade**, no GitHub Pages, com conta
+Supabase jogando PvP/Boss por ali.
 
 ## Convenções
 - Textos em português; manter emojis e `aria-label` nos botões.
