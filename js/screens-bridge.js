@@ -233,13 +233,48 @@ function mnToggle(){if(typeof document.getElementById!=='function')return;ifv(do
 function mnData(){const nb=G.badges.length,dx=(G.dex||[]).length;return{lv:Math.max(1,...G.team.map(m=>m.l)),isl:{vale:Math.min(100,(G.vbest||0)*10),cristal:Math.round((G.twBest||0)/30*100),canion:Math.min(100,Math.round((G.xcDone||0)/10*100)),porto:Math.min(100,Math.round(sfState().mo/MSDAY*100))},name:G.hero?String(G.hero.name):(ME||'Convidado'),coins:G.coins||0,guest:!ME,sub:ME?'conectado':'sem salvar',bl:['Pd','Ag','El','Pl','Ge','Vo','Ps','Fo'],bc:GY.map(g=>ARENA[g.ty][1]),be:GY.map((g,i)=>G.badges.includes(i)),bn:GY.map(g=>g.n),cnt:{gyms:nb+'/8',tac:'8',team:G.team.length+'/6',dex:dx+'/'+DEX.length,bag:''+(Object.keys(G.leg||{}).length+'/3'),missoes:''+msCount()}}}
 const NAV={gyms:()=>{G.screen='gyms';R()},tac:()=>{G.screen='tac';R()},team:()=>{G.screen='team';R()},dex:()=>{G.screen='dex';R()},pvp:()=>pvpOpen(),boss:()=>{G.screen='boss';G.bsfb=0;R()},bag:()=>{G.screen='bag';G.bgfb=0;R()},safari:()=>{G.screen='safari';G.sffb=0;R()},missoes:()=>{G.screen='missions';G.msfb=0;R()},train:()=>{G.screen='train';G.trfb=0;R()},tower:()=>{G.screen='tower';G.twfb=0;R()},trade:()=>xcOpen(),heal:()=>goHeal(),cfg:()=>openCfg(),exit:()=>quitGame()};
 if(typeof addEventListener==='function')addEventListener('message',e=>{const f=$('#mnf');if(!f||!f.contentWindow||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;if(d.k==='ready'){MN.ready=true;f.contentWindow.postMessage({numius:1,k:'data',d:mnData()},'*');mnToggle()}else if(d.k==='nav'&&NAV[d.to])NAV[d.to]()});
+/* Fluxo de autenticação (Fase 1 do backend, ver CLAUDE.md). Validação de formato é sempre local;
+   depois disso, se o cliente Supabase estiver disponível (SB, ver js/supabase.js), cadastro e login
+   passam a ser de verdade (auth.users do Supabase, nome de treinador resolvido pra e-mail pelas
+   funções username_available/email_for_username). Sem Supabase (offline, CDN bloqueada) — ou, no
+   login, se o nome de treinador não existir no Supabase — cai pro fluxo local antigo
+   (authCoreLocal, mon-users/PBKDF2), pra não quebrar contas de antes da Fase 1 nem o jogo offline. */
 async function authCore(up,id,pw,em,p2){
- id=String(id||'').trim().toLowerCase();em=String(em||'').trim();pw=String(pw||'');p2=String(p2||'');const u=U();let err='';
+ id=String(id||'').trim().toLowerCase();em=String(em||'').trim();pw=String(pw||'');p2=String(p2||'');let err='';
  if(!/^[a-z0-9_]{3,20}$/.test(id))err='O nome deve ter de 3 a 20 letras minúsculas, números ou _.';
  else if(up&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em))err='Digite um e-mail válido.';
  else if(up&&pw.length<6)err='A senha precisa ter pelo menos 6 caracteres.';
  else if(up&&pw!==p2)err='As senhas não coincidem.';
- else if(up&&u[id])err='Esse nome de treinador já está em uso.';
+ else if(!SB)return authCoreLocal(up,id,pw,em,p2);
+ else{
+  try{
+   if(up){
+    const{data:av,error:avErr}=await SB.rpc('username_available',{u:id});
+    if(avErr)err='Não foi possível verificar o nome. Tente novamente.';
+    else if(!av)err='Esse nome de treinador já está em uso.';
+    else{
+     const{data:su,error:suErr}=await SB.auth.signUp({email:em.toLowerCase(),password:pw,options:{data:{username:id}}});
+     if(suErr)err=/registered|existe/i.test(suErr.message||'')?'Esse e-mail já está cadastrado.':'Não foi possível criar a conta. Tente novamente.';
+     else if(su.session){const uid=su.user.id;ME=uid;try{localStorage.setItem('mon-session',uid)}catch(e){}cacheAcct(uid,em.toLowerCase(),id);enter();return ''}
+     else err='Conta criada! Veja seu e-mail pra confirmar antes de entrar.';
+    }
+   }else{
+    const{data:em2,error:eErr}=await SB.rpc('email_for_username',{u:id});
+    if(eErr||!em2)return authCoreLocal(up,id,pw,em,p2);
+    const{data:si,error:siErr}=await SB.auth.signInWithPassword({email:em2,password:pw});
+    if(siErr)err=/confirm/i.test(siErr.message||'')?'Confirme seu e-mail antes de entrar.':'Senha incorreta.';
+    else{const uid=si.user.id;ME=uid;try{localStorage.setItem('mon-session',uid)}catch(e){}cacheAcct(uid,em2,id);enter();return ''}
+   }
+  }catch(e){err='Não foi possível concluir. Tente novamente.'}
+ }
+ lgErr(err);return err;
+}
+/* Fluxo de antes da Fase 1 — conta só neste navegador (mon-users/PBKDF2 em js/state.js). Usado como
+   reserva quando o Supabase está indisponível, e no login quando o nome digitado não existe lá
+   (contas criadas antes da Fase 1). */
+async function authCoreLocal(up,id,pw,em,p2){
+ const u=U();let err='';
+ if(up&&u[id])err='Esse nome de treinador já está em uso.';
  else if(up&&Object.values(u).some(x=>x.email===em.toLowerCase()))err='Esse e-mail já está cadastrado.';
  else if(!up&&!u[id])err='Treinador não encontrado. Toque em CRIAR CONTA.';
  else{

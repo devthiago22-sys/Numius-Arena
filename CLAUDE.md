@@ -17,22 +17,23 @@ Carregados por `index.html` **nesta ordem**; não use `import/export`:
 3. `state.js`: `G` (estado), `save/load` (conta em `localStorage`), `calc`, `form`, `evo`, `mk`, `moves`.
 4. `battle.js`: `hit` (dano, emite eventos de animação com `evp`), habilidades passivas, IA (`eTurn`), `turn`, XP,
    aprendizado, `tac`, `vstart`, atributos (`calc`, `sx`).
-5. `auth.js`: `submitAuth`, `enter`, `guest`, `logout`.
-6. `arena-fx.js`: arena antiga em HTML (reserva), `sfx`.
-7. `audio.js`: música (WebAudio), ponte do Centro de Cura, volume.
-8. `pvp.js`: PvP em tempo real.
-9. `screens-core.js`: `dec`, `iw` (iframe pré-carregado), telas Starter e Hero.
-10. `pixel-scene.js`: cenário pixel art do menu antigo (reserva).
-11. `screens-bridge.js`: pontes com as telas em iframe (login, menu, equipe, ginásios, mostruário, PvP,
+5. `supabase.js`: cliente Supabase (`SB`, Fase 1 do backend) e `cacheAcct` — ver seção "Back-end" abaixo.
+6. `auth.js`: `submitAuth`, `enter`, `guest`, `logout`.
+7. `arena-fx.js`: arena antiga em HTML (reserva), `sfx`.
+8. `audio.js`: música (WebAudio), ponte do Centro de Cura, volume.
+9. `pvp.js`: PvP em tempo real.
+10. `screens-core.js`: `dec`, `iw` (iframe pré-carregado), telas Starter e Hero.
+11. `pixel-scene.js`: cenário pixel art do menu antigo (reserva).
+12. `screens-bridge.js`: pontes com as telas em iframe (login, menu, equipe, ginásios, mostruário, PvP,
     táticas, **arena de batalha** `btMount/btData/btSend`, **treinamento** `trMount/trData/trSend`,
-    **torre de gelo** `twMount/twData/twSend`) e `authCore`.
-12. `boss.js`: **Boss semanal** (raid): chefes `BOSSES`, simulação `bsNew/bsTurn`, recompensas, ovos, ponte `bsMount/bsData/bsSend`.
-13. `legend.js`: **lendários invocáveis** (`LEG`, `lgCast`, `lgEnd`, `tyOf`, barra `lgBarSync`, animação `lgFx`) e ponte da **Mochila** (`bgMount/bgData/bgSend`).
-14. `safari.js`: **Zona Safari** (sorteio `sfSpin`, cruzamento `sfBreed`, ponte `sfMount/sfData/sfSend`).
-15. `missions.js`: **Missões** (tabela `MIS`, `msAdd`, `msClaim`, ponte `msMount/msData/msSend`) e a Moeda Safari.
-16. `trade.js`: **Troca de Numius** online (sala peer-to-peer, `XC`, `xcOpen/xcOnPeers`, ponte `xcMount/xcData/xcSend`).
-17. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
-18. `main.js`: `boot()`.
+    **torre de gelo** `twMount/twData/twSend`) e `authCore`/`authCoreLocal`.
+13. `boss.js`: **Boss semanal** (raid): chefes `BOSSES`, simulação `bsNew/bsTurn`, recompensas, ovos, ponte `bsMount/bsData/bsSend`.
+14. `legend.js`: **lendários invocáveis** (`LEG`, `lgCast`, `lgEnd`, `tyOf`, barra `lgBarSync`, animação `lgFx`) e ponte da **Mochila** (`bgMount/bgData/bgSend`).
+15. `safari.js`: **Zona Safari** (sorteio `sfSpin`, cruzamento `sfBreed`, ponte `sfMount/sfData/sfSend`).
+16. `missions.js`: **Missões** (tabela `MIS`, `msAdd`, `msClaim`, ponte `msMount/msData/msSend`) e a Moeda Safari.
+17. `trade.js`: **Troca de Numius** online (sala peer-to-peer, `XC`, `xcOpen/xcOnPeers`, ponte `xcMount/xcData/xcSend`).
+18. `render.js`: `R()` (renderizador principal), personagem, configurações, cura, `pick`.
+19. `main.js`: `boot()`.
 
 Regras:
 - **Nunca reordene** os scripts nem chame, no nível superior de um arquivo, funções definidas em arquivos
@@ -142,21 +143,44 @@ determinística e não pode depender do estado local de um só jogador. A sala u
 que só existe dentro do claude.ai.
 
 ## Back-end (Supabase)
-Projeto criado: **numius-arena** (region `sa-east-1`), org `devthiago22-sys's Org`, project ref
-`nrkfxlmjztjtpgcrprsv`, URL `https://nrkfxlmjztjtpgcrprsv.supabase.co`. A chave publicável (`sb_publishable_...`,
-segura pra expor no front) ainda não foi colada em nenhum arquivo do jogo — isso é trabalho da Fase 1
-(criar a camada de API/cliente Supabase no front). **A chave `service_role` nunca deve ir pro front nem
-pro repositório** — só é usada do lado do servidor/Edge Functions.
-- Auth do Supabase (`auth.users`) vai substituir o par `mon-users`/PBKDF2 local (`js/state.js`) —
-  login/cadastro passam a ser chamadas de API em vez de só `localStorage`. Ainda não implementado.
-- Tabela `public.saves` já criada (migração `create_saves_table`), uma linha por jogador
-  (`user_id` referenciando `auth.users`), espelhando o schema documentado acima (seção "Schema do save")
-  quase campo a campo — `jsonb` pras estruturas aninhadas (`team`, `tac`, `hero`, etc.), `updated_at`
-  atualizado sozinho por trigger. RLS ligado: cada jogador só lê/escreve a própria linha (`auth.uid() =
-  user_id`), sem policy de `delete` por enquanto. Front ainda não lê/escreve nela — é trabalho da Fase 1/2.
-- Lógica determinística que já existe pra validar no servidor (via Edge Functions, que também rodam
-  JS/TS): `hit()`/`pvpResolve` (PvP), `bsTurn`/`bsRng` (Boss semanal), a resolução de troca em `trade.js`.
-  Nenhuma Edge Function criada ainda.
+Projeto: **numius-arena** (region `sa-east-1`), org `devthiago22-sys's Org`, project ref
+`nrkfxlmjztjtpgcrprsv`, URL `https://nrkfxlmjztjtpgcrprsv.supabase.co`. **A chave `service_role` nunca
+deve ir pro front nem pro repositório** — só é usada do lado do servidor/Edge Functions. A chave
+publicável (`sb_publishable_...`, segura pra expor) está em `js/supabase.js` (`SB_URL`/`SB_KEY`).
+
+**Fase 1 — autenticação (implementada)**: `js/supabase.js` cria o cliente `SB` (null se a CDN do
+SDK, carregada em `index.html`, não carregar — offline ou bloqueada). `authCore(up,id,pw,em,p2)`
+(`js/screens-bridge.js`, chamada tanto pela tela de login em iframe quanto por `submitAuth()` em
+`auth.js`, a versão de reserva em HTML) faz cadastro/login de verdade pelo Supabase Auth quando `SB`
+existe:
+- A Auth do Supabase é por **e-mail**, mas o jogo loga por **nome de treinador**. Duas funções no
+  banco resolvem isso: `username_available(u)` (checa se o nome já existe, cadastro) e
+  `email_for_username(u)` (acha o e-mail dono do nome, login) — ambas `security definer`, só leitura
+  mínima, únicas funções com `EXECUTE` liberado pra `anon`/`authenticated` de propósito.
+- Cadastro (`SB.auth.signUp`) manda o nome de treinador em `options.data.username`; a trigger
+  `on_auth_user_created` em `auth.users` cria a linha em `public.profiles` (`user_id`, `username`)
+  sozinha no banco (`handle_new_user`, sem `EXECUTE` público — só roda via trigger). Se a confirmação
+  de e-mail do projeto estiver ligada, `signUp` não devolve sessão na hora: a pessoa recebe o aviso
+  "confirme seu e-mail" e só consegue entrar depois de clicar no link.
+- Login sem Supabase, ou nome de treinador não encontrado lá (contas de antes da Fase 1): cai pra
+  `authCoreLocal` (a lógica antiga, local, intacta — `mon-users`/PBKDF2 em `js/state.js`). Isso
+  também é a reserva natural se o Supabase cair.
+- Depois de logar pelo Supabase, `ME` passa a ser o **uuid** da conta (não mais o nome de treinador),
+  e `cacheAcct()` (`js/supabase.js`) espelha isso num registro local em `mon-users` (sem hash de
+  senha, quem autentica é o Supabase) — assim `save()`/`load()`/`enter()` continuam funcionando sem
+  mudar nada. **O progresso de uma conta Supabase ainda só existe neste navegador** (a Fase 2 troca
+  isso por ler/escrever a tabela `saves` de verdade). `logout()` também chama `SB.auth.signOut()`.
+
+**Fase 2 — save sincronizado (ainda não implementada)**: tabela `public.saves` já criada (migração
+`create_saves_table`), uma linha por jogador (`user_id` referenciando `auth.users`), espelhando o
+schema documentado acima (seção "Schema do save") quase campo a campo — `jsonb` pras estruturas
+aninhadas (`team`, `tac`, `hero`, etc.), `updated_at` atualizado sozinho por trigger. RLS ligado: cada
+jogador só lê/escreve a própria linha (`auth.uid() = user_id`), sem policy de `delete` por enquanto.
+`save()`/`load()` ainda não leem/escrevem nela.
+
+**Fases seguintes**: lógica determinística que já existe pra validar no servidor (via Edge Functions,
+que também rodam JS/TS): `hit()`/`pvpResolve` (PvP), `bsTurn`/`bsRng` (Boss semanal), a resolução de
+troca em `trade.js`. Nenhuma Edge Function criada ainda.
 
 ## Pré-visualização no claude.ai
 Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 16 MB, reduza imagens
