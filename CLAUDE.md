@@ -212,9 +212,30 @@ lê/escreve a própria linha (`auth.uid() = user_id`), sem policy de `delete` po
   seção abaixo) — use o GitHub Pages, de preferência logando com a mesma conta em dois navegadores/
   aparelhos diferentes pra confirmar que o progresso realmente sincroniza.
 
-**Fases seguintes**: lógica determinística que já existe pra validar no servidor (via Edge Functions,
-que também rodam JS/TS): `hit()`/`pvpResolve` (PvP), `bsTurn`/`bsRng` (Boss semanal), a resolução de
-troca em `trade.js`. Nenhuma Edge Function criada ainda.
+**Fase 3 — validação de PvP no servidor (implementada, escopo deliberadamente limitado)**: Edge
+Function `pvp-report` (`supabase/functions/pvp-report/index.ts`), chamada por `pvpEnd()` (`js/pvp.js`)
+só pra conta Supabase (`SB&&isSbId(ME)`). **Não é um replay completo da batalha** — portar
+`hit()`/`pvpResolve`/`legend.js` pro Deno seria um trabalho grande e arriscado de manter sincronizado
+com o motor do jogo (toda mudança de balanceamento teria que ser replicada nos dois lados). Em vez
+disso, o cliente ainda decide quem venceu, mas o servidor:
+- confirma a identidade de quem chama pelo JWT (nunca confia num `user_id` vindo do corpo);
+- recusa um delta de LP fora do que a fórmula de `pvpEnd()` poderia produzir (vitória: 15 a 40; derrota:
+  −20 a −10 — os mesmos limites de `25+clamp(-10,15,...)` / `-(15+clamp(-5,5,...))` que já existem no
+  cliente);
+- recusa reportar o mesmo `bid` (id da partida) duas vezes, e limita a frequência de chamadas por conta
+  (mín. 5s entre reports) — contra o ataque trivial de dar LP infinito a si mesmo chamando repetido;
+- aplica o resultado de forma atômica (`public.pvp_apply_result`, `security definer`, só a
+  `service_role` executa — um único `UPDATE ... RETURNING`, sem race de ler-e-escrever) no `pv` (jsonb)
+  da linha de `public.saves`, com o LP sempre entre 0 e 3500;
+- grava cada report em `public.pvp_matches` (RLS: cada jogador só lê os próprios) pra auditoria futura.
+O cliente usa o LP que a função devolve (sobrescreve o calculado localmente); se a chamada falhar (sem
+rede, rate limit, etc.) o jogo já salvou o cálculo local antes de tentar — nunca trava a partida.
+Pra fechar essa lacuna de verdade (confirmar quem realmente venceu, não só limitar o estrago), o próximo
+passo seria portar o motor determinístico de verdade — avaliado e descartado por ora pelo custo/risco.
+
+**Fases seguintes**: o mesmo tipo de validação (limites + auditoria, sem replay completo) pode ser
+replicado pro Boss semanal (`bsTurn`/`bsRng`) e pra Troca de Numius (resolução em `trade.js`). Nenhuma
+Edge Function criada pra esses dois ainda.
 
 ## Pré-visualização no claude.ai
 Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 16 MB, reduza imagens

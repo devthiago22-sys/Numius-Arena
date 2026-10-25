@@ -74,5 +74,20 @@ function pvpResolve(B,actA,actB){
  B.foe=B.oq.find(m=>m.hp>0)||B.oq[0];
  RR=Math.random;
 }
-function pvpEnd(){{const B=G.battle;if(B&&B.pvp&&!B.scored&&(B.over==='win'||B.over==='lose')){B.scored=1;const q=pv0(),d=(B.olp|0)-q.lp,win=B.over==='win',old=q.lp;let dl=win?25+Math.max(-10,Math.min(15,Math.round(d/20))):-(15+Math.max(-5,Math.min(5,Math.round(-d/40))));q.lp=Math.max(0,Math.min(3500,q.lp+dl));dl=q.lp-old;if(win)q.w++;else q.l++;PV.msg=(win?'🏆 Vitória! ':'Derrota. ')+(dl>=0?'+':'')+dl+' LP';save()}}
+/* Fase 3 do backend (ver CLAUDE.md): numa conta Supabase, o resultado também é reportado pra Edge
+   Function `pvp-report`, que valida o delta de LP contra os mesmos limites da fórmula abaixo, limita a
+   frequência e grava auditoria em public.pvp_matches — e o LP que ela devolve (pv) é o que vale de
+   verdade (sobrescreve o calculado aqui). Numa conta local (sem Supabase) continua só local, como antes.
+   Falha de rede/servidor nunca trava o jogo: o cálculo local já fica salvo antes de tentar reportar. */
+function pvpEnd(){{const B=G.battle;if(B&&B.pvp&&!B.scored&&(B.over==='win'||B.over==='lose')){B.scored=1;const q=pv0(),d=(B.olp|0)-q.lp,win=B.over==='win',old=q.lp;let dl=win?25+Math.max(-10,Math.min(15,Math.round(d/20))):-(15+Math.max(-5,Math.min(5,Math.round(-d/40))));q.lp=Math.max(0,Math.min(3500,q.lp+dl));dl=q.lp-old;if(win)q.w++;else q.l++;PV.msg=(win?'🏆 Vitória! ':'Derrota. ')+(dl>=0?'+':'')+dl+' LP';save();
+  if(SB&&isSbId(ME))pvpReport(B.bid,win,B.turn||1,dl).catch(()=>{});
+ }}
  G.team=G.rt||G.team;G.rt=null;G.battle=null;G.screen='pvp';pvpAnnounce();R()}
+async function pvpReport(bid,won,turns,lpDelta){
+ try{
+  const{data:sess}=await SB.auth.getSession();const tok=sess&&sess.session&&sess.session.access_token;if(!tok)return;
+  const r=await fetch(SB_URL+'/functions/v1/pvp-report',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({bid,won,turns,lpDelta})});
+  const j=await r.json().catch(()=>null);
+  if(j&&j.ok&&j.pv&&typeof j.pv.lp==='number'){const q=pv0();q.lp=j.pv.lp;if(typeof j.pv.w==='number')q.w=j.pv.w;if(typeof j.pv.l==='number')q.l=j.pv.l;save();if(G.screen==='pvp')R()}
+ }catch(e){}
+}
