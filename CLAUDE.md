@@ -267,10 +267,25 @@ limites aproximados, dá pra garantir **exatamente** "no máximo 1 resgate por c
 O cliente usa o `fr`/`coins`/`eg` que a função devolve (sobrescreve o já creditado localmente); falha de
 rede não desfaz o crédito local, só deixa de sincronizar com a nuvem dessa vez.
 
-**Fases seguintes**: o mesmo tipo de validação pode ser replicado pra Troca de Numius (resolução em
-`trade.js`) — ali não tem relógio nem recompensa fixa pra se apoiar (depende do que os dois lados
-oferecem), então provavelmente precisa de outra abordagem (ex.: os dois lados assinarem/confirmarem a
-troca pro servidor, não só aplicarem local). Nenhuma Edge Function criada pra isso ainda.
+**Fase 5 — auditoria leve da Troca de Numius (implementada, escolhida deliberadamente mais fraca que
+PvP/Boss)**: Edge Function `trade-report` (`supabase/functions/trade-report/index.ts`), chamada por
+`xcOnPeers()` (`js/trade.js`), logo depois que a troca já foi aplicada local nos dois aparelhos (por
+acordo direto via Realtime, ver seção "A sala" mais acima). A troca é um acordo entre **duas contas
+diferentes**, sem relógio nem recompensa fixa pra se apoiar (depende do que cada lado oferece) — dar ao
+servidor autoridade de verdade sobre o resultado exigiria reescrever o fluxo pra os dois lados esperarem
+a aprovação dele antes de aplicar (um "escrow" de verdade), em vez do acordo P2P direto de hoje. Optou-se
+por **não** fazer isso agora (mudança bem maior, e troca com amigos já é baixo risco: precisa dos dois
+lados concordarem) — em vez disso, cada lado só **audita** depois do fato:
+- confirma a identidade de quem chama pelo JWT;
+- confere se o Numiu que essa conta diz ter **dado** (`gave`, no formato `xc1()`: espécie + os 6 IVs,
+  que não mudam com XP/nível — uma assinatura estável) realmente existia no save dela na **nuvem**
+  (não bloqueia a troca, só sinaliza: `verified:false` quer dizer que a troca não bate com o que a
+  nuvem tinha, sinal de cliente adulterado nessa conta);
+- grava tudo em `public.trade_log` (RLS: cada jogador só lê os próprios) — hoje é só rastro pra
+  investigar depois (ex.: um script futuro que lista `verified:false`), nada reage a isso automaticamente.
+Se um dia a troca precisar de garantia de verdade (o servidor decidindo, não só auditando), o caminho é
+reescrever pra um escrow: os dois lados mandam a oferta pro servidor com um `tradeId` em comum, e só
+quando as duas chegam e conferem é que ele aplica a troca nos dois `saves.team` de uma vez (atômico).
 
 ## Pré-visualização no claude.ai
 Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 16 MB, reduza imagens

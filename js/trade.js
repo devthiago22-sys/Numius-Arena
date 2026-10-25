@@ -56,9 +56,12 @@ function xcOnPeers(){
    XC.doneId=XC.id;
    const mine=G.xcSel,theirs=p.presence.xcOff;
    if(mine!=null&&G.team[mine]&&theirs&&S[theirs.i|0]){
-    const gave=S[G.team[mine].i].n,got=pvpBuild(theirs),rcv=S[got.i].n;
+    const gaveSnap=xc1(G.team[mine]),gave=S[G.team[mine].i].n,got=pvpBuild(theirs),rcv=S[got.i].n;
     G.team[mine]=got;G.xcDone=(G.xcDone||0)+1;save();
     PV.msg=`🔁 Troca concluída! Você deu ${gave} e recebeu ${rcv}.`;
+    /* Fase 5 do backend (ver CLAUDE.md): auditoria leve, numa conta Supabase — só registra e confere
+       se o Numiu dado realmente existia no save na nuvem; não bloqueia a troca (já aplicada acima). */
+    if(SB&&isSbId(ME))xcReport(XC.id,gaveSnap,theirs).catch(()=>{});
    }
    XC.st='idle';XC.with=null;XC.id=null;XC.ok=null;
    G.xcSel=G.team.length?Math.min(G.xcSel??0,G.team.length-1):null;
@@ -75,6 +78,12 @@ function xcOnPeers(){
  }
 }
 
+async function xcReport(tradeId,gave,got){
+ try{
+  const{data:sess}=await SB.auth.getSession();const tok=sess&&sess.session&&sess.session.access_token;if(!tok)return;
+  await fetch(SB_URL+'/functions/v1/trade-report',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({tradeId,gave,got})});
+ }catch(e){}
+}
 /* ---------- ponte com a tela ---------- */
 const XCS={n:'trade',ready:false,sent:false};
 function xcMount(){
