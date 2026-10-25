@@ -45,14 +45,20 @@ function bsMember(src,id,tr,me,ai){
  return{id,tr:tr.n,e:tr.e,me,ai,i:m.i,l:m.l,n:s.n,hp:m.max,max:m.max,a:m.a,sa:m.sa,d:m.d,sd:m.sd,sp:m.sp,t:s.t,t2:s.t2||null,ab:s.ab[1],
   mv:moves(m).slice(0,4).map(x=>({n:x.n,t:x.t,p:x.p,c:x.c==='e'?'e':'f',x:x.x||''})),alive:true,def:0,fz:0,vd:0,dm:0,lastDm:0}
 }
-function bsNew(bi,pick){
- msAdd('boss');
- const bd=BOSSES[bi],mine=G.team[pick]||G.team[0],L=mine.l;
- const BL=BSX.lv;
- const Z={s:(Date.now()^(bi*7919))>>>0,bi,n:0,ci:0,charging:false,over:null,mono:0};
+/* bsInit: monta Z.s/Z.b (chefe) sozinho — reaproveitado pelo solo (bsNew) e pelo raid com jogadores
+   (bsNewGroup, ver seção "Raid co-op" mais abaixo), que só diferem em como montam Z.p (o grupo). */
+function bsInit(bi,seed){
+ const bd=BOSSES[bi],BL=BSX.lv;
+ const Z={s:seed>>>0,bi,n:0,ci:0,charging:false,over:null,mono:0};
  const hp=Math.round(BSX.hp[0]+BSX.hp[1]*BL*BL/10);
  Z.b={n:bd.n,t:bd.t,t2:bd.t2,lv:BL,hp,max:hp,sh:0,ph:1,a:Math.floor(BSX.atk[0]*BL+BSX.atk[1]),d:Math.floor(BSX.def[0]*BL+BSX.def[1])};
  Z.b.sd=Z.b.d;
+ return Z;
+}
+function bsNew(bi,pick){
+ msAdd('boss');
+ const mine=G.team[pick]||G.team[0],L=mine.l;
+ const Z=bsInit(bi,Date.now()^(bi*7919));
  const hero=(G.hero&&G.hero.name)||'Você',al=BSALLY.slice().sort(()=>bsRng(Z)-.5).slice(0,4);
  const used=new Set([mine.i]),mk2=k=>{let f;for(let t=0;t<9;t++){f=BASE[Math.floor(bsRng(Z)*BASE.length)];if(!used.has(form(f,L))||t>5)break}const u=mk(f,Math.max(5,L+Math.floor(bsRng(Z)*5)-2));used.add(u.i);return u};
  Z.p=[bsMember(mine,'p2',{n:hero,e:'⭐'},true,false),...al.map((a,k)=>bsMember(mk2(k),'p'+(k<2?k:k+1),a,false,true))].sort((a,b)=>a.id<b.id?-1:1);
@@ -94,9 +100,13 @@ function bsTurn(Z,pa){
  const ev=[],B=Z.b,bd=BOSSES[Z.bi],alive=()=>Z.p.filter(m=>m.alive);
  Z.n++;ev.push({t:'turn',n:Z.n});
  const order=alive().sort((a,b)=>b.sp-a.sp),acts=[];
+ /* pa aceita dois formatos: uma ação única {k,i} (solo, pro único membro humano, m.me) ou um mapa
+    {id:ação} com uma ação por membro humano (raid co-op, ver "Raid co-op" mais abaixo) — m.ai continua
+    sendo o que distingue humano de bot (antes a checagem era m.me, que só existe num dos humanos). */
+ const singleAct=pa&&(pa.k==='mv'||pa.k==='def');
  order.forEach(m=>{
   if(m.fz>0){m.fz=0;ev.push({t:'fz',who:m.id});acts.push({m,k:'skip'});return}
-  const a=m.me?(pa||{k:'def'}):bsPick(Z,m);
+  const a=m.ai?bsPick(Z,m):((singleAct?(m.me?pa:null):(pa&&pa[m.id]))||{k:'def'});
   if(a.k==='def'){m.def=1;ev.push({t:'def',who:m.id});acts.push({m,k:'def'})}else acts.push({m,k:'mv',x:m.mv[a.i]||m.mv[0],i:a.i|0});
  });
  const atk=acts.filter(a=>a.k==='mv'),n=atk.length,mul=1+BSX.sync*Math.max(0,n-1);
@@ -180,6 +190,199 @@ function bsHatch(){
  return{i:m.i,n:S[m.i].n,l:m.l,rar:e.k,col:e.c,t:S[m.i].t,t2:S[m.i].t2||null};
 }
 
+/* ---------- Raid co-op (Boss com outros jogadores, não só bots) ----------
+   Reaproveita a MESMA sala de presença do PvP/Troca (ensureRoom() em js/pvp.js, prefixo `bg` nos campos
+   de presença). Modelo: quem cria o grupo é o ANFITRIÃO — ele é a autoridade: roda a simulação de
+   verdade (bsTurn/bsNewGroup) e manda o resultado de cada turno pros outros pela própria presença
+   (brLive). Os convidados nunca simulam: só mandam a própria jogada (brTurn/brAct) e espelham o que o
+   anfitrião manda. Cada jogador real resgata a própria recompensa na própria conta — a Fase 4
+   (boss-claim) não muda nada, roda igual em cada cliente (bsFinish/bossReport usam ME/SB locais).
+   Limitação conhecida (documentada, não escondida): sem troca de anfitrião — se ELE cair no meio do
+   raid, os outros perdem a tentativa (sem recompensa), igual a sair manualmente. Se um CONVIDADO cair,
+   o anfitrião preenche a jogada dele com "Proteger" depois de ~22s sem resposta e o raid continua.
+   Pareamento: pool público (mesma sala, sem código) + sala de amigos opcional (mesmo truque do XC.rm
+   da Troca de Numius, campo de presença `brRm`). Vagas sem jogador real são preenchidas com aliados IA,
+   igual ao raid solo (até 4 convidados + o anfitrião = grupo de 5). */
+const BR={mode:'solo',host:false,hostId:null,rm:null,pick:0,Z:null,idByPeer:null,view:null,turnN:0,myAct:null,waitSince:0,wtid:null,gone:0,lastSnap:null};
+let BRMSG='';
+const brHeroNm=()=>String((G.hero&&G.hero.name)||'Treinador').slice(0,14);
+const brPickSnap=()=>{const m=G.team[BR.pick]||G.team[0];return m?{i:m.i,l:m.l,v:STK.map(k=>m.iv[k]==null?15:m.iv[k]),e:STK.map(k=>m.ev[k]||0),mv:m.mv||0}:null};
+function brPres(p){pvpPres(p)}
+function brOthersOpen(){return PV.peers.filter(p=>!p.sameTab&&p.kind==='viewer'&&p.presence&&p.presence.bg===1&&p.presence.brSt==='open'&&(p.presence.brRm||null)===(BR.rm||null))}
+function brMembersOf(hostPeer){return PV.peers.filter(p=>!p.sameTab&&p.presence&&p.presence.bg===1&&p.presence.brWith===hostPeer)}
+function brClearRaid(){BR.Z=null;BR.view=null;BR.idByPeer=null;BR.turnN=0;BR.myAct=null;BR.waitSince=0;BR.lastSnap=null;clearTimeout(BR.wtid);BR.wtid=null}
+async function brEnter(){
+ BR.mode='lobby';BR.host=false;BR.hostId=null;brClearRaid();
+ await ensureRoom();
+ brPres({bg:1,brSt:null,brRm:BR.rm||null,brNm:brHeroNm(),brWith:null,brPick:brPickSnap(),brTurn:null,brAct:null,brStart:null,brLive:null});
+ bsSend();
+}
+function brExit(){
+ BR.mode='solo';BR.host=false;BR.hostId=null;brClearRaid();
+ brPres({bg:null,brSt:null,brRm:null,brNm:null,brWith:null,brPick:null,brTurn:null,brAct:null,brStart:null,brLive:null});
+}
+async function brCreate(){
+ await ensureRoom();if(!PV.ok)return;
+ BR.host=true;BR.hostId=null;BR.mode='lobby';
+ brPres({bg:1,brSt:'open',brRm:BR.rm||null,brNm:brHeroNm(),brWith:null,brPick:brPickSnap()});
+ bsSend();
+}
+async function brJoin(hostPeer){
+ await ensureRoom();if(!PV.ok||!hostPeer)return;
+ BR.host=false;BR.hostId=hostPeer;BR.mode='lobby';BR.gone=0;
+ brPres({bg:1,brSt:null,brWith:hostPeer,brNm:brHeroNm(),brPick:brPickSnap()});
+ bsSend();
+}
+function brLeave(){
+ BR.host=false;BR.hostId=null;BR.mode='lobby';BR.gone=0;brClearRaid();
+ brPres({brSt:null,brWith:null,brStart:null,brLive:null,brTurn:null,brAct:null});
+ bsSend();
+}
+function brRoom(op,code){
+ if(!PV.ok)return;
+ if(BR.host||BR.hostId)brLeave();
+ if(op==='create'){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=n=>Array.from({length:n},()=>A[Math.floor(Math.random()*A.length)]).join('');BR.rm=r(4)+'-'+r(4)}
+ else if(op==='join'){const c=String(code||'').trim().toUpperCase();if(!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(c)){BRMSG='Código inválido. Use o formato XXXX-XXXX.';bsSend();return}BR.rm=c}
+ else if(op==='leave')BR.rm=null;
+ brPres({brRm:BR.rm||null});bsSend();
+}
+/* bsNewGroup: igual em espírito ao bsNew solo, mas monta Z.p a partir de até 5 humanos reais (anfitrião
+   + convidados) em vez de só 1 — o resto do grupo de 5 continua preenchido com aliados IA (mesma lógica
+   mk2 do bsNew). human: [{peer,nm,pick}], pick no formato compacto de xc1()/pvpBuild (espécie+IVs+EVs). */
+function bsNewGroup(bi,human){
+ if(!human||!human.length)return null;
+ const built=human.slice(0,5).map(h=>({...h,mon:pvpBuild(h.pick)}));
+ const L=Math.max(...built.map(h=>h.mon.l),1);
+ const Z=bsInit(bi,(Date.now()^(bi*7919)^0x9e3779b9)>>>0);
+ const slots=['p0','p1','p2','p3','p4'],used=new Set();
+ const hp=built.map((h,k)=>{used.add(h.mon.i);return bsMember(h.mon,slots[k],{n:h.nm,e:'⭐'},k===0,false)});
+ const need=5-hp.length,al=BSALLY.slice().sort(()=>bsRng(Z)-.5).slice(0,need);
+ const mk2=()=>{let f;for(let t=0;t<9;t++){f=BASE[Math.floor(bsRng(Z)*BASE.length)];if(!used.has(form(f,L))||t>5)break}const u=mk(f,Math.max(5,L+Math.floor(bsRng(Z)*5)-2));used.add(u.i);return u};
+ const ai=al.map((a,k)=>bsMember(mk2(),slots[hp.length+k],a,false,true));
+ Z.p=[...hp,...ai].sort((a,b)=>a.id<b.id?-1:1);
+ Z.idByPeer={};built.forEach((h,k)=>{Z.idByPeer[h.peer]=slots[k]});
+ Z.me=Z.p.find(m=>m.id===slots[0]);Z.log=[];
+ return Z;
+}
+function brStartPayload(Z){
+ const bd=BOSSES[Z.bi],uidById={};for(const peer in Z.idByPeer)uidById[Z.idByPeer[peer]]=peer;
+ return{bi:Z.bi,boss:{...Z.b,id:bd.id},
+  party:Z.p.map(m=>({id:m.id,uid:uidById[m.id]||null,tr:m.tr,e:m.e,ai:m.ai,i:m.i,fam:S[m.i].fam,l:m.l,n:m.n,hp:m.hp,max:m.max,t:m.t,t2:m.t2,
+   mv:m.mv.map(x=>({n:x.n,t:x.t,p:x.p,c:x.c,M:bsEffB(x.t,Z.b)}))})),
+  warn:bsWarn(Z)};
+}
+async function brStartRaid(){
+ if(!BR.host)return;
+ const mems=brMembersOf(myPeer()).filter(p=>p.presence.brPick).slice(0,4);
+ const human=[{peer:myPeer(),nm:brHeroNm(),pick:brPickSnap()},...mems.map(p=>({peer:p.peer,nm:String(p.presence.brNm||'Treinador').slice(0,14),pick:p.presence.brPick}))];
+ const Z=bsNewGroup(bsNow().i,human);
+ if(!Z)return;
+ msAdd('boss');
+ brClearRaid();BR.Z=Z;BR.idByPeer=Z.idByPeer;BR.mode='raid';
+ brPres({brSt:'raid',brStart:brStartPayload(Z),brLive:null,brTurn:null,brAct:null});
+ bsPost(bsStartMsg(Z));
+}
+function brJoinStart(sp){
+ if(BR.mode==='raid')return;
+ msAdd('boss');
+ BR.mode='raid';brClearRaid();
+ BR.idByPeer={};sp.party.forEach(p=>{if(p.uid)BR.idByPeer[p.uid]=p.id});
+ const myId=BR.idByPeer[myPeer()];
+ BR.view={bi:sp.bi,n:0,me:{dm:0},over:null};
+ const party=sp.party.map(p=>({...p,me:p.id===myId}));
+ bsPost({k:'bsstart',boss:sp.boss,party,warn:sp.warn});
+}
+function brSubmitAction(a){brPres({brTurn:(BR.turnN||0)+1,brAct:a})}
+function brTryResolve(){
+ if(!BR.host||!BR.Z||BR.Z.over||!BR.myAct)return;
+ const Z=BR.Z,expect=BR.turnN+1,hostId=BR.idByPeer[myPeer()];
+ const acts={};acts[hostId]=BR.myAct;
+ let missing=false;
+ for(const peer in BR.idByPeer){
+  if(peer===myPeer())continue;
+  const id=BR.idByPeer[peer],p=peerOf(peer);
+  if(p&&p.presence.brTurn===expect)acts[id]=p.presence.brAct||{k:'def'};else missing=true;
+ }
+ if(missing){
+  if(!BR.waitSince)BR.waitSince=Date.now();
+  if(Date.now()-BR.waitSince<22000){if(!BR.wtid)BR.wtid=setTimeout(()=>{BR.wtid=null;brTryResolve()},1500);return}
+  for(const id of Object.values(BR.idByPeer))if(!acts[id])acts[id]={k:'def'};
+ }
+ BR.waitSince=0;clearTimeout(BR.wtid);BR.wtid=null;
+ const r=bsTurn(Z,acts);BR.myAct=null;BR.turnN=r.turn;BR.lastSnap=r.snap;
+ const dmByMember={};Z.p.forEach(m=>{if(!m.ai)dmByMember[m.id]=m.dm});
+ let rw=null;if(r.over)rw=bsFinish(Z,r.over==='win');
+ bsPost({k:'bsturn',evs:r.evs,snap:r.snap,over:r.over,warn:r.warn,turn:r.turn,reward:rw,score:Z.me.dm,best:bsd().best,coins:G.coins||0,frag:G.frag,eggs:G.eggs||0});
+ brPres({brLive:{turn:r.turn,evs:r.evs,snap:r.snap,warn:r.warn,over:r.over,dmByMember},brTurn:null,brAct:null});
+ if(r.over){BR.mode='lobby';brPres({brSt:null,brStart:null});setTimeout(bsSend,50)}
+}
+function brApplyLive(live){
+ if(!live||!BR.view||live.turn!==BR.turnN+1)return;
+ BR.turnN=live.turn;BR.lastSnap=live.snap;
+ const myId=BR.idByPeer&&BR.idByPeer[myPeer()];
+ if(myId&&live.dmByMember&&live.dmByMember[myId]!=null)BR.view.me.dm=live.dmByMember[myId];
+ BR.view.n=live.turn;
+ let rw=null;
+ if(live.over){BR.view.over=live.over;rw=bsFinish(BR.view,live.over==='win')}
+ bsPost({k:'bsturn',evs:live.evs,snap:live.snap,over:live.over,warn:live.warn,turn:live.turn,reward:rw,score:BR.view.me.dm,best:bsd().best,coins:G.coins||0,frag:G.frag,eggs:G.eggs||0});
+ if(live.over){BR.mode='lobby';setTimeout(bsSend,50)}
+}
+function brOnPeers(){
+ if(G.screen!=='boss'||BR.mode==='solo')return;
+ if(BR.mode==='lobby'){
+  if(BR.host){bsSend();return}
+  if(BR.hostId){
+   const h=peerOf(BR.hostId);
+   if(!h||h.presence.bg!==1){
+    if(!BR.gone){BR.gone=Date.now();setTimeout(brOnPeers,8500)}
+    else if(Date.now()-BR.gone>8000){BR.gone=0;BRMSG='O anfitrião saiu do grupo.';brLeave()}
+    return;
+   }
+   BR.gone=0;
+   if(h.presence.brSt==='raid'&&h.presence.brStart)brJoinStart(h.presence.brStart);else bsSend();
+   return;
+  }
+  bsSend();return;
+ }
+ if(BR.mode==='raid'){
+  if(BR.host){brTryResolve();return}
+  const h=peerOf(BR.hostId);
+  if(!h||h.presence.bg!==1){
+   if(!BR.gone){BR.gone=Date.now();setTimeout(brOnPeers,8500)}
+   else if(Date.now()-BR.gone>8000){
+    BR.gone=0;
+    if(BR.view&&!BR.view.over){BR.view.over='left';bsFinish(BR.view,false)}
+    const snap=BR.lastSnap,score=(BR.view&&BR.view.me.dm)||0,turn=BR.turnN||0;
+    BR.mode='lobby';brLeave();
+    bsPost({k:'bsturn',evs:[],snap,over:'lose',warn:null,turn,reward:null,score,best:bsd().best,coins:G.coins||0,frag:G.frag,eggs:G.eggs||0});
+   }
+   return;
+  }
+  BR.gone=0;
+  if(h.presence.brLive)brApplyLive(h.presence.brLive);
+ }
+}
+function brData(){
+ const msg=BRMSG;BRMSG='';
+ if(BR.mode==='lobby'){
+  if(BR.host){
+   const mems=brMembersOf(myPeer());
+   return{mode:'lobby',host:true,rm:BR.rm||null,msg,
+    members:[{nm:brHeroNm(),you:true,ready:true},...mems.map(p=>({nm:esc(String(p.presence.brNm||'Treinador').slice(0,14)),you:false,ready:!!p.presence.brPick}))]};
+  }
+  if(BR.hostId){
+   const h=peerOf(BR.hostId),mems=h?brMembersOf(BR.hostId):[],hostNm=h?esc(String(h.presence.brNm||'Treinador').slice(0,14)):'...';
+   return{mode:'lobby',host:false,joined:true,rm:BR.rm||null,hostNm,msg,
+    members:[{nm:hostNm,you:false,ready:true},{nm:brHeroNm(),you:true,ready:true},...mems.filter(p=>p.peer!==myPeer()).map(p=>({nm:esc(String(p.presence.brNm||'Treinador').slice(0,14)),you:false,ready:!!p.presence.brPick}))]};
+  }
+  return{mode:'lobby',host:false,joined:false,rm:BR.rm||null,online:PV.peers.filter(p=>!p.sameTab).length,msg,
+   lobbies:brOthersOpen().map(p=>({host:p.peer,nm:esc(String(p.presence.brNm||'Treinador').slice(0,14)),n:1+brMembersOf(p.peer).length}))};
+ }
+ if(BR.mode==='raid')return{mode:'raid',msg};
+ return{mode:'solo',msg};
+}
+function bsPost(o){const f=document.getElementById('bsf');if(BSS.ready&&f&&f.contentWindow)f.contentWindow.postMessage(Object.assign({numius:1},o),'*')}
+
 /* ---------- ponte com a tela ---------- */
 function bsMount(){
  if(typeof document.createElement!=='function')return;
@@ -197,7 +400,7 @@ function bsData(){
   rew:BSR,top:BSTOP,egg:Object.values(EGG).map(e=>({k:e.k,w:e.w,c:e.c})),
   team:G.team.map((m,k)=>({k,i:m.i,fam:S[m.i].fam,n:S[m.i].n,l:m.l,t:S[m.i].t,t2:S[m.i].t2||null,mv:moves(m).slice(0,4).map(x=>x.n)})),
   hero:(G.hero&&G.hero.name)||ME||'Você',rank:{world:BSRANK.world,list:BSRANK.top()},
-  imgs:BSS.sent?null:(BSS.sent=1,btImgs()),teamFull:G.team.length>=6}
+  imgs:BSS.sent?null:(BSS.sent=1,btImgs()),teamFull:G.team.length>=6,grp:brData()}
 }
 function bsSend(){const f=document.getElementById('bsf');if(BSS.ready&&f&&f.contentWindow)f.contentWindow.postMessage(bsData(),'*')}
 function bsToggle(){if(typeof document.getElementById!=='function')return;const f=document.getElementById('bsf');if(f)f.style.display=(G.screen==='boss'&&!G.bsfb)?'block':'none'}
@@ -211,10 +414,29 @@ if(typeof addEventListener==='function')addEventListener('message',e=>{const f=d
  const post=o=>f.contentWindow.postMessage(Object.assign({numius:1},o),'*');
  if(d.k==='ready'){BSS.ready=true;bsSend()}
  else if(G.screen!=='boss')return;
- else if(d.k==='nav'&&d.to==='map'){BSS.Z=null;G.screen='map';R()}
- else if(d.k==='leave'){const Z=BSS.Z;if(Z&&!Z.over){Z.over='left';bsFinish(Z,false)}BSS.Z=null;setTimeout(bsSend,50)}
+ else if(d.k==='nav'&&d.to==='map'){BSS.Z=null;if(BR.mode!=='solo')brExit();G.screen='map';R()}
+ else if(d.k==='leave'){
+  if(BR.mode==='raid'){
+   const z=BR.host?BR.Z:BR.view;if(z&&!z.over){z.over='left';bsFinish(z,false)}
+   BR.mode='lobby';brLeave();
+  }else{const Z=BSS.Z;if(Z&&!Z.over){Z.over='left';bsFinish(Z,false)}BSS.Z=null}
+  setTimeout(bsSend,50);
+ }
  else if(d.k==='start'){const nw=bsNow();BSS.Z=bsNew(nw.i,d.pick|0);post(bsStartMsg(BSS.Z))}
- else if(d.k==='turn'){const Z=BSS.Z;if(!Z)return;const r=bsTurn(Z,d.a);let rw=null;if(r.over)rw=bsFinish(Z,r.over==='win');
+ else if(d.k==='turn'){
+  if(BR.mode==='raid'){
+   if(BR.host){BR.myAct=d.a;brTryResolve()}else brSubmitAction(d.a);
+   return;
+  }
+  const Z=BSS.Z;if(!Z)return;const r=bsTurn(Z,d.a);let rw=null;if(r.over)rw=bsFinish(Z,r.over==='win');
   post({k:'bsturn',evs:r.evs,snap:r.snap,over:r.over,warn:r.warn,turn:r.turn,reward:rw,score:Z.me.dm,best:bsd().best,coins:G.coins||0,frag:G.frag,eggs:G.eggs||0});if(r.over)setTimeout(bsSend,50)}
  else if(d.k==='hatch'){const r=bsHatch();post({k:'bshatch',...r,eggs:G.eggs||0,imgs:r.i!=null?btImgs():null});setTimeout(bsSend,50)}
+ /* ---- raid co-op (ver seção acima) ---- */
+ else if(d.k==='gmode'){if(d.v==='solo'){if(BR.mode!=='solo')brExit()}else if(BR.mode==='solo')brEnter()}
+ else if(d.k==='gpick'){BR.pick=d.i|0;if(BR.mode!=='solo')brPres({brPick:brPickSnap()})}
+ else if(d.k==='gcreate'){brCreate()}
+ else if(d.k==='gjoin'){brJoin(d.host)}
+ else if(d.k==='gleave'){brLeave()}
+ else if(d.k==='groom'){brRoom(d.op,d.code)}
+ else if(d.k==='gstart'){brStartRaid()}
 });

@@ -20,7 +20,7 @@ async function ensureRoom(){
   try{PV.room=(typeof claude!=='undefined'&&claude.use)?await claude.use('room'):null}catch(e){PV.room=null}
   if(PV.room){
    PV.ok=true;
-   PV.room.onPeers(ch=>{PV.peers=ch.peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers()},()=>{PV.ok=false;if(G.screen==='pvp'||G.screen==='trade')R()});
+   PV.room.onPeers(ch=>{PV.peers=ch.peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers();if(typeof brOnPeers==='function')brOnPeers()},()=>{PV.ok=false;if(G.screen==='pvp'||G.screen==='trade')R()});
   }else if(SB){await rtJoin()}else{PV.ok=false}
  }
 }
@@ -32,7 +32,7 @@ function rtJoin(){
    ch.on('presence',{event:'sync'},()=>{
     const st=ch.presenceState(),peers=[];
     for(const k in st){const es=st[k];if(es&&es.length)peers.push({peer:k,presence:es[es.length-1],sameTab:k===PV.rtKey,kind:'viewer'})}
-    PV.peers=peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers();
+    PV.peers=peers;pvpOnPeers();if(typeof xcOnPeers==='function')xcOnPeers();if(typeof brOnPeers==='function')brOnPeers();
    });
    ch.subscribe(status=>{
     if(status==='SUBSCRIBED'){PV.ok=true;PV.room={presence:patch=>{Object.assign(PV.rtState,patch);return ch.track(PV.rtState)}};ch.track(PV.rtState).catch(()=>{});res()}

@@ -34,6 +34,18 @@ const ok = (cond, msg) => { console.log((cond ? '  OK   ' : '  FALHOU ') + msg);
   console.log('Boss semanal');
   ok(await page.evaluate(() => BSS.ready), 'tela do boss carregou');
   ok(await page.evaluate(() => { G.team = [mk(2, 46), mk(5, 45), mk(8, 44)]; const Z = bsNew(0, 0); let g = 0; while (!Z.over && g++ < 60) bsTurn(Z, bsPick(Z, Z.me)); return !!Z.over && Z.n > 3; }), 'simulação do raid termina');
+  ok(await page.evaluate(() => {
+    const human = [
+      { peer: 'h1', nm: 'Anfitrião', pick: { i: 2, l: 46, v: [20, 20, 20, 20, 20, 20], e: [0, 0, 0, 0, 0, 0], mv: 0 } },
+      { peer: 'h2', nm: 'Convidado', pick: { i: 5, l: 45, v: [20, 20, 20, 20, 20, 20], e: [0, 0, 0, 0, 0, 0], mv: 0 } }
+    ];
+    const Z = bsNewGroup(0, human);
+    if (!Z || Z.p.length !== 5 || Z.p.filter(m => !m.ai).length !== 2) return false;
+    const humans = Z.p.filter(m => !m.ai);
+    let g = 0;
+    while (!Z.over && g++ < 60) { const acts = {}; humans.forEach(m => { acts[m.id] = { k: 'mv', i: 0 }; }); bsTurn(Z, acts); }
+    return !!Z.over && Z.n > 3 && Z.p.filter(m => !m.ai).every(m => m.dm > 0);
+  }), 'raid em grupo: 2 jogadores reais + bots até o chefe cair (ou perder)');
   ok(await page.evaluate(() => { G.eggs = 1; G.team = [mk(0, 5)]; const r = bsHatch(); return r.i != null && G.team.length === 2 && G.eggs === 0; }), 'ovo choca e entra na equipe');
 
   console.log('Centro de cura');

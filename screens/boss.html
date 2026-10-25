@@ -209,6 +209,7 @@ button:disabled{cursor:default;opacity:.45}
 'use strict';
 const $=s=>document.querySelector(s),post=o=>{try{parent.postMessage(Object.assign({numius:1},o),'*')}catch(e){}};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc2=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const TC={Fogo:'#ff7a3d',Água:'#38bdf8',Planta:'#4ade80',Elétrico:'#facc15',Pedra:'#c9a66b',Gelo:'#7dd3fc',Psíquico:'#e879f9',Voador:'#93c5fd',Dragão:'#818cf8',Normal:'#d1d5db',Luz:'#fde68a',Trevas:'#b07cff',Cósmico:'#7aa2ff'};
 const TE={Fogo:'🔥',Água:'💧',Planta:'🍃',Elétrico:'⚡',Pedra:'🪨',Gelo:'❄️',Psíquico:'🔮',Voador:'🪶',Dragão:'🐉',Normal:'◎',Luz:'✨',Trevas:'🌑',Cósmico:'🌌'};
 const BIMG={aurelion:'assets/screens/boss-aurelion.webp',nyxar:'assets/screens/boss-nyxar.webp',chronos:'assets/screens/boss-chronos.webp'};
@@ -477,17 +478,39 @@ function setBg(k){kind=k;ps=Array.from({length:RM?0:k==='nyxar'?140:46},()=>spaw
 function chips(){return `<span class="chip">🪙 ${D.coins}</span><span class="chip"><i class="frag" style="--fc:${bd().col}"></i> ${D.frag[bd().id]||0}</span><span class="chip">🥚 ${D.eggs}</span>`}
 function renderLobby(){
  if(!D)return;const b=bd();theme(b);setBg(b.id);mode==='lobby'&&($('#lobby').classList.remove('hidden'));
- const lv=45;
+ const lv=45,grp=D.grp||{mode:'solo'},others=(grp.mode==='lobby'&&grp.members)?grp.members.filter(m=>!m.you).map(m=>m.nm):null;
  const slots=[0,1,2,3,4].map(k=>{if(k===2){const m=D.team[pick]||D.team[0];return `<div class="slot me"><span class="px" style="font-size:8px;color:var(--bc2)">VOCÊ</span><canvas data-lv="${img('f'+m.i)}" data-rig="${famOf(m)}" data-pad=".12,.12,.22,.08" role="img" aria-label="${m.n}"></canvas><b>${m.n}</b><span>Nv ${m.l}</span></div>`}
-  const a=['🧑‍🎤','🧙‍♀️','🧑‍🚀','🥷'][k>2?k-1:k];return `<div class="slot"><span class="em">${a}</span><b>Aliado IA</b><span>treinador</span></div>`}).join('');
+  const slotIdx=k>2?k-1:k,a=['🧑‍🎤','🧙‍♀️','🧑‍🚀','🥷'][slotIdx],nm=others&&others[slotIdx];
+  return `<div class="slot"><span class="em">${nm?'🧑':a}</span><b>${nm||'Aliado IA'}</b><span>treinador</span></div>`}).join('');
  const picks=D.team.map((m,k)=>`<button class="pk ${k===pick?'on':''}" data-pk="${k}"><img src="${img('f'+m.i)}" alt=""><span>${m.n} <small>Nv ${m.l}</small></span></button>`).join('');
  const mvs=Object.values(b.mv).map(m=>`<span style="color:${TC[m.t]}">${TE[m.t]} ${m.n}</span>`).join(' · ');
  let body='';
- if(tab==='raid')body=`
-  <div class="sec">SEU GRUPO · 5 TREINADORES</div><div class="party">${slots}</div>
+ if(tab==='raid'){
+  const toggle=`<div class="sec">MODO</div><div class="party" style="grid-template-columns:1fr 1fr">
+   <button class="btn ${grp.mode==='solo'?'go':''}" id="gm-solo" type="button">👤 SOZINHO</button>
+   <button class="btn ${grp.mode!=='solo'?'go':''}" id="gm-grp" type="button">👥 COM JOGADORES</button></div>`;
+  let groupUI='';
+  if(grp.mode==='lobby'){
+   const msg=grp.msg?`<div class="card" style="border-color:#f59e0b">${esc2(grp.msg)}</div>`:'';
+   if(grp.host||grp.joined){
+    const rows=(grp.members||[]).map(m=>`<div class="lr ${m.you?'me':''}">${m.ready?'🟢':'⚪'}<b>${m.nm}${m.you?' (você)':''}</b></div>`).join('');
+    groupUI=`${msg}<div class="sec">${grp.host?'SEU GRUPO · VOCÊ É O ANFITRIÃO':'GRUPO DE '+grp.hostNm}${grp.rm?' · SALA '+grp.rm:''}</div><div class="lb">${rows}</div>
+     ${grp.host?'<div class="card">Quando estiver pronto, toque em INICIAR RAID abaixo.</div>':'<button class="btn" id="g-leave" type="button">SAIR DO GRUPO</button>'}`;
+   }else{
+    const lobbies=grp.lobbies||[];
+    groupUI=`${msg}<div class="sec">GRUPOS ABERTOS ${grp.rm?'· SALA '+grp.rm:''} · ${grp.online||0} online</div>
+     <div class="lb">${lobbies.length?lobbies.map(l=>`<div class="lr"><b style="flex:1">${l.nm} (${l.n}/5)</b><button class="btn" data-join="${l.host}" type="button">ENTRAR</button></div>`).join(''):'<div class="card">Nenhum grupo aberto agora. Crie o seu!</div>'}</div>
+     <button class="btn go" id="g-create" type="button" style="width:100%">CRIAR GRUPO</button>
+     <div class="sec">SALA DE AMIGOS (opcional)</div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${grp.rm?`<span class="chip">${grp.rm}</span><button class="btn" id="g-room-leave" type="button">SAIR DA SALA</button>`:`<button class="btn" id="g-room-create" type="button">CRIAR SALA</button><input id="g-room-code" placeholder="XXXX-XXXX" maxlength="9" style="padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:inherit;font-family:var(--mono);width:110px;text-transform:uppercase"><button class="btn" id="g-room-join" type="button">ENTRAR</button>`}</div>`;
+   }
+  }
+  body=`
+  <div class="sec">SEU GRUPO · 5 TREINADORES</div><div class="party">${slots}</div>${toggle}${groupUI}
   <div class="sec">ESCOLHA O SEU NUMIU</div><div class="picks">${picks}</div>
   <div class="card"><b style="color:var(--bc2)">Golpes de ${b.n}:</b> ${mvs}<br><b style="color:var(--bc2)">Poder do chefe:</b> ${b.fxd}.<br><b style="color:var(--bc2)">Nível recomendado:</b> ${lv}+ · Tentativas nesta semana: ${D.tries}</div>
-  <div class="card">🛡 <b>Proteger</b> faz seu Numiu entrar na frente de um aliado e, na ultimate, dois protetores criam uma <b>Barreira Conjunta</b>. Quando 3 ou mais atacam juntos, a <b>Sincronia</b> aumenta o dano de todos.<br>Os 4 aliados são controlados por IA: o co-op online com outros jogadores depende do servidor.</div>`;
+  <div class="card">🛡 <b>Proteger</b> faz seu Numiu entrar na frente de um aliado e, na ultimate, dois protetores criam uma <b>Barreira Conjunta</b>. Quando 3 ou mais atacam juntos, a <b>Sincronia</b> aumenta o dano de todos.<br>Vagas sem jogador real são preenchidas com aliados IA.</div>`;
+ }
  else if(tab==='rew')body=`
   <div class="sec">VITÓRIA NA SEMANA ${D.claimed?'· <span style="color:#4ade80">JÁ RECEBIDA</span>':''}</div>
   <div class="rw"><div class="rwi"><i class="frag" style="--fc:${b.col}"></i> ${D.rew.frag} fragmentos de ${b.n}</div><div class="rwi">🪙 ${D.rew.coins} moedas</div><div class="rwi">🥚 ${D.rew.egg} ovo misterioso</div></div>
@@ -511,14 +534,27 @@ function renderLobby(){
     <div class="bname"><h1>${b.n}</h1><p>${b.tt}</p><div style="margin-top:6px;display:flex;gap:6px;justify-content:center"><span class="chip" style="color:${TC[b.t]}">${TE[b.t]} ${b.t}</span>${b.t2?`<span class="chip" style="color:${TC[b.t2]}">${TE[b.t2]} ${b.t2}</span>`:''}</div></div></div>
    <div class="pan"><div class="tabs"><button class="tab ${tab==='raid'?'on':''}" data-t="raid">⚔ RAID</button><button class="tab ${tab==='rew'?'on':''}" data-t="rew">🎁 RECOMPENSAS</button><button class="tab ${tab==='rank'?'on':''}" data-t="rank">🏆 RANKING</button></div>
     <div class="tb">${body}</div>
-    ${tab==='raid'?`<div style="padding:clamp(8px,1.4vh,14px);border-top:1px solid var(--line)"><button class="btn go" id="go" style="width:100%">⚔ INICIAR RAID</button></div>`:''}</div>
+    ${tab==='raid'?goBar(grp):''}</div>
   </div>`;
  $('#back').onclick=()=>post({k:'nav',to:'map'});
  document.querySelectorAll('[data-t]').forEach(e=>e.onclick=()=>{tab=e.dataset.t;renderLobby()});
- document.querySelectorAll('[data-pk]').forEach(e=>e.onclick=()=>{pick=+e.dataset.pk;renderLobby()});
- const g=$('#go');if(g)g.onclick=()=>{snd('ok');post({k:'start',pick})};
+ document.querySelectorAll('[data-pk]').forEach(e=>e.onclick=()=>{pick=+e.dataset.pk;post({k:'gpick',i:pick});renderLobby()});
+ const g=$('#go');if(g)g.onclick=()=>{snd('ok');if(grp.mode==='lobby'&&grp.host)post({k:'gstart'});else post({k:'start',pick})};
  const h=$('#hatchb');if(h)h.onclick=()=>{post({k:'hatch'});hatchStart()};
+ const gs=$('#gm-solo');if(gs)gs.onclick=()=>post({k:'gmode',v:'solo'});
+ const gg=$('#gm-grp');if(gg)gg.onclick=()=>post({k:'gmode',v:'grp'});
+ const gc=$('#g-create');if(gc)gc.onclick=()=>post({k:'gcreate'});
+ const gl=$('#g-leave');if(gl)gl.onclick=()=>post({k:'gleave'});
+ document.querySelectorAll('[data-join]').forEach(e=>e.onclick=()=>post({k:'gjoin',host:e.dataset.join}));
+ const rc=$('#g-room-create');if(rc)rc.onclick=()=>post({k:'groom',op:'create'});
+ const rj=$('#g-room-join');if(rj)rj.onclick=()=>{const v=$('#g-room-code');post({k:'groom',op:'join',code:v?v.value:''})};
+ const rl=$('#g-room-leave');if(rl)rl.onclick=()=>post({k:'groom',op:'leave'});
  liveScan($('#lobby'));
+}
+function goBar(grp){
+ if(grp.mode==='raid')return '';
+ if(grp.mode==='lobby'&&grp.joined)return `<div style="padding:clamp(8px,1.4vh,14px);border-top:1px solid var(--line)"><div class="card">Aguardando o anfitrião iniciar a raid...</div></div>`;
+ return `<div style="padding:clamp(8px,1.4vh,14px);border-top:1px solid var(--line)"><button class="btn go" id="go" style="width:100%">⚔ INICIAR RAID</button></div>`;
 }
 
 /* ---------- batalha: utilidades ---------- */
@@ -552,7 +588,7 @@ function startBattle(m){
  const bb=D.bosses[D.bi];theme(bb);setBg(bb.id);
  $('#lobby').classList.add('hidden');$('#battle').classList.remove('hidden');$('#ov').classList.remove('on');
  $('#hn').textContent=bb.n;lvBind($('#bimg'),BIMG[bb.id],bb.id,'.14,.14,.14,.14');$('#turn').textContent='TURNO 1';
- $('#mems').innerHTML=B.party.map(p=>{const pos=P5[p.id];const src=img('b'+p.i)||img('f'+p.i);return `<div class="mem ${p.me?'me':''}" id="m_${p.id}" style="left:${pos[0]}%;top:${pos[1]}%"><div class="vdx"></div><div class="guard"></div><div class="frz">⏳</div><div class="sp"><canvas class="lv" data-lv="${src}" data-rig="${famOf(p)}" data-pad=".35,.35,.4,.12" data-tint="1" role="img" aria-label="${p.n}"></canvas></div><div class="tg">${p.e} ${p.tr} <em>${p.me?'':'IA'}</em></div><div class="tg" style="font-weight:600;opacity:.85">${p.n} Nv${p.l}</div><div class="hb"><i></i></div></div>`}).join('');
+ $('#mems').innerHTML=B.party.map(p=>{const pos=P5[p.id];const src=img('b'+p.i)||img('f'+p.i);return `<div class="mem ${p.me?'me':''}" id="m_${p.id}" style="left:${pos[0]}%;top:${pos[1]}%"><div class="vdx"></div><div class="guard"></div><div class="frz">⏳</div><div class="sp"><canvas class="lv" data-lv="${src}" data-rig="${famOf(p)}" data-pad=".35,.35,.4,.12" data-tint="1" role="img" aria-label="${p.n}"></canvas></div><div class="tg">${p.e} ${p.tr} <em>${p.me?'':(p.ai?'IA':'')}</em></div><div class="tg" style="font-weight:600;opacity:.85">${p.n} Nv${p.l}</div><div class="hb"><i></i></div></div>`}).join('');
  B.party.forEach(hpBar);bossBar();ST.b.ph=1;liveScan($('#mems'));
  B.party.forEach((p,k)=>setTimeout(()=>{const l=lvM(p.id);if(l)l.play('enter')},250+k*140));setTimeout(()=>lvP(lvB(),'roar'),500);
  $('#boss').className='';$('#vig').classList.remove('on');$('#dim').style.opacity=0;

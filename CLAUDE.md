@@ -59,7 +59,7 @@ tactical, train, tower, trade e as demais telas novas (safari, missions) são HT
 | `gyf` ginásios | `ready`, `gym`, `nav` | `gyms` |
 | `dxf` mostruário | `ready`, `nav` | `dex` |
 | `btf` arena de batalha | `ready`, `bact` (`move`,`swap`,`swapTo`,`cap`,`flee`,`leave`,`end`) | `bimgs`, `bstate` (`seq`,`st`,`evs`) |
-| `bsf` boss semanal | `ready`, `nav`, `start` (`pick`), `turn` (`a`: `{k:'mv',i}` ou `{k:'def'}`), `hatch` | `bsdata`, `bsstart`, `bsturn`, `bshatch` |
+| `bsf` boss semanal | `ready`, `nav`, `start` (`pick`), `turn` (`a`: `{k:'mv',i}` ou `{k:'def'}`), `hatch`, `leave`, **raid co-op:** `gmode` (`v`:solo/grp), `gpick` (`i`), `gcreate`, `gjoin` (`host`), `gleave`, `groom` (`op`,`code`), `gstart` | `bsdata` (campo `grp`), `bsstart`, `bsturn`, `bshatch` |
 | `bgf` mochila | `ready`, `nav` (map, boss), `unlock` (`id`), `hatch` | `bgdata`, `bgunlock`, `bghatch` |
 | `sff` zona safari | `ready`, `nav`, `spin` (`z`), `breed` (`a`,`b`), `take` (`u`), `release` (`u`) | `sfdata`, `sfspin`, `sfbreed`, `sftake`, `sfrelease` |
 | `msf` missões | `ready`, `nav`, `claim` (`id`) | `msdata`, `msclaim` |
@@ -360,9 +360,64 @@ Não commite `dist/`. Não guarde imagens em base64 no código: use `assets/`.
 ## Boss semanal (`js/boss.js` + `screens/boss.html`)
 - A semana e o dragão da vez saem da mesma conta do menu: `bsWeek()`; ordem AURELION, NYXAR, CHRONOS. Mudou a conta no
   menu (`bossInfo` em `screens/menu.html`)? Mude em `bsNow()` também.
-- Raid de 5 treinadores: o jogador + 4 aliados controlados por IA (`bsPick`). Co-op com humanos e ranking mundial
-  **precisam de servidor**: `BSRANK` (hoje só local) e a simulação determinística (`bsRng` com semente) já estão
-  prontos para isso; as jogadas de cada humano entrariam no lugar de `bsPick`.
+- Raid de 5 treinadores: o jogador + 4 aliados. Por padrão os 4 são controlados por IA (`bsPick`), mas dá pra jogar
+  com até 4 jogadores reais no lugar deles — ver "Raid co-op" logo abaixo. Ranking mundial (`BSRANK.world`)
+  continua só local (`BSRANK` hoje não manda nada pro servidor) — fora de escopo por ora.
+
+### Raid co-op (jogar o Boss com outros jogadores, não só bots)
+Implementado em `js/boss.js` (seção "Raid co-op" no arquivo, logo depois de `bsHatch`) + a aba RAID de
+`screens/boss.html`. Reaproveita a **mesma sala de presença do PvP/Troca de Numius** (`ensureRoom()` em
+`js/pvp.js` — ver "A sala" em "## PvP (determinismo)"), com um prefixo próprio de campos (`br*`, de "boss
+raid") pra não colidir com os campos `xc*`/`pv*` já usados ali. **Cuidado**: o objeto global `BG` e as
+funções `bgMount/bgData/bgSend/bgToggle` já pertencem à Mochila (`js/legend.js`) — por isso o raid co-op
+usa `BR`/`br*`, nunca `bg*` fora do campo de presença genérico `bg:1` (só uma flag "estou na tela do
+Boss buscando/num grupo", não colide porque é chave de objeto, não identificador global).
+
+**Modelo: o anfitrião é a autoridade.** Quem cria o grupo roda a simulação de verdade (`bsTurn`, a mesma
+do solo) e manda o resultado de cada turno pros outros pela própria presença (`brLive`). Os convidados
+**nunca simulam**: só mandam a própria jogada (`brTurn`/`brAct`, o número do turno que estão respondendo
++ a ação) e espelham o que o anfitrião manda, alimentando a mesma tela de batalha (`bsstart`/`bsturn`)
+que o solo já usa — a tela (`screens/boss.html`) não sabe se está em raid solo, hospedando ou
+convidada, só recebe as mesmas mensagens de sempre. Isso evitou ter que portar o motor de combate pra
+rodar igual em 5 aparelhos ao mesmo tempo (determinismo de verdade entre 5 pontas seria bem mais frágil).
+- **`bsTurn(Z,pa)` foi generalizado** pra aceitar `pa` em dois formatos: uma ação única `{k,i}` (solo,
+  sempre pro único membro com `.me===true`) ou um mapa `{id:ação}` com uma ação por `id` de membro humano
+  (raid). A checagem interna trocou de `m.me` pra `m.ai` (bot ou não) — `m.me` continua existindo, mas
+  agora é só "esse é o MEU próprio membro" (pra UI/placar), não mais o que decide quem é controlado por
+  jogada externa.
+- **`bsInit(bi,seed)`** foi extraído de dentro do antigo `bsNew` (monta só `Z.s`/`Z.b`, o chefe) — reusado
+  tanto por `bsNew` (solo) quanto por `bsNewGroup(bi,human)` (raid), que monta `Z.p` a partir de até 5
+  humanos reais (`human:[{peer,nm,pick}]`, `pick` no formato compacto de `xc1()`/`pvpBuild` — reaproveita
+  o `pvpBuild` já existente, que já sanitiza IV/EV/nível/golpes de um peer não confiável) e preenche o
+  resto do grupo de 5 com aliados IA, igual ao `mk2` do solo.
+- **Pareamento**: pool público (mesma sala, sem código) + sala de amigos opcional com código `XXXX-XXXX`
+  (mesmo truque do `XC.rm` da Troca de Numius, campo de presença `brRm`). Criar o grupo (`brCreate`)
+  marca a presença como `brSt:'open'`; outros que estão só navegando (`brOthersOpen()`, filtra por
+  `brSt==='open'` e mesma `brRm`) veem a lista de grupos abertos e entram (`brJoin`) sem precisar de
+  aceite do anfitrião (risco baixo — é cooperativo, não PvP). O anfitrião vê quem entrou computando
+  direto dos peers (`brMembersOf(meuPeer)`, filtra por `brWith===meuPeer`), sem precisar de um passo de
+  confirmação. `npm run test` cobre só a simulação (`bsNewGroup`+`bsTurn` com ações de 2 humanos até o
+  fim) — o pareamento em si (sala, presença) só foi verificado manualmente, igual o PvP (ver "Fase 3" e
+  a nota sobre teste em dois navegadores).
+- **Turno por turno**: cada humano manda a própria jogada marcada com o número do turno que está
+  respondendo (`brTurn`); o anfitrião só resolve (`brTryResolve`) quando tem a jogada de todos os
+  membros humanos pro turno esperado — quem não respondeu em ~22s leva "Proteger" por padrão (nunca
+  trava o raid esperando um convidado que sumiu). O resultado (eventos, HP, dano de cada humano por
+  turno) vai de volta pela presença (`brLive`); cada convidado aplica isso na própria tela e mantém um
+  "espelho" leve do próprio placar (`BR.view`, só `{bi,n,me:{dm},over}` — o bastante pra chamar
+  `bsFinish`/`bossReport` no fim, **cada jogador resgata a própria recompensa na própria conta** — a
+  Fase 4 (`boss-claim`) não precisou mudar nada, roda igual em cada cliente com o `ME`/`SB` local).
+- **Limitação conhecida, documentada e não escondida da pessoa**: sem troca de anfitrião. Se o
+  ANFITRIÃO cair no meio do raid, os convidados detectam (mesmo "gone" de ~8s do PvP/Troca) e encerram a
+  própria tentativa como derrota, sem recompensa — igual a sair manualmente. Se for um CONVIDADO que
+  cai, o raid continua (o anfitrião preenche a jogada dele com "Proteger" depois do timeout); o convidado
+  que caiu, ao voltar, só vê o grupo como se nunca tivesse saído (não há reconexão no meio de um raid).
+- UI: a aba RAID de `screens/boss.html` ganhou um alternador SOZINHO/COM JOGADORES. Em "com jogadores",
+  mostra os grupos abertos (ou o próprio grupo, se já criou/entrou) e troca o botão "INICIAR RAID" por
+  "aguardando o anfitrião" quando a pessoa é convidada (só o anfitrião inicia). Os golpes de outros
+  jogadores reais na arena de batalha aparecem com o nome deles (sem a etiqueta "IA", que agora só
+  aparece pra aliados de verdade controlados por IA — antes qualquer membro que não fosse "você" ganhava
+  essa etiqueta, o que ficaria errado com jogadores reais no grupo).
 - Combate (`bsTurn`) devolve eventos (`atk`, `sync`, `def`, `tele`, `bs`, `baoe`, `phase`, `st`, `faint`, `end`...) que a
   tela anima. Mecânicas: Sincronia (3+ atacantes), Proteger (intercepta golpe focado), Barreira Conjunta (2 protetores
   na ultimate), fases em 66% e 33% (escudo de cristal / vazio / congelamento).
