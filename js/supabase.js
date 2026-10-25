@@ -3,7 +3,12 @@
    caem pro fluxo local antigo (mon-users/PBKDF2 em js/state.js) em vez de quebrar — ver authCore()
    em js/screens-bridge.js. */
 const SB_URL='https://nrkfxlmjztjtpgcrprsv.supabase.co';
-const SB_KEY='sb_publishable_Nmc0npQyZBb7LUaNZXpb3g_g3qxHWTI';
+/* Chave "legacy anon" (JWT clássico), não a "publishable" nova (sb_publishable_...): essa é a que
+   deu erro ("Não foi possível verificar o nome") no cadastro de verdade — o formato novo de chave é
+   recente e provavelmente não é reconhecido do jeito esperado pela versão do supabase-js carregada
+   via CDN em index.html. A JWT clássica é o formato testado há anos, segura pra expor no front (role
+   "anon", protegida pelas políticas de RLS) e compatível com qualquer versão do cliente. */
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ya2Z4bG1qenRqdHBnY3JwcnN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NzkyMzgsImV4cCI6MjEwODQ1NTIzOH0.UB-LD-7P49Q5dhM_n7yemATlTYAw2dJKL_I_KoHBmvo';
 const SB=(typeof window!=='undefined'&&window.supabase&&window.supabase.createClient)
  ?window.supabase.createClient(SB_URL,SB_KEY)
  :null;

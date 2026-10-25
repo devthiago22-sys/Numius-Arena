@@ -250,7 +250,7 @@ async function authCore(up,id,pw,em,p2){
   try{
    if(up){
     const{data:av,error:avErr}=await SB.rpc('username_available',{u:id});
-    if(avErr)err='Não foi possível verificar o nome. Tente novamente.';
+    if(avErr){err='Não foi possível verificar o nome. Tente novamente.';console.error('[numius] username_available falhou:',avErr)}
     else if(!av)err='Esse nome de treinador já está em uso.';
     else{
      const{data:su,error:suErr}=await SB.auth.signUp({email:em.toLowerCase(),password:pw,options:{data:{username:id}}});
@@ -269,6 +269,7 @@ async function authCore(up,id,pw,em,p2){
     }
    }else{
     const{data:em2,error:eErr}=await SB.rpc('email_for_username',{u:id});
+    if(eErr)console.error('[numius] email_for_username falhou:',eErr);
     if(eErr||!em2)return authCoreLocal(up,id,pw,em,p2);
     const{data:si,error:siErr}=await SB.auth.signInWithPassword({email:em2,password:pw});
     if(siErr)err=/confirm/i.test(siErr.message||'')?'Confirme seu e-mail antes de entrar.':'Senha incorreta.';

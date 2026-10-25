@@ -146,7 +146,11 @@ que só existe dentro do claude.ai.
 Projeto: **numius-arena** (region `sa-east-1`), org `devthiago22-sys's Org`, project ref
 `nrkfxlmjztjtpgcrprsv`, URL `https://nrkfxlmjztjtpgcrprsv.supabase.co`. **A chave `service_role` nunca
 deve ir pro front nem pro repositório** — só é usada do lado do servidor/Edge Functions. A chave
-publicável (`sb_publishable_...`, segura pra expor) está em `js/supabase.js` (`SB_URL`/`SB_KEY`).
+publicável está em `js/supabase.js` (`SB_URL`/`SB_KEY`) — é a chave **"legacy anon" (JWT clássico)**,
+não a "publishable" nova (`sb_publishable_...`): a nova deu erro de verdade no cadastro ("Não foi
+possível verificar o nome") fora deste sandbox, provavelmente por incompatibilidade com a versão do
+`supabase-js` carregada via CDN. Se um dia trocar pra chave nova, teste cadastro/login de verdade (fora
+daqui, com internet) antes de assumir que funciona — esse bug não aparece testando só com SQL direto.
 
 **Fase 1 — autenticação (implementada)**: `js/supabase.js` cria o cliente `SB` (null se a CDN do
 SDK, carregada em `index.html`, não carregar — offline ou bloqueada). `authCore(up,id,pw,em,p2)`
