@@ -268,6 +268,22 @@ use o site publicado (GitHub Pages: `https://devthiago22-sys.github.io/Numius-Ar
 pasta raiz — já configurado), nunca o link do artifact. Confirmado funcionando no GitHub Pages em
 2026-10-24.
 
+**Pra `claude.use('room')` funcionar no preview (PvP e Troca de Numius), a Artifact precisa declarar a
+capability `room`** (`capabilities:{room:{}}` na chamada do Artifact tool) — sem isso `claude.use('room')`
+devolve `null` mesmo dentro do claude.ai e o jogo mostra "online não está disponível", igual se estivesse
+fora do claude.ai. Isso ficou sem declarar por várias publicações (só foi notado e corrigido em
+2026-10-24, versão 45) — **ao publicar este artifact pela primeira vez numa sessão nova** (sem reaproveitar
+a mesma `url`), lembre de declarar de novo; reaproveitando a mesma `url` a declaração anterior persiste
+(só se perde se um publish mandar `capabilities:{}` por engano).
+**E mesmo com isso corrigido, conta Supabase e sala de PvP/Troca nunca coexistem**: Supabase só funciona
+fora do claude.ai (GitHub Pages, pela sandbox acima) e `claude.use('room')` só existe dentro do claude.ai
+— são ambientes mutuamente exclusivos por design da plataforma. Na prática hoje: PvP/Troca funcionam no
+preview do claude.ai só com conta convidada ou conta local antiga (não Supabase); e uma conta Supabase no
+GitHub Pages nunca tem PvP/Troca disponível. As Fases 3 e 4 (validação de PvP/Boss no servidor, atrás de
+`isSbId(ME)`) por isso nunca disparam de verdade hoje — ficam prontas pro dia em que o PvP ganhar outro
+transporte (ex.: canais do Supabase Realtime em vez da sala do claude.ai), mas é bom ter isso em mente
+antes de investir mais nessa linha (ex.: uma Fase 5 pra Troca de Numius teria o mesmo problema).
+
 ## Convenções
 - Textos em português; manter emojis e `aria-label` nos botões.
 - Respeitar `prefers-reduced-motion` em animações novas.
