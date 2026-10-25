@@ -256,7 +256,16 @@ async function authCore(up,id,pw,em,p2){
      const{data:su,error:suErr}=await SB.auth.signUp({email:em.toLowerCase(),password:pw,options:{data:{username:id}}});
      if(suErr)err=/registered|existe/i.test(suErr.message||'')?'Esse e-mail já está cadastrado.':'Não foi possível criar a conta. Tente novamente.';
      else if(su.session){const uid=su.user.id;ME=uid;try{localStorage.setItem('mon-session',uid)}catch(e){}cacheAcct(uid,em.toLowerCase(),id);enter();return ''}
-     else err='Conta criada! Veja seu e-mail pra confirmar antes de entrar.';
+     else{
+      /* O jogo usa um e-mail sintético (gerado pela tela de login, não digitado pela pessoa), então
+         ela nunca vai conseguir clicar num link de confirmação. O gatilho handle_new_user já
+         confirma esse e-mail sozinho no banco (ver migração auto_confirm_synthetic_email_signups);
+         só falta entrar — signUp() não devolve sessão quando "Confirm email" está ligado no projeto,
+         mesmo já confirmado, então loga em seguida numa chamada separada. */
+      const{data:si2,error:si2Err}=await SB.auth.signInWithPassword({email:em.toLowerCase(),password:pw});
+      if(si2Err)err='Conta criada! Toque em ENTRAR com o mesmo nome e senha.';
+      else{const uid=si2.user.id;ME=uid;try{localStorage.setItem('mon-session',uid)}catch(e){}cacheAcct(uid,em.toLowerCase(),id);enter();return ''}
+     }
     }
    }else{
     const{data:em2,error:eErr}=await SB.rpc('email_for_username',{u:id});

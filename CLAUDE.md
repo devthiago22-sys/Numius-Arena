@@ -159,9 +159,17 @@ existe:
   mínima, únicas funções com `EXECUTE` liberado pra `anon`/`authenticated` de propósito.
 - Cadastro (`SB.auth.signUp`) manda o nome de treinador em `options.data.username`; a trigger
   `on_auth_user_created` em `auth.users` cria a linha em `public.profiles` (`user_id`, `username`)
-  sozinha no banco (`handle_new_user`, sem `EXECUTE` público — só roda via trigger). Se a confirmação
-  de e-mail do projeto estiver ligada, `signUp` não devolve sessão na hora: a pessoa recebe o aviso
-  "confirme seu e-mail" e só consegue entrar depois de clicar no link.
+  sozinha no banco (`handle_new_user`, sem `EXECUTE` público — só roda via trigger).
+- **E-mail é sintético, não digitado pela pessoa**: a tela de login (`screens/login.html`, bundle
+  React) só pede nome de treinador + senha — ela mesma gera um e-mail tipo `nome@numius.game` pra
+  mandar em `signup` (ver tabela de iframes, `k:'signup'` manda `id,pw,em,p2`). Por isso a pessoa
+  **nunca** consegue clicar num link de confirmação: esse e-mail não existe de verdade. Pra não travar
+  o cadastro pra sempre (era exatamente o bug: só dava pra jogar como convidado), a migração
+  `auto_confirm_synthetic_email_signups` faz `handle_new_user` confirmar esse e-mail sozinho no banco
+  (`update auth.users set email_confirmed_at = now()`), e `authCore` (`js/screens-bridge.js`), se
+  `signUp` não devolver sessão na hora (comum quando "Confirm email" está ligado no projeto, mesmo já
+  confirmado no banco pela trigger — o retorno do `signUp` não reflete isso), tenta
+  `signInWithPassword` em seguida, numa chamada separada que já lê o e-mail confirmado.
 - Login sem Supabase, ou nome de treinador não encontrado lá (contas de antes da Fase 1): cai pra
   `authCoreLocal` (a lógica antiga, local, intacta — `mon-users`/PBKDF2 em `js/state.js`). Isso
   também é a reserva natural se o Supabase cair.
@@ -191,6 +199,21 @@ Gere o arquivo único (`tools/build_single_file.py`) e publique-o. Se passar de 
 - Respeitar `prefers-reduced-motion` em animações novas.
 - Ao criar uma tela nova: adicione o HTML em `screens/`, o nome em `SCREEN_NAMES` (`loader.js`), a ponte
   em `screens-bridge.js`, e uma verificação em `tests/smoke.js`.
+
+## Menu principal (`screens/menu.html`) — layout responsivo das ilhas
+As 4 ilhas ficam em posições fixas por porcentagem (`left`/`top` no array `d`, dentro do bundle React:
+vale 18%/20%, cristal 72%/20%, canion 18%/62%, porto 72%/62%) enquanto o card do **Boss Semanal**
+(`.boss-island`, `boss-island-wrap`) fica sempre centrado (`left:50%,top:50%`) com **tamanho fixo em
+px**, não em porcentagem. Isso quebra em larguras intermediárias: a posição das ilhas encolhe
+proporcionalmente à largura da tela, mas o card do boss não — então ele passa por cima das ilhas
+(reportado: cobria a ilha VALE ANCESTRAL quase inteira). A correção são media queries em cascata no
+`<style>` do próprio `menu.html` que reposicionam as ilhas pros cantos (`left`/`top` menores) e encolhem
+tanto `.island-img` quanto `.boss-island` em pixels fixos conforme a largura cai: `max-width:1200px` →
+`max-width:900px` → `max-width:650px` (a última é a faixa de celular; nenhuma delas resolve larguras
+abaixo de ~600px de verdade, porque a barra lateral do menu sozinha já ocupa boa parte da tela — não é
+o caso reportado). Mudou o tamanho/posição de alguma ilha ou do card do boss? Teste em pelo menos
+768px, 960px, 1024px, 1145px e 1280px de largura (foi assim que o buraco entre 640 e 1200px foi achado
+— nenhum desses media queries existia nessa faixa antes).
 
 ## Arena de batalha (`screens/battle.html`)
 O jogo não desenha a batalha: `hit()`, `applyStatus`, `turnFx` etc. empilham eventos (`evp`: `move`, `buff`, `status`,
