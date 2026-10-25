@@ -1,6 +1,6 @@
 function lgMount(){const f=$('#lgf');if(!f||!f.dataset||f.dataset.m)return;f.dataset.m=1;LG.ready=false;f.srcdoc=dec(LG);clearTimeout(LG.t);LG.t=setTimeout(()=>{if(!LG.ready&&G.screen==='auth'){G.fb=1;G.tp=2;G.mode='in';R()}},6000)}
 function lgErr(m){const f=$('#lgf');if(f&&f.contentWindow)f.contentWindow.postMessage({numius:1,k:'err',msg:m},'*')}
-if(typeof addEventListener==='function')addEventListener('message',e=>{const f=$('#lgf');if(!f||!f.contentWindow||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;if(d.k==='ready')LG.ready=true;else if(d.k==='login')authCore(false,d.id,d.pw);else if(d.k==='signup')authCore(true,d.id,d.pw,d.em,d.p2);else if(d.k==='guest')guest()});
+if(typeof addEventListener==='function')addEventListener('message',e=>{const f=$('#lgf');if(!f||!f.contentWindow||e.source!==f.contentWindow)return;const d=e.data||{};if(!d.numius)return;if(d.k==='ready')LG.ready=true;else if(d.k==='login')authCore(false,d.id,d.pw);else if(d.k==='signup')authCore(true,d.id,d.pw,d.em,d.p2);else if(d.k==='guest')guest();else if(d.k==='forgot'){G.fb=1;G.tp=3;G.mode='in';G.err='';G.note='';R()}});
 function mnMount(){
  if(typeof document.createElement!=='function')return;
  const f=iw('mnf',MN,'Menu principal');

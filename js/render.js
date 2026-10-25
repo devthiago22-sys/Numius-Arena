@@ -13,7 +13,7 @@ function reset(){hasSave=false;G={team:[],badges:[],coins:0,screen:'start',battl
 
 function R(){
  const A=$('#app');let h='';
- if(G.screen==='auth'&&!G.fb){h=`<iframe id=lgf class=lgf title="Entrar na Numius Arena"></iframe><button class=lgfpw onclick="G.fb=1;G.tp=2;G.mode='in';G.err='';R()">Esqueci minha senha</button>`}
+ if(G.screen==='auth'&&!G.fb){h=`<iframe id=lgf class=lgf title="Entrar na Numius Arena"></iframe>`}
  else if(G.screen==='auth'){
   const up=G.mode==='up',f=G.f||{},ph=G.tp||0;
   const st=Array.from({length:26},(_,i)=>`<i style="left:${(i*37+11)%100}%;top:${(i*23+5)%50}%;animation-delay:${(i%7)*.35}s"></i>`).join('');
