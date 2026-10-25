@@ -69,6 +69,19 @@ function xcOnPeers(){
   }
   return;
  }
+ if(XC.st==='search'&&XC.out){
+  /* Mandei um desafio (xcChallenge) e ainda não me pareei — confere se quem eu desafiei já
+     aceitou (xcAcceptFrom do outro lado grava xcWith/xcId apontando pra mim). Sem isso, o lado que
+     desafia nunca percebia o aceite do outro e a troca nunca fechava (bug achado testando ao vivo
+     com dois navegadores: quem aceitava via para 'paired', quem desafiou ficava preso em 'search'
+     até o aceitante dar timeout e voltar pra 'idle' sozinho). */
+  const p=peerOf(XC.out.to);
+  if(p&&p.presence.xc===1&&p.presence.xcWith===mp&&p.presence.xcId===XC.out.bid){
+   XC.with=XC.out.to;XC.id=XC.out.bid;XC.st='paired';XC.ok=null;XC.doneId=null;XC.gone=0;XC.out=null;
+   pvpPres({xcSt:'paired',xcWith:XC.with,xcId:XC.id,xcOk:null,xcCh:null});R();
+  }
+  return;
+ }
  if(XC.st==='search'&&!XC.out){
   const oth=xcOthers();
   const inc=oth.find(p=>p.presence.xcCh&&p.presence.xcCh.to===mp&&p.presence.xcSt==='search'&&!XC.seen[p.presence.xcCh.bid]);
