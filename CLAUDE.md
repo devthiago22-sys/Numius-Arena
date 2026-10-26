@@ -381,26 +381,34 @@ celular em pé (largura típica 360-430px) ela sozinha já não cabe ao lado do 
 fixos da cascata acima, ficavam sobrepostas/cortadas (reportado com print de tela: a barra lateral
 "tomava conta" da tela e as ilhas apareciam amontoadas/cortadas à direita).
 **Correção** (dois media queries novos, mesmo `<style>` de `menu.html`, mesmo padrão de `!important`
-sobre as classes Tailwind já compiladas):
-- `max-width:600px`: a barra lateral vira uma **trilha de ícones** (`aside` cai pra 52px fixos) — os
-  rótulos de texto de cada item do menu (`aside nav button > div.flex-1.min-w-0`), o contador/badge
-  (`[class*="text-[9px]"]` dentro do botão) e os títulos em `font-pixel` (cabeçalho "MENU PRINCIPAL" e
-  o rótulo "INSÍGNIAS" — os dois usam essa mesma classe, sem mais nada que os diferencie, por isso o
-  seletor é `aside span.font-pixel` genérico) somem; só os ícones e os pontinhos de insígnia continuam
-  visíveis, empilhados (a `aside` já tem `overflow-y:auto`, então isso rola dentro da barra em vez de
-  vazar). O miolo (`main`) e o mapa (`section.flex-1`) perdem padding (`20px`→`8px`/`6px`) e o mapa
-  passa a ter praticamente a largura toda da tela pras 4 ilhas + o card do boss, repaginados num novo
-  conjunto de `left`/`top`/tamanhos (ilhas ~64px, boss ~84×62px).
-- `max-width:400px`: mais um degrau pra aparelhos bem estreitos (ex. 360px) — `aside` cai pra 44px,
+sobre as classes Tailwind já compiladas). **Primeira tentativa** (abandonada): esconder o texto dos
+itens do menu e deixar só um trilho de ícones. O jogador pediu explicitamente pra NÃO fazer isso — quer
+os mesmos rótulos de texto do PC, só menores, mesmo no celular. Versão atual:
+- `max-width:600px`: a barra lateral encolhe pra **130px fixos** (`aside`, antes 188/216px) mas
+  **mantém o texto** de cada item — só diminui a fonte (`aside nav button > div.flex-1.min-w-0 >
+  div:first-child`, 10px→7.5px) e deixa o rótulo **quebrar em 2 linhas** em vez de cortar com "..."
+  (`white-space:normal!important` + `overflow:visible!important` + `text-overflow:clip!important`,
+  sobrescrevendo o `truncate` do Tailwind) — assim "BATALHAS TÁTICAS" aparece inteiro em duas linhas em
+  vez de virar "BATA...". O único texto que some é o contador (`[class*="text-[9px]"]`, ex. "3/8" ao
+  lado do rótulo) — é informação que já aparece dentro de cada tela, e abrir mão dele é o que sobra de
+  espaço pra o rótulo não truncar tanto. O ícone de cada item encolhe (28px→22px) e o cabeçalho/rótulo
+  "INSÍGNIAS" (`font-pixel`) diminuem a fonte em vez de sumir. O miolo (`main`) e o mapa
+  (`section.flex-1`) perdem padding (`20px`→`6px`/`4px`) e as ilhas encolhem mais um pouco (~60px,
+  antes ~82px) pra abrir espaço pros 130px da barra agora mais larga que o trilho de ícones da primeira
+  tentativa.
+- `max-width:400px`: mais um degrau pra aparelhos bem estreitos (ex. 360px) — `aside` cai pra 108px,
   ilhas e boss encolhem mais um pouco, e o título do topo ("NUMIUS ARENA", `h1.font-pixel`) diminui a
   fonte (14px→11px) pra não encostar no botão de engrenagem ao lado.
-- **Cuidado ao editar essa seção**: os seletores que escondem texto (`div.flex-1.min-w-0`, o
-  `[class*="text-[9px]"]`, `span.font-pixel`) dependem das classes Tailwind literais que o bundle React
-  já gera — não são classes "seguras" postas de propósito, são as que calharam de ser únicas o
-  suficiente dentro de `aside` pra não pegar outro elemento por engano (ex.: o nome do jogador no
-  cartão de conta usa só `className:"flex-1"`, sem `min-w-0` — por isso o seletor exige os dois juntos).
-  Se o bundle for regerado/trocado essas classes podem mudar; confira com um screenshot em 390×844
-  (o viewport que `tests/smoke.js` já usa) depois de qualquer mudança no JSX de `menu.html`.
+- **Cuidado ao editar essa seção**: o seletor que quebra o rótulo em 2 linhas
+  (`aside nav button > div.flex-1.min-w-0 > div:first-child`) e o que esconde o contador
+  (`[class*="text-[9px]"]`) dependem das classes Tailwind literais que o bundle React já gera — não são
+  classes "seguras" postas de propósito, são as que calharam de ser únicas o suficiente dentro de
+  `aside` pra não pegar outro elemento por engano (ex.: o nome do jogador no cartão de conta usa só
+  `className:"flex-1"`, sem `min-w-0` — por isso o seletor do rótulo do menu exige os dois juntos, pra
+  não afetar o nome da conta). Se o bundle for regerado/trocado essas classes podem mudar; confira com
+  um screenshot em 360×800/390×844/414×896/428×926 (o viewport 390×844 é o que `tests/smoke.js` já usa)
+  depois de qualquer mudança no JSX de `menu.html` — o objetivo é texto **legível e completo** (sem
+  truncar em letras soltas tipo "GI." ou "BATA."), não só "sem sobreposição".
 - **Sobre "forçar a tela pra vertical"**: não dá pra travar a orientação de verdade numa aba comum de
   navegador (a API de orientation lock só funciona em tela cheia/PWA instalado, e nem existe no Safari
   do iPhone) — por isso a correção foi deixar o layout **funcionar bem em retrato** (que já é a

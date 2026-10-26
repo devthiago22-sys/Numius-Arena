@@ -80,36 +80,45 @@ function ju(){let[A,e]=KA.useState(""),[D,setD]=KA.useState({name:"Treinador",lv
         }
         /* Celular em retrato (telas estreitas, ~360-600px de largura): a barra lateral fixa
            (188/216px) sozinha já não cabe ao lado do mapa nesses aparelhos (ver CLAUDE.md,
-           seção "Menu principal"). Em vez de continuar encolhendo os dois lado a lado até
-           quebrar, a barra vira uma trilha de ícones (sem rótulo de texto) e o mapa das ilhas
-           ganha praticamente toda a largura da tela — mesma identidade visual do PC, só compacta. */
+           seção "Menu principal"). Em vez de esconder o texto dos itens do menu (trilho só de
+           ícones), a barra mantém os MESMOS rótulos de texto do PC — só reduzida de tamanho —
+           e o mapa das ilhas encolhe junto pra caber do lado dela, sem sobrepor nada. */
         @media (max-width: 600px) {
-          main { padding: 8px !important; gap: 6px !important; }
-          aside { width: 52px !important; min-width: 52px !important; max-width: 52px !important; }
-          aside > div:first-child { padding: 8px 2px !important; justify-content: center !important; }
-          aside span.font-pixel { display: none !important; }
-          aside nav { padding: 6px 4px !important; gap: 5px !important; }
-          aside nav button { justify-content: center !important; gap: 0 !important; padding: 8px 2px !important; }
-          aside nav button > div.flex-1.min-w-0 { display: none !important; }
+          main { padding: 6px !important; gap: 5px !important; }
+          aside { width: 130px !important; min-width: 130px !important; max-width: 130px !important; }
+          aside > div:first-child { padding: 6px 8px !important; }
+          aside > div:first-child span.font-pixel { font-size: 7px !important; }
+          aside nav { padding: 5px 4px !important; gap: 4px !important; }
+          aside nav button { padding: 6px 6px !important; gap: 6px !important; align-items: center !important; }
+          aside nav button > div:first-child { width: 22px !important; height: 22px !important; }
+          aside nav button > div:first-child svg { width: 12px !important; height: 12px !important; }
+          /* Em vez de cortar o rótulo com "..." (ficava ilegível em palavras longas como
+             "BATALHAS TÁTICAS"), deixa quebrar em 2 linhas — mostra a palavra inteira. */
+          aside nav button > div.flex-1.min-w-0 > div:first-child { font-size: 7.5px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.15 !important; }
+          /* O contador (ex. "3/8") ao lado do rótulo some nessa largura — é informação que já
+             aparece dentro de cada tela; sem ele sobra espaço pro rótulo não truncar tanto. */
           aside nav button [class*="text-[9px]"] { display: none !important; }
-          aside div.flex-1:not(.min-w-0) { display: none !important; }
-          main section.flex-1 { padding: 6px !important; }
-          .island-vale { left: 2% !important; top: 3% !important; }
-          .island-cristal { left: 58% !important; top: 3% !important; }
-          .island-canion { left: 2% !important; top: 60% !important; }
-          .island-porto { left: 58% !important; top: 60% !important; }
-          .island-img { width: 64px !important; height: 64px !important; }
-          .plate-box { min-width: 66px !important; max-width: 78px !important; padding: 4px 5px !important; }
-          .plate-name { font-size: 6.5px !important; }
-          .boss-island { width: 84px !important; height: 62px !important; }
-          .boss-title { font-size: 6px !important; }
-          .boss-sub { font-size: 5px !important; }
+          aside div.flex-1:not(.min-w-0) > div:first-child { font-size: 8px !important; }
+          aside div.flex-1:not(.min-w-0) > div:last-child { font-size: 6.5px !important; }
+          aside span.font-pixel { font-size: 6px !important; }
+          main section.flex-1 { padding: 4px !important; }
+          .island-vale { left: 0% !important; top: 2% !important; }
+          .island-cristal { left: 52% !important; top: 2% !important; }
+          .island-canion { left: 0% !important; top: 61% !important; }
+          .island-porto { left: 52% !important; top: 61% !important; }
+          .island-img { width: 60px !important; height: 60px !important; }
+          .plate-box { min-width: 64px !important; max-width: 76px !important; padding: 3px 4px !important; }
+          .plate-name { font-size: 6px !important; }
+          .boss-island { width: 78px !important; height: 57px !important; }
+          .boss-title { font-size: 5.5px !important; }
+          .boss-sub { font-size: 4.5px !important; }
         }
         @media (max-width: 400px) {
-          aside { width: 44px !important; min-width: 44px !important; max-width: 44px !important; }
-          .island-img { width: 54px !important; height: 54px !important; }
-          .plate-box { min-width: 56px !important; max-width: 68px !important; }
-          .boss-island { width: 70px !important; height: 52px !important; }
+          aside { width: 108px !important; min-width: 108px !important; max-width: 108px !important; }
+          aside nav button > div.flex-1.min-w-0 > div:first-child { font-size: 6.8px !important; }
+          .island-img { width: 50px !important; height: 50px !important; }
+          .plate-box { min-width: 52px !important; max-width: 62px !important; }
+          .boss-island { width: 64px !important; height: 47px !important; }
           h1.font-pixel { font-size: 11px !important; }
         }
         @media (max-height: 780px) { aside nav { gap: 3px !important; } aside nav button { padding-top: 5px !important; padding-bottom: 5px !important; } }
