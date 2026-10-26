@@ -369,11 +369,44 @@ proporcionalmente à largura da tela, mas o card do boss não — então ele pas
 (reportado: cobria a ilha VALE ANCESTRAL quase inteira). A correção são media queries em cascata no
 `<style>` do próprio `menu.html` que reposicionam as ilhas pros cantos (`left`/`top` menores) e encolhem
 tanto `.island-img` quanto `.boss-island` em pixels fixos conforme a largura cai: `max-width:1200px` →
-`max-width:900px` → `max-width:650px` (a última é a faixa de celular; nenhuma delas resolve larguras
-abaixo de ~600px de verdade, porque a barra lateral do menu sozinha já ocupa boa parte da tela — não é
-o caso reportado). Mudou o tamanho/posição de alguma ilha ou do card do boss? Teste em pelo menos
-768px, 960px, 1024px, 1145px e 1280px de largura (foi assim que o buraco entre 640 e 1200px foi achado
-— nenhum desses media queries existia nessa faixa antes).
+`max-width:900px` → `max-width:650px` (a última é a faixa de celular). Mudou o tamanho/posição de alguma
+ilha ou do card do boss? Teste em pelo menos 768px, 960px, 1024px, 1145px e 1280px de largura (foi assim
+que o buraco entre 640 e 1200px foi achado — nenhum desses media queries existia nessa faixa antes).
+
+### Celular em retrato (abaixo de ~600px de largura)
+Essa lacuna documentada acima ("nenhuma delas resolve larguras abaixo de ~600px") era real e foi
+reportada: a barra lateral fixa (`aside`, `w-[188px] md:w-[216px]`) não encolhe sozinha, então num
+celular em pé (largura típica 360-430px) ela sozinha já não cabe ao lado do mapa — o conteúdo
+(`section.flex-1`) ficava espremido numa faixa estreitíssima e as 4 ilhas, ainda nos tamanhos de pixel
+fixos da cascata acima, ficavam sobrepostas/cortadas (reportado com print de tela: a barra lateral
+"tomava conta" da tela e as ilhas apareciam amontoadas/cortadas à direita).
+**Correção** (dois media queries novos, mesmo `<style>` de `menu.html`, mesmo padrão de `!important`
+sobre as classes Tailwind já compiladas):
+- `max-width:600px`: a barra lateral vira uma **trilha de ícones** (`aside` cai pra 52px fixos) — os
+  rótulos de texto de cada item do menu (`aside nav button > div.flex-1.min-w-0`), o contador/badge
+  (`[class*="text-[9px]"]` dentro do botão) e os títulos em `font-pixel` (cabeçalho "MENU PRINCIPAL" e
+  o rótulo "INSÍGNIAS" — os dois usam essa mesma classe, sem mais nada que os diferencie, por isso o
+  seletor é `aside span.font-pixel` genérico) somem; só os ícones e os pontinhos de insígnia continuam
+  visíveis, empilhados (a `aside` já tem `overflow-y:auto`, então isso rola dentro da barra em vez de
+  vazar). O miolo (`main`) e o mapa (`section.flex-1`) perdem padding (`20px`→`8px`/`6px`) e o mapa
+  passa a ter praticamente a largura toda da tela pras 4 ilhas + o card do boss, repaginados num novo
+  conjunto de `left`/`top`/tamanhos (ilhas ~64px, boss ~84×62px).
+- `max-width:400px`: mais um degrau pra aparelhos bem estreitos (ex. 360px) — `aside` cai pra 44px,
+  ilhas e boss encolhem mais um pouco, e o título do topo ("NUMIUS ARENA", `h1.font-pixel`) diminui a
+  fonte (14px→11px) pra não encostar no botão de engrenagem ao lado.
+- **Cuidado ao editar essa seção**: os seletores que escondem texto (`div.flex-1.min-w-0`, o
+  `[class*="text-[9px]"]`, `span.font-pixel`) dependem das classes Tailwind literais que o bundle React
+  já gera — não são classes "seguras" postas de propósito, são as que calharam de ser únicas o
+  suficiente dentro de `aside` pra não pegar outro elemento por engano (ex.: o nome do jogador no
+  cartão de conta usa só `className:"flex-1"`, sem `min-w-0` — por isso o seletor exige os dois juntos).
+  Se o bundle for regerado/trocado essas classes podem mudar; confira com um screenshot em 390×844
+  (o viewport que `tests/smoke.js` já usa) depois de qualquer mudança no JSX de `menu.html`.
+- **Sobre "forçar a tela pra vertical"**: não dá pra travar a orientação de verdade numa aba comum de
+  navegador (a API de orientation lock só funciona em tela cheia/PWA instalado, e nem existe no Safari
+  do iPhone) — por isso a correção foi deixar o layout **funcionar bem em retrato** (que já é a
+  orientação natural de um celular na mão) em vez de tentar forçar a rotação. Um celular deitado
+  (paisagem, largura >600px) continua caindo nos media queries de tablet/desktop acima, que já se
+  parecem bastante com o PC.
 
 ## Arena de batalha (`screens/battle.html`)
 O jogo não desenha a batalha: `hit()`, `applyStatus`, `turnFx` etc. empilham eventos (`evp`: `move`, `buff`, `status`,
